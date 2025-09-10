@@ -17,6 +17,8 @@ const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
 
 if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+  console.log("certpath: " + certFilePath)
+  console.log("keypath: " + keyFilePath)
   if (
     0 !==
     child_process.spawnSync(
