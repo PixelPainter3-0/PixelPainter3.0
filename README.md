@@ -58,7 +58,7 @@ vscode-icons
 	- ClientId
 	- ClientSecret
 	- HomeUrl
-1. Run the project with the Start button in Visual Studio
+1. Run the project with the Start button in Visual Studi
 
 ## Missing HTTPS Certificates
 
