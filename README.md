@@ -73,7 +73,6 @@ If there is an HTTPS certificate error when running 'npm run dev', manually crea
 	dotnet dev-certs https --export-path 'your directory here'/mytestvueapp.client.pem 
 	
 
-
 ### TODO Configuring in WSL
 
 - Clone repo to wsl instance
@@ -83,5 +82,4 @@ If there is an HTTPS certificate error when running 'npm run dev', manually crea
 - run `dotnet dev-certs https --export-path /home/username/.aspnet/https/mytestvueapp.client.pem` 
     - May need to install dotnet `sudo apt install dotnet-sdk-8.0`
 - `npm run build` will compile the application
-- `npm run dev` will set up a development instance of the project
-
+- `dotnet run` ( in *.Server ) will set up a development instance of the project
