@@ -1,6 +1,7 @@
 FROM phusion/baseimage:noble-1.0.2
 
-RUN apt update && apt install -y git dotnet-sdk-8.0 npm 
+RUN apt update
+RUN apt install -y git dotnet-sdk-8.0 npm 
 
 RUN mkdir -p /usr/app
 WORKDIR /usr/app

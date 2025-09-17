@@ -18,7 +18,7 @@ services:
     networks:
       - pixel_network
   website:
-    image: waffleer/pixel-painter:v0.0.1
+    image: waffleer/pixel-painter:v0.0.2
     container_name: pixel-painter
     command: ["dotnet", "run"]
     ports:
