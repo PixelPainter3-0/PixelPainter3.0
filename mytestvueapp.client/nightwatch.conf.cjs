@@ -58,7 +58,6 @@ module.exports = {
         start_process: true,
         server_path: ''
       },
-      
     },
     
     chrome: {

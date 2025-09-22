@@ -65,7 +65,7 @@ vscode-icons
 If there is an HTTPS certificate error when running 'npm run dev', manually creating the certificate might be needed.
 
 1. Route to the 'Roaming' folder
-2. Create a new folder called 'ASP.NET' if it is not already presen
+2. Create a new folder called 'ASP.NET' if it is not already present
 3. Create a new folder in ASP.NET called 'https'
 4. Copy the directory of the 'https' folder
 5. Open terminal and run the following command:
