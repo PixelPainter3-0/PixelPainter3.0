@@ -13,7 +13,7 @@
       </template>
       <template #title>
         <div class="text-base font-bold m-0 px-2 pt-1">
-          {{ art.title }}
+          {{ title }}
         </div>
       </template>
       <template #subtitle>
@@ -50,13 +50,27 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from "vue";
+import { defineProps, ref, onMounted } from "vue";
 import Card from "primevue/card";
 import Button from "primevue/button";
 import LikeButton from "../LikeButton.vue";
 import MyCanvas from "../MyCanvas/MyCanvas.vue";
 import Art from "@/entities/Art";
 import router from "@/router";
+
+const title = ref<string>("");
+
+onMounted(() => {
+    if (props.art.title.length > 20) {
+        const tempTitle = props.art.title.substring(0, 20);
+        const elipsis = "...";
+        title.value = tempTitle + elipsis;
+    }
+    else {
+        title.value = props.art.title;
+    }
+  }
+);
 
 const props = defineProps<{
   art: Art;
