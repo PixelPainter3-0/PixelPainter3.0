@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="1"
+            tests="1">
+
+  <testsuite name="Ecosia.org Demo" id="nightwatch.ecosia"
+    errors="0" failures="1" hostname="" package="ecosia" skipped="0"
+    tests="1" time="7.952" timestamp="">
+  
+    <testcase name="Demo test ecosia.org" classname="Ecosia.org Demo" time="7.212" assertions="5">
+
+    
+
+    
+
+    
+
+      <failure message="Testing if element &lt;.layout__content&gt; contains text &#39;Nightwatch.js&#39; in 5000ms - expected &#34;contains text &#39;Nightwatch.js&#39;&#34; but got: &#34;does not contain &#39;Nightwatch.js&#39;&#34; (5176ms)">    at DescribeInstance.&lt;anonymous&gt; (/home/waffleer/PixelPainter3.0/mytestvueapp.client/nightwatch/ecosia.ts:14:15)</failure>
+
+    
+    </testcase>
+  
+
+  
+
+    
+
+  
+  </testsuite>
+</testsuites>

@@ -21,18 +21,18 @@ describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
 
   it('Canvas Resolution', (browser) => {
     browser.element.find('.p-inputnumber-input').assert.hasClass("p-inputnumber-input")
-
+    
   });
 
-  // it('Home button', (browser) => {
-  //   browser
-  //     .element.findByText('Home')
-  //     .assert.visible();
-  //   browser
-  //     .element.findByText('Home')
-  //     .click();
-  //   browser.assert.urlEquals(this.pixelpainterurl_base);
-  // });
+  it('Home button', (browser) => {
+    browser
+      .element.findByText('Home')
+      .assert.visible();
+    browser
+      .element.findByText('Home')
+      .click();
+    browser.assert.urlEquals(this.pixelpainterurl_base);
+  });
 
   it('Painter button', (browser) => {
     browser

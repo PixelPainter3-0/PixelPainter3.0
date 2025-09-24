@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="1"
+            tests="2">
+
+  <testsuite name="nightwatch.google" id="nightwatch.google"
+    errors="0" failures="1" hostname="" package="google" skipped="0"
+    tests="2" time="7.836" timestamp="">
+  
+    <testcase name="Google title test" classname="nightwatch.google" time="0.9630" assertions="1">
+
+    
+    </testcase>
+  
+    <testcase name="Google search test" classname="nightwatch.google" time="6.870" assertions="1">  <failure message="Timed out while waiting for element &lt;#main&gt; to be present for 5000 milliseconds. - expected &#34;visible&#34; but got: &#34;not found&#34; (5143ms)">    at Object.Google search test (/home/waffleer/PixelPainter3.0/mytestvueapp.client/nightwatch/google.ts:16:8)</failure>
+
+    
+    </testcase>
+  
+
+  
+
+    
+
+  
+  </testsuite>
+</testsuites>

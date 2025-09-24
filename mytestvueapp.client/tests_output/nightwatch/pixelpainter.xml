@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="0"
+            tests="0">
+
+  <testsuite name="Pixel Painter Tests" id="nightwatch.pixelpainter"
+    errors="0" failures="0" hostname="" package="pixelpainter" skipped="5"
+    tests="0" time="0" timestamp="">
+  
+
+  
+
+    
+
+  
+    
+    <testcase
+      name="Find Cat" classname="Pixel Painter Tests">
+      <skipped />
+    </testcase>
+    
+    <testcase
+      name="Home button" classname="Pixel Painter Tests">
+      <skipped />
+    </testcase>
+    
+    <testcase
+      name="Gallary button" classname="Pixel Painter Tests">
+      <skipped />
+    </testcase>
+    
+    <testcase
+      name="Find Home button" classname="Pixel Painter Tests">
+      <skipped />
+    </testcase>
+    
+    <testcase
+      name="Find Home button" classname="Pixel Painter Tests">
+      <skipped />
+    </testcase>
+    
+  
+  </testsuite>
+</testsuites>
