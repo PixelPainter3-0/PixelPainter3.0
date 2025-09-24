@@ -1,4 +1,9 @@
 <template>
+  <div style="text-align: center" class="justify-content-center flex w-full h-full align-items-center">
+    <h2 class="flex">
+      {{ art.title }}
+    </h2>
+  </div>
   <div class="justify-content-center flex w-full h-full align-items-center">
     <div v-if="!art.isGif && art" class="border-2">
       <MyCanvas
@@ -13,10 +18,6 @@
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
     <Card class="w-20rem ml-5">
       <template #content>
-        <h3 class="flex">
-          {{ art.title }}
-        </h3>
-
         <div>
           By
           <div

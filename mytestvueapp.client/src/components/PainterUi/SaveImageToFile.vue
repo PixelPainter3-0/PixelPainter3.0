@@ -150,6 +150,7 @@ async function saveGIFFromPainter(): Promise<void> {
   }
   GIFCreationService.createGIF(urls, props.fps);
 }
+
 async function saveGifFromImage() {
   GIFCreationService.createGIF(props.gifFromViewer!, props.fps);
 }
