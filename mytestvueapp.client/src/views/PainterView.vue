@@ -70,25 +70,28 @@
                       v-model:greyscale="greyscale" />
     </template>
     <template #end>
-      <Button icon="pi pi-times"
-              class="mr-2"
-              severity="primary"
-              label="Clear"
-              @click="clear()" />
-      <Button icon="pi pi-expand"
-              class="mr-2"
-              severity="primary"
-              label="Recenter"
-              @click="canvas?.recenter()" />
-      <Button :disabled="connected"
-              :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
-              class="mr-2 Rainbow"
-              label="Gravity"
-              @click="runGravity()" />
-      <Button icon="pi pi-lightbulb"
-              class="Rainbow"
-              label="Give Me Color!"
-              @click="randomizeGrid()" />
+        <audio ref="audioRef"></audio>
+        <Button icon="pi pi-times"
+                class="mr-2"
+                severity="primary"
+                label="Clear"
+                @click="clear()" />
+        <Button icon="pi pi-expand"
+                class="mr-2"
+                severity="primary"
+                label="Recenter"
+                @click="canvas?.recenter()" />
+        <Button :disabled="connected"
+                :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
+                class="mr-2 Rainbow"
+                label="Gravity"
+                @click="runGravity()" />
+        <Button icon="pi pi-lightbulb"
+                class="Rainbow"
+                label="Give Me Color!"
+                @click="randomizeGrid()" />
+        <Button label="Toggle Music"
+                @click="toggleMusic()" />
     </template>
   </Toolbar>
 </template>
@@ -148,6 +151,14 @@
   const showLayers = ref<boolean>(true);
   const greyscale = ref<boolean>(false);
   const loggedIn = ref<boolean>(false);
+
+  const audioRef = ref(null);
+  var audioPlaying = 0;
+  const audioFiles = [
+      "/src/music/In-the-hall-of-the-mountain-king.mp3",
+      "/src/music/flight-of-the-bumblebee.mp3",
+      "/src/music/OrchestralSuiteNo3.mp3"
+  ];
 
   // Connection Information
   const connected = ref<boolean>(false);
@@ -1251,6 +1262,22 @@
   //   ctx.putImageData(imageData, 0, 0);
   // }
 
+    function toggleMusic(): void {
+        if (audioPlaying == 0) {
+            audioRef.value.pause();
+            audioRef.value.currentTime = 0;
+
+            var randomIndex = Math.floor(Math.random() * audioFiles.length);
+            var chosenMusic = audioFiles[randomIndex];
+            audioRef.value.src = chosenMusic;
+            audioRef.value.play();
+            audioPlaying = 1;
+        }
+        else {
+            audioRef.value.pause();
+            audioPlaying = 0;
+        }
+    }
 
   function handleKeyDown(event: KeyboardEvent) {
     if (keyBindActive.value) {
