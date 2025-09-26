@@ -1217,6 +1217,7 @@ async function saveGIFFromPainter(): Promise<void> {
     const strings = dataURL.split(",");
     urls.push(strings[1]);
   }
+  
   GIFCreationService.createGIF(urls, fps.value);
 }
 
@@ -1326,6 +1327,7 @@ function handleKeyDown(event: KeyboardEvent) {
         saveGIFFromPainter();
       } else {
         saveToFile();
+
       }
     } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
       event.preventDefault();
