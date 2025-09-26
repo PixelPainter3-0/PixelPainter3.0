@@ -38,6 +38,15 @@ export const useLayerStore = defineStore('layers', {
       for (let i = 0; i < this.grids.length; i++)
         arr.push(this.grids[i].grid);
       return arr;
+    },
+    updateGrid(): void {
+      this.grids[this.layer].updateGrid();
+    },
+    undo(): void {
+      this.grids[this.layer].undo();
+    },
+    redo(): void {
+      this.grids[this.layer].redo();
     }
   }
 });

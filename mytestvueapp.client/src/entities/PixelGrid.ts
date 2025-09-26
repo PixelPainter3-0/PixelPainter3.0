@@ -7,6 +7,10 @@ export class PixelGrid {
   grid: string[][];
   encodedGrid?: string;
   isGif: boolean;
+  blankGrid: string[][];
+  undoStack: string[][][];
+  redoStack: string[][][];
+  redoStackMaxSize: number;
 
   constructor(
     width: number,
@@ -30,6 +34,10 @@ export class PixelGrid {
         backgroundColor
       ).grid;
     }
+    this.blankGrid = this.createGrid(width, height);
+    this.undoStack = [];
+    this.redoStack = [];
+    this.redoStackMaxSize = 0;
   }
 
   //Initialize a grid with a given width, height
@@ -65,5 +73,32 @@ export class PixelGrid {
 
   public getEncodedGrid(): string {
     return Codec.Encode(this);
+  }
+
+  public updateGrid(): void {
+    this.undoStack.push(JSON.parse(JSON.stringify(this.grid)));
+    this.redoStack = [];
+    this.redoStackMaxSize = 0;
+  }
+  public undo(): void {
+    if(this.undoStack.length == 0) {
+      if(this.redoStack.length != this.redoStackMaxSize){
+        this.redoStack.push(JSON.parse(JSON.stringify(this.grid)));
+      }
+      this.grid = JSON.parse(JSON.stringify(this.blankGrid));
+    } else if(this.undoStack.length >= 1){
+      this.redoStack.push(JSON.parse(JSON.stringify(this.grid)));
+      if(this.redoStackMaxSize == 0){
+        this.redoStackMaxSize = this.undoStack.length;
+        this.undoStack.pop();
+      }
+      this.grid = JSON.parse(JSON.stringify(this.undoStack.pop()!));
+    }
+  }
+  public redo(): void {
+    if(this.redoStack.length > 0){
+      this.undoStack.push(JSON.parse(JSON.stringify(this.grid)));
+      this.grid = JSON.parse(JSON.stringify(this.redoStack.pop()!));
+    }
   }
 }
