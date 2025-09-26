@@ -142,7 +142,9 @@ import Cursor from "@/entities/Cursor";
 import { Pixel } from "@/entities/Pixel";
 import Artist from "@/entities/Artist";
 
+//services
 import LoginService from "@/services/LoginService";
+import GIFCreationService from "@/services/GIFCreationService";
 
 //vue
 import { ref, watch, computed, onMounted, onUnmounted } from "vue";
@@ -532,7 +534,6 @@ watch(
 );
 
 //functions
-
 function runGravity() {
   if (intervalId.value != -1) {
     clearInterval(intervalId.value);
@@ -1095,6 +1096,130 @@ function redo() {
   canvas?.value.drawLayers(layerStore.layer);
 }
 
+//Save to file functions
+function flattenArt(): string[][] {
+  let width = layerStore.grids[0].width;
+  let height = layerStore.grids[0].height;
+  let arr: string[][] = Array.from({ length: height }, () =>
+    Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
+  );
+
+  for (let length = 0; length < layerStore.grids.length; length++) {
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        //only set empty cells to background color if its the first layer
+        //layers above the first will just replace cells if they have a value
+        if (layerStore.grids[length].grid[i][j] !== "empty") {
+          arr[i][j] = layerStore.grids[length].grid[i][j];
+        }
+      }
+    }
+  }
+  return arr;
+}
+
+async function saveToFile(): Promise<void> {
+  const grid: string[][] = flattenArt();
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Could not get context");
+  }
+  const image = context.createImageData(grid.length, grid.length);
+
+  canvas.width = grid.length;
+  canvas.height = grid.length;
+
+  for (let x = 0; x < grid.length; x++) {
+    for (let y = 0; y < grid.length; y++) {
+      let pixelHex = grid[x][y];
+      pixelHex = pixelHex.replace("#", "").toUpperCase();
+      const index = (x + y * grid.length) * 4;
+      image?.data.set(
+        [
+          parseInt(pixelHex.substring(0, 2), 16),
+          parseInt(pixelHex.substring(2, 4), 16),
+          parseInt(pixelHex.substring(4, 6), 16),
+          255
+        ],
+        index
+      );
+    }
+  }
+  context?.putImageData(image, 0, 0);
+
+  //upscale the image to 1080
+  var upsizedCanvas = document.createElement("canvas");
+  upsizedCanvas.width = 1080;
+  upsizedCanvas.height = 1080;
+  var upsizedContext = upsizedCanvas.getContext("2d");
+  if (!upsizedContext) {
+    throw new Error("Could not get context");
+  }
+  upsizedContext.imageSmoothingEnabled = false; // Disable image smoothing
+  upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
+
+  const link = document.createElement("a");
+  link.download = "image.png";
+  link.href = upsizedCanvas.toDataURL("image/png");
+  link.click();
+}
+
+async function saveGIFFromPainter(): Promise<void> {
+  let urls: string[] = [];
+  let grids = layerStore.grids;
+  for (let i = 0; i < grids.length; i++) {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Could not get context");
+    }
+    const image = context.createImageData(grids[i].width, grids[i].height);
+
+    canvas.width = grids[i].width;
+    canvas.height = grids[i].height;
+
+    for (let x = 0; x < grids[i].height; x++) {
+      for (let y = 0; y < grids[i].width; y++) {
+        let pixelHex;
+        if (grids[i].grid[x][y] === "empty") {
+          pixelHex = grids[i].backgroundColor;
+        } else {
+          pixelHex = grids[i].grid[x][y];
+        }
+        pixelHex = pixelHex.replace("#", "").toUpperCase();
+        const index = (x + y * grids[i].width) * 4;
+        image?.data.set(
+          [
+            parseInt(pixelHex.substring(0, 2), 16),
+            parseInt(pixelHex.substring(2, 4), 16),
+            parseInt(pixelHex.substring(4, 6), 16),
+            255
+          ],
+          index
+        );
+      }
+    }
+    context?.putImageData(image, 0, 0);
+
+    let upsizedCanvas = document.createElement("canvas");
+    upsizedCanvas.width = 1080;
+    upsizedCanvas.height = 1080;
+    let upsizedContext = upsizedCanvas.getContext("2d");
+    if (!upsizedContext) {
+      throw new Error("Could not get context");
+    }
+    upsizedContext.imageSmoothingEnabled = false;
+    upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
+
+    let dataURL = upsizedCanvas.toDataURL("image/png");
+    const strings = dataURL.split(",");
+    urls.push(strings[1]);
+  }
+  GIFCreationService.createGIF(urls, fps.value);
+}
+
 function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
     if (event.key === "p") {
@@ -1121,6 +1246,10 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Rectangle";
       canvas?.value.updateCursor();
+    } else if (event.key === "l") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Ellipse";
+      canvas?.value.updateCursor();
     } else if (event.key === "q" && cursor.value.size > 1) {
       event.preventDefault();
       cursor.value.size -= 1;
@@ -1132,51 +1261,72 @@ function handleKeyDown(event: KeyboardEvent) {
     } else if (event.key === "1") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[0];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[0];
     } else if (event.key === "2") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[1];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[1];
     } else if (event.key === "3") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[2];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[2];
     } else if (event.key === "4") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[3];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[3];
     } else if (event.key === "5") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[4];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[4];
     } else if (event.key === "6") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[5];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[5];
     } else if (event.key === "7") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[6];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[6];
     } else if (event.key === "8") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[7];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[7];
     } else if (event.key === "9") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[8];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[8];
     } else if (event.key === "0") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[9];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[9];
     } else if (event.key === "-") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[10];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[10];
     } else if (event.key === "=") {
       event.preventDefault();
       updatePallet();
-      cursor.value.color = currentPallet.value[11];
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[11];
+    } else if (event.ctrlKey && event.key === "s") {
+      console.log("Ctrl+s was pressed.");
+      event.preventDefault();
+      console.log(art.value);
+      if (art.value.pixelGrid.isGif) {
+        saveGIFFromPainter();
+      } else {
+        saveToFile();
+      }
     } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
       event.preventDefault();
       undo();

@@ -4,7 +4,7 @@
       <Card class="h-fit">
         <template #content>
           <Avatar icon="pi pi-user" class="mr-2" size="xlarge" shape="circle" />
-          <div class="text-3xl p-font-bold">{{ curArtist.name }}</div>
+          <div class="text-3xl p-font-bold">{{ curUsername.name }}</div>
           <div class="flex mt-4 p-2 gap-2 flex-column">
             <Button
               :disabled="!canEdit"
@@ -41,10 +41,7 @@
                     variant="filled"
                   />
                 </div>
-                <Button
-                  v-if="
-                    !isEditing && (isAdmin || curArtist?.name == curUser.name)
-                  "
+                <Button v-if="!isEditing"
                   severity="secondary"
                   rounded
                   icon="pi pi-pencil"
@@ -158,12 +155,15 @@ const curUser = ref<Artist>(new Artist());
 const pageStatus = ref<string>("");
 const canEdit = ref<boolean>(false);
 
+var curUsername = ref<string>("");
+
 var myArt = ref<Art[]>([]);
 var likedArt = ref<Art[]>([]);
 
 onMounted(async () => {
   await LoginService.getCurrentUser().then((user: Artist) => {
     curUser.value = user;
+    curUsername.value = curUser.value;
     if (user.id == 0) {
       router.go(-1);
       toast.add({
@@ -243,6 +243,7 @@ async function updateUsername(): Promise<void> {
           detail: "Username successfully changed",
           life: 3000
         });
+        curUsername.value.name = newUsername.value;
         artist.value.name = newUsername.value;
         isEditing.value = false;
       } else {
