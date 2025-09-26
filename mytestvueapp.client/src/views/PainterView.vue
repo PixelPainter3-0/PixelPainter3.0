@@ -401,7 +401,6 @@ onMounted(async () => {
         ArtAccessService.getArtById(id)
           .then((data) => {
             if (!data.artistId.includes(artist.value.id)) {
-              console.log(artist.value);
               router.go(-1);
               toast.add({
                 severity: "error",
@@ -632,7 +631,6 @@ function drawAtCoords(coords: Vector2[]) {
       for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
         for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
           layerStore.grids[layerStore.layer].grid[i][j] = tempGrid[i][j];
-
           canvas.value?.updateCell(layerStore.layer, i, j, tempGrid[i][j]);
         }
       }
@@ -895,8 +893,10 @@ function calculateRectangle(start: Vector2, end: Vector2): Vector2[] {
   let stepX = start.x;
   while (stepX != end.x) {
     if (stepX >= 0 && stepX < boundary) {
-      if (start.y >= 0 && start.y < boundary) coords.push(new Vector2(stepX, start.y));
-      if (end.y >= 0 && end.y < boundary) coords.push(new Vector2(stepX, end.y));
+      if (start.y >= 0 && start.y < boundary)
+        coords.push(new Vector2(stepX, start.y));
+      if (end.y >= 0 && end.y < boundary)
+        coords.push(new Vector2(stepX, end.y));
     }
 
     if (stepX < end.x) stepX++;
@@ -906,16 +906,17 @@ function calculateRectangle(start: Vector2, end: Vector2): Vector2[] {
   let stepY = start.y;
   while (stepY != end.y) {
     if (stepY >= 0 && stepY < boundary) {
-      if (start.x >= 0 && start.x < boundary) coords.push(new Vector2(start.x, stepY));
-      if (end.x >= 0 && end.x < boundary) coords.push(new Vector2(end.x, stepY));
+      if (start.x >= 0 && start.x < boundary)
+        coords.push(new Vector2(start.x, stepY));
+      if (end.x >= 0 && end.x < boundary)
+        coords.push(new Vector2(end.x, stepY));
     }
 
     if (stepY < end.y) stepY++;
     else if (stepY > end.y) stepY--;
   }
 
-  if (end.x >= 0 && end.x < boundary &&
-    end.y >= 0 && end.y < boundary) {
+  if (end.x >= 0 && end.x < boundary && end.y >= 0 && end.y < boundary) {
     coords.push(end);
   }
 
@@ -972,7 +973,7 @@ function calculateEllipse(start: Vector2, end: Vector2): Vector2[] {
   let center = new Vector2(leftBound + xOffset / 2, lowerBound + yOffset / 2);
 
   let a = Math.max(xOffset, yOffset) / 2; //Major Axis length
-  let b = Math.min(xOffset, yOffset) / 2; //Minor Axis length    
+  let b = Math.min(xOffset, yOffset) / 2; //Minor Axis length
 
   if (xOffset > yOffset) {
     // Major Axis is Horrizontal
@@ -1075,14 +1076,23 @@ function onMouseUp() {
       cursor.value.color,
       getRectanglePixels(startPix.value, endPix.value)
     );
-  }
-  if (cursor.value.selectedTool.label == "Ellipse") {
+  } else if (cursor.value.selectedTool.label == "Ellipse") {
     sendPixels(
       layerStore.layer,
       cursor.value.color,
       getEllipsePixels(startPix.value, endPix.value)
     );
   }
+  layerStore.updateGrid();
+}
+
+function undo() {
+  layerStore.undo();
+  canvas?.value.drawLayers(layerStore.layer);
+}
+function redo() {
+  layerStore.redo();
+  canvas?.value.drawLayers(layerStore.layer);
 }
 
 function handleKeyDown(event: KeyboardEvent) {
@@ -1167,6 +1177,12 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       updatePallet();
       cursor.value.color = currentPallet.value[11];
+    } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
+      event.preventDefault();
+      undo();
+    } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
+      event.preventDefault();
+      redo();
     }
   }
 }
