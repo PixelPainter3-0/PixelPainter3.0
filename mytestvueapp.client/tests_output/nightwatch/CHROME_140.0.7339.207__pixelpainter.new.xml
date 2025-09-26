@@ -5,33 +5,33 @@
 
   <testsuite name="Pixel Painter Tests" id="nightwatch.pixelpainter.new"
     errors="0" failures="0" hostname="" package="pixelpainter.new" skipped="0"
-    tests="5" time="3.757" timestamp="">
+    tests="5" time="5.325" timestamp="">
   
-    <testcase name="Color Picker" classname="Pixel Painter Tests" time="1.557" assertions="1">
+    <testcase name="Color Picker" classname="Pixel Painter Tests" time="0.5550" assertions="1">
 
     
     </testcase>
   
-    <testcase name="Canvas Resolution" classname="Pixel Painter Tests" time="0.3870" assertions="0">
+    <testcase name="Canvas Resolution" classname="Pixel Painter Tests" time="0.3330" assertions="0">
     </testcase>
   
-    <testcase name="Home button" classname="Pixel Painter Tests" time="0.5160" assertions="3">
+    <testcase name="Home button" classname="Pixel Painter Tests" time="0.8530" assertions="3">
 
     
-
-    
-
-    
-    </testcase>
-  
-    <testcase name="Painter button" classname="Pixel Painter Tests" time="0.3820" assertions="2">
 
     
 
     
     </testcase>
   
-    <testcase name="Gallery button" classname="Pixel Painter Tests" time="0.9050" assertions="2">
+    <testcase name="Painter button" classname="Pixel Painter Tests" time="2.415" assertions="2">
+
+    
+
+    
+    </testcase>
+  
+    <testcase name="Gallery button" classname="Pixel Painter Tests" time="1.167" assertions="2">
 
     
 

@@ -5,28 +5,28 @@
 
   <testsuite name="Pixel Painter Tests" id="nightwatch.pixelpainter.home"
     errors="0" failures="0" hostname="" package="pixelpainter.home" skipped="0"
-    tests="4" time="3.844" timestamp="">
+    tests="4" time="4.588" timestamp="">
   
-    <testcase name="Find Cat" classname="Pixel Painter Tests" time="0.7450" assertions="1">
+    <testcase name="Find Cat" classname="Pixel Painter Tests" time="0.5470" assertions="1">
 
     
     </testcase>
   
-    <testcase name="Home button" classname="Pixel Painter Tests" time="0.5700" assertions="2">
-
-    
-
-    
-    </testcase>
-  
-    <testcase name="Painter button" classname="Pixel Painter Tests" time="1.504" assertions="2">
+    <testcase name="Home button" classname="Pixel Painter Tests" time="0.4390" assertions="2">
 
     
 
     
     </testcase>
   
-    <testcase name="Gallery button" classname="Pixel Painter Tests" time="1.023" assertions="2">
+    <testcase name="Painter button" classname="Pixel Painter Tests" time="1.557" assertions="2">
+
+    
+
+    
+    </testcase>
+  
+    <testcase name="Gallery button" classname="Pixel Painter Tests" time="2.045" assertions="2">
 
     
 
