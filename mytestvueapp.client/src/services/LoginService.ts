@@ -95,7 +95,7 @@ export default class LoginService {
   public static async updateUsername(newUsername: any): Promise<boolean> {
     try {
       const response = await fetch(
-        `login/UpdateUsername?newUsername=${newUsername}`,
+        `/login/UpdateUsername?newUsername=${newUsername}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" }
