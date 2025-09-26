@@ -1293,51 +1293,51 @@
       } else if (event.key === "1") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[0];
+        cursor.value.color = currentPallet.value._value[0];
       } else if (event.key === "2") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[1];
+        cursor.value.color = currentPallet.value._value[1];
       } else if (event.key === "3") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[2];
+        cursor.value.color = currentPallet.value._value[2];
       } else if (event.key === "4") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[3];
+        cursor.value.color = currentPallet.value._value[3];
       } else if (event.key === "5") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[4];
+        cursor.value.color = currentPallet.value._value[4];
       } else if (event.key === "6") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[5];
+        cursor.value.color = currentPallet.value._value[5];
       } else if (event.key === "7") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[6];
+        cursor.value.color = currentPallet.value._value[6];
       } else if (event.key === "8") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[7];
+        cursor.value.color = currentPallet.value._value[7];
       } else if (event.key === "9") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[8];
+        cursor.value.color = currentPallet.value._value[8];
       } else if (event.key === "0") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[9];
+        cursor.value.color = currentPallet.value._value[9];
       } else if (event.key === "-") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[10];
+        cursor.value.color = currentPallet.value._value[10];
       } else if (event.key === "=") {
         event.preventDefault();
         updatePallet();
-        cursor.value.color = currentPallet.value.values[11];
+        cursor.value.color = currentPallet.value._value[11];
       } else if (event.ctrlKey && event.key === "s") {
         console.log("Ctrl+s was pressed.");
         event.preventDefault();
