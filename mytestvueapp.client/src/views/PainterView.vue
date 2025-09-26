@@ -1325,11 +1325,6 @@
         updatePallet();
         // @ts-ignore
         cursor.value.color = currentPallet.value._value[6];
-      } else if (event.key === "8") {
-        event.preventDefault();
-        updatePallet();
-        // @ts-ignore
-        cursor.value.color = currentPallet.value._value[7];
       } else if (event.key === "9") {
         event.preventDefault();
         updatePallet();
