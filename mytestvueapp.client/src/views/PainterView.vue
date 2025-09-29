@@ -1232,6 +1232,23 @@ async function saveGIFFromPainter(): Promise<void> {
   GIFCreationService.createGIF(urls, fps.value);
 }
 
+function toggleMusic(): void {
+        if (audioPlaying == 0) {
+            audioRef.value.pause();
+            audioRef.value.currentTime = 0;
+
+            var randomIndex = Math.floor(Math.random() * audioFiles.length);
+            var chosenMusic = audioFiles[randomIndex];
+            audioRef.value.src = chosenMusic;
+            audioRef.value.play();
+            audioPlaying = 1;
+        }
+        else {
+            audioRef.value.pause();
+            audioPlaying = 0;
+        }
+    }
+
 function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
     if (event.key === "p") {
@@ -1331,135 +1348,19 @@ function handleKeyDown(event: KeyboardEvent) {
       //@ts-ignore
       cursor.value.color = currentPallet.value._value[11];
     } else if (event.ctrlKey && event.key === "s") {
-      console.log("Ctrl+s was pressed.");
-      event.preventDefault();
-      console.log(art.value);
-      if (art.value.pixelGrid.isGif) {
-        saveGIFFromPainter();
-      } else {
-        saveToFile();
-
-  function toggleMusic(): void {
-        if (audioPlaying == 0) {
-            audioRef.value.pause();
-            audioRef.value.currentTime = 0;
-
-            var randomIndex = Math.floor(Math.random() * audioFiles.length);
-            var chosenMusic = audioFiles[randomIndex];
-            audioRef.value.src = chosenMusic;
-            audioRef.value.play();
-            audioPlaying = 1;
-        }
-        else {
-            audioRef.value.pause();
-            audioPlaying = 0;
-        }
-    }
-
-  function handleKeyDown(event: KeyboardEvent) {
-    if (keyBindActive.value) {
-      if (event.key === "p") {
         event.preventDefault();
-        cursor.value.selectedTool.label = "Pan";
-        canvas?.value.updateCursor();
-      } else if (event.key === "b") {
-        event.preventDefault();
-        cursor.value.selectedTool.label = "Brush";
-        canvas?.value.updateCursor();
-      } else if (event.key === "e") {
-        event.preventDefault();
-        cursor.value.selectedTool.label = "Eraser";
-        canvas?.value.updateCursor();
-      } else if (event.key === "d") {
-        event.preventDefault();
-        cursor.value.selectedTool.label = "Pipette";
-        canvas?.value.updateCursor();
-      } else if (event.key === "f") {
-        event.preventDefault();
-        cursor.value.selectedTool.label = "Bucket";
-        canvas?.value.updateCursor();
-      } else if (event.key === "r") {
-        event.preventDefault();
-        cursor.value.selectedTool.label = "Rectangle";
-        canvas?.value.updateCursor();
-      } else if (event.key === "l") {
-        event.preventDefault();
-        cursor.value.selectedTool.label = "Ellipse";
-        canvas?.value.updateCursor();
-      } else if (event.key === "q" && cursor.value.size > 1) {
-        event.preventDefault();
-        cursor.value.size -= 1;
-        canvas?.value.updateCursor();
-      } else if (event.key === "w" && cursor.value.size < 32) {
-        event.preventDefault();
-        cursor.value.size += 1;
-        canvas?.value.updateCursor();
-      } else if (event.key === "1") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[0];
-      } else if (event.key === "2") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[1];
-      } else if (event.key === "3") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[2];
-      } else if (event.key === "4") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[3];
-      } else if (event.key === "5") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[4];
-      } else if (event.key === "6") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[5];
-      } else if (event.key === "7") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[6];
-      } else if (event.key === "8") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[7];
-      } else if (event.key === "9") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[8];
-      } else if (event.key === "0") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[9];
-      } else if (event.key === "-") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[10];
-      } else if (event.key === "=") {
-        event.preventDefault();
-        updatePallet();
-        cursor.value.color = currentPallet.value._value[11];
-      } else if (event.ctrlKey && event.key === "s") {
-        console.log("Ctrl+s was pressed.");
-        event.preventDefault();
-        console.log(art.value);
         if (art.value.pixelGrid.isGif) {
           saveGIFFromPainter();
-        } else if (art.value.isGif) {
-          saveGifFromImage();
         } else {
           saveToFile();
         }
-      }
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
+      } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
       event.preventDefault();
       undo();
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
-      event.preventDefault();
-      redo();
+      } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
+        event.preventDefault();
+        redo();
+      }
     }
   }
 
