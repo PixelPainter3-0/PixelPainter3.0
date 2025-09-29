@@ -1,0 +1,49 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Compile Web Application
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup Node.js for npm install
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x' # Use the Node.js version compatible with your project
+
+    - name: Install npm dependencies
+      working-directory: ./mytestvueapp.client
+      run: npm install --legacy-peer-deps
+
+    - name: Create directory for HTTPS certificate
+      run: mkdir -p ~/.aspnet/https
+
+    # Build and publish dotnet
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+      
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+      
+    - name: Archive published files
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-app
+        path: ./publish
+
