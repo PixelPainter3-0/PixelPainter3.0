@@ -5,6 +5,7 @@
     @click="toggleModal()"
   ></Button>
 
+  <!---->
   <Dialog v-model:visible="visible" modal :style="{ width: '26rem' }">
     <template #header>
       <h1 class="mr-2">
@@ -12,6 +13,7 @@
       </h1>
     </template>
     <div class="flex flex-column gap-3 justify-content-center">
+      <!-- title selection -->
       <div class="flex align-items-center gap-3">
         <span>Title: </span>
         <InputText
@@ -20,6 +22,41 @@
           class="w-full"
         ></InputText>
       </div>
+      <!-- tag selection -->
+      <div class="flex align-items-center gap-3">
+        <span>Tags:</span>
+        <div>
+          <div v-for="tag in allTags" :key="tag.id">
+            <input
+              type="checkbox"
+              :value="tag.id"
+              v-model="selectedTagIds"
+              :id="'tag-' + tag.id"
+            />
+            <label :for="'tag-' + tag.id">{{ tag.name }}</label>
+          </div>
+        </div>
+      </div>
+      <!-- tag creation -->
+      <div class="flex align-items-center gap-3 mt-2">
+        <InputText
+          v-model="newTagName"
+          placeholder="New tag name"
+          class="w-10rem"
+          :disabled="tagCreationLoading"
+        />
+        <Button
+          label="Add Tag"
+          size="small"
+          :loading="tagCreationLoading"
+          @click="createTag"
+          :disabled="!newTagName || tagCreationLoading"
+        />
+      </div>
+      <div v-if="tagCreationError" class="text-danger small">
+        {{ tagCreationError }}
+      </div>
+      <!-- privacy selection -->
       <div class="flex align-items-center gap-3">
         <span>Privacy:</span>
         <ToggleButton
@@ -64,6 +101,8 @@ import router from "@/router";
 import LoginService from "@/services/LoginService";
 import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
+import TagService from "@/services/TagService";
+
 const layerStore = useLayerStore();
 const artistStore = useArtistStore();
 const toast = useToast();
@@ -72,6 +111,28 @@ const loading = ref<boolean>(false);
 
 const newName = ref<string>("");
 const newPrivacy = ref<boolean>(false);
+
+const allTags = ref<any[]>([]);
+const selectedTagIds = ref<number[]>([]);
+const newTagName = ref<string>("");
+const tagCreationError = ref<string>("");
+const tagCreationLoading = ref<boolean>(false);
+
+async function createTag() {
+  if (!newTagName.value) return;
+  tagCreationLoading.value = true;
+  tagCreationError.value = "";
+  try {
+    const newTag = await TagService.createTag(newTagName.value);
+    allTags.value.push(newTag);
+    selectedTagIds.value.push(newTag.id);
+    newTagName.value = "";
+  } catch (error: any) {
+    tagCreationError.value = error?.message || "Failed to create tag";
+  } finally {
+    tagCreationLoading.value = false;
+  }
+}
 
 const props = defineProps<{
   art: Art;
@@ -88,14 +149,29 @@ watch(visible, () => {
   emit("openModal", visible.value);
 });
 
-function toggleModal(): void {
+// function toggleModal(): void { //OLD toggleModal();
+//   visible.value = !visible.value;
+//   newName.value = props.art.title;
+//   if (newName.value == "") {
+//     newName.value = "Untitled";
+//   }
+//   newPrivacy.value = props.art.isPublic;
+// }
+
+async function toggleModal(): Promise<void> {
   visible.value = !visible.value;
   newName.value = props.art.title;
   if (newName.value == "") {
     newName.value = "Untitled";
   }
   newPrivacy.value = props.art.isPublic;
+
+  if (visible.value) {
+    allTags.value = await TagService.getAllTags();
+    selectedTagIds.value = []; // Reset or load existing tags if editing
+  }
 }
+
 
 function flattenArtEncode(): string {
   let width = layerStore.grids[0].width;
@@ -149,6 +225,13 @@ function finalizeUpload(success: boolean, artId?: number): void {
   visible.value = false;
 
   if (success && artId) {
+    // Assign tags after successful upload
+    if (selectedTagIds.value.length > 0) {
+      TagService.assignTagsToArt(artId, selectedTagIds.value)
+        .catch((e) => {
+          console.error("Failed to assign tags:", e);
+        });
+    }
     toast.add({
       severity: "success",
       summary: "Success",
@@ -209,6 +292,7 @@ function upload(): void {
       newArt.pixelGrid.encodedGrid = flattenArtEncode();
       newArt.artistId = props.art.artistId;
       newArt.artistName = props.art.artistName;
+      //foreach Selected Tag, add tag to tag[] in art
 
       ArtAccessService.saveArt(newArt)
         .then((data: Art) => finalizeUpload(!!data.id, data.id))

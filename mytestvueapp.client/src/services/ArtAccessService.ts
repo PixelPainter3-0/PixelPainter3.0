@@ -6,8 +6,10 @@ export default class ArtAccessService {
     try {
       const response = await fetch("/artaccess/GetAllArt");
       if (!response.ok) {
+        console.log("Bad response");
         throw new Error("Error grabbign art");
       }
+      console.log("Good response");
       const json = await response.json();
       const allArt: Art[] = [];
 

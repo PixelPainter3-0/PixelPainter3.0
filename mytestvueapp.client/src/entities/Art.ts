@@ -1,4 +1,5 @@
 import { PixelGrid } from "./PixelGrid";
+import type Tag from "./Tag";
 
 export default class Art {
   //required
@@ -7,6 +8,8 @@ export default class Art {
   title: string;
   isPublic: boolean;
   creationDate: string;
+
+  Tags: Tag[];
 
   //may be null if new
   pixelGrid: PixelGrid;
@@ -41,5 +44,7 @@ export default class Art {
     this.gifID = 0;
     this.gifFps = 0;
     this.isLiked = false;
+
+    this.Tags = []; // Initialize Tags as an empty array
   }
 }

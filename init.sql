@@ -42,6 +42,7 @@ BEGIN
     );
 END
 GO
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Likes')
 BEGIN
     CREATE TABLE Likes (
@@ -89,6 +90,33 @@ BEGIN
     );
 END
 GO
+
+-- Tag table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tag')
+BEGIN
+    CREATE TABLE Tag (
+        Id INT IDENTITY(1,1) NOT NULL,
+        [Name] NVARCHAR(100) NOT NULL,
+        CreationDate DATETIME DEFAULT GETDATE(),
+        PRIMARY KEY (Id)
+    );
+END
+GO
+
+-- ArtTags table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ArtTags')
+BEGIN
+    CREATE TABLE ArtTags (
+        ArtId INT NOT NULL,
+        TagId INT NOT NULL,
+        CreationDate DATETIME DEFAULT GETDATE(),
+        PRIMARY KEY (ArtId, TagId),
+        CONSTRAINT FK_ArtTags_Art FOREIGN KEY (ArtId) REFERENCES Art(Id) ON DELETE CASCADE,
+        CONSTRAINT FK_ArtTags_Tag FOREIGN KEY (TagId) REFERENCES Tag(Id) ON DELETE CASCADE
+    );
+END
+GO
+
 --------------------------------------------------------------------------------------------------------------
 CREATE TRIGGER CommentDeleteTrigger ON dbo.Comment
 	for delete

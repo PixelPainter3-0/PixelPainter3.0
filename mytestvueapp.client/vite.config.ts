@@ -80,7 +80,11 @@ export default defineConfig({
       "^/socket/": {
         target,
         secure: false,
-      }
+      },
+      "^/Tag": {
+        target,
+        secure: false,
+      },
     },
     port: 5173,
     https: {

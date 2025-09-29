@@ -1,3 +1,4 @@
+using MyTestVueApp.Server.Models;
 using System.Reflection.Metadata.Ecma335;
 
 namespace MyTestVueApp.Server.Entities
@@ -11,6 +12,8 @@ namespace MyTestVueApp.Server.Entities
         public bool IsPublic { get; set; }
         public DateTime CreationDate { get; set; }
         public PixelGrid PixelGrid { get; set; }
+       public List<Tag> Tags { get; set; }
+
 
 
         //Optional external values

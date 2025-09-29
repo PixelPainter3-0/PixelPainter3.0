@@ -1,10 +1,11 @@
+using ImageMagick;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using MyTestVueApp.Server.Configuration;
 using MyTestVueApp.Server.Entities;
 using MyTestVueApp.Server.Interfaces;
-using Microsoft.Data.SqlClient;
+using MyTestVueApp.Server.Models;
 using System.Linq;
-using ImageMagick;
 
 namespace MyTestVueApp.Server.ServiceImplementations
 {
@@ -45,7 +46,8 @@ namespace MyTestVueApp.Server.ServiceImplementations
 	                    COUNT(distinct Likes.ArtistId) as Likes, 
 	                    Count(distinct Comment.Id) as Comments,
                         Art.gifId,
-                        Art.gifFrameNum
+                        Art.gifFrameNum,
+                        Art.Tags,
                     FROM ART  
 	                    LEFT JOIN Likes ON Art.ID = Likes.ArtID  
 	                    LEFT JOIN Comment ON Art.ID = Comment.ArtID
@@ -77,6 +79,8 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 GifID = reader.GetInt32(10),
                                 GifFrameNum = reader.GetInt32(11),
                                 PixelGrid = pixelGrid,
+                                //Tags = reader.IsDBNull(12) ? new List<ArtModel>() : new List<ArtModel>(), 
+                                //newly added also new ArtTags in query1 above
                             };
 
                             painting.SetArtists((await GetArtistsByArtId(painting.Id)).ToList());
@@ -327,7 +331,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                             art.Id = Convert.ToInt32(newArtId);
                         }
                     }
-
+                // assign tags via tag service
                 return art;
             }
             catch (Exception ex)
@@ -738,6 +742,25 @@ namespace MyTestVueApp.Server.ServiceImplementations
             {
                 Logger.LogCritical(ex, "Error in DeleteContributingArtist");
                 throw;
+            }
+        }
+        public async Task AddTagsToArtAsync(int artId, IEnumerable<Tag> tags)
+        {
+            var connectionString = AppConfig.Value.ConnectionString;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var uniqueTags = tags.GroupBy(t => t.Id).Select(g => g.First());
+                foreach (var tag in uniqueTags)
+                {
+                    var query = "INSERT INTO ArtTags (ArtId, TagId) VALUES (@ArtId, @TagId);";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@ArtId", artId);
+                        command.Parameters.AddWithValue("@TagId", tag.Id);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
             }
         }
 
