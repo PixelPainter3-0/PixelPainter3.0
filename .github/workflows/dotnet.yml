@@ -5,7 +5,7 @@ name: Publish Web Application
 
 on:
   push:
-    branches: [ "master", "ndobo-github-actions" ] # Remove dev branch
+    branches: [ "main", "ndobo-github-actions" ] # Remove dev branch
 
 jobs:
   build:
