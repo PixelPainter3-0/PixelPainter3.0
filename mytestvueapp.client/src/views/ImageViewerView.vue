@@ -18,6 +18,23 @@
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
     <Card class="w-20rem ml-5">
       <template #content>
+        <div>
+          By
+          <div
+            :style="{
+              textDecoration: hover ? 'underline' : 'none',
+              cursor: hover ? 'pointer' : 'none'
+            }"
+            v-for="(artist, index) in art.artistName"
+            :key="index"
+            class="py-1 font-semibold"
+            @click="router.push(`/accountpage/${artist}`)"
+            v-on:mouseover="hover = true"
+            v-on:mouseleave="hover = false"
+          >
+            {{ artist }}
+          </div>
+        </div>
        <div>
 <div
       :style="{
