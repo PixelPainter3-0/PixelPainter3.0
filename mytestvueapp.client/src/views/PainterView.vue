@@ -1,5 +1,4 @@
 <template>
-  <audio ref="audioRef"></audio>
   <DrawingCanvas
     ref="canvas"
     :style="{ cursor: cursor.selectedTool.cursor }"
@@ -196,7 +195,7 @@ const audioFiles = [
     "/src/music/flight-of-the-bumblebee.mp3",
     "/src/music/OrchestralSuiteNo3.mp3"
 ];
-const audioRef = ref(null);
+const audioRef = ref(new Audio());
 
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
@@ -1245,6 +1244,7 @@ function toggleMusic(): void {
             audioPlaying = 1;
         }
         else {
+            //@ts-ignore
             audioRef.value.pause();
             audioPlaying = 0;
         }
