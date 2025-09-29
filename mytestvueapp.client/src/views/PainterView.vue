@@ -1,4 +1,5 @@
 <template>
+  <audio ref="audioRef"></audio>
   <DrawingCanvas
     ref="canvas"
     :style="{ cursor: cursor.selectedTool.cursor }"
@@ -88,7 +89,7 @@
       />
     </template>
     <template #end>
-      <audio ref="audioRef"></audio>
+      
       <Button
         icon="pi pi-times"
         class="mr-2"
