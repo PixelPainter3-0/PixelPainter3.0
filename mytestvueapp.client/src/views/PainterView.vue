@@ -190,12 +190,13 @@ let connection = new SignalR.HubConnectionBuilder()
   })
   .build();
       
-  var audioPlaying = 0;
-  const audioFiles = [
-      "/src/music/In-the-hall-of-the-mountain-king.mp3",
-      "/src/music/flight-of-the-bumblebee.mp3",
-      "/src/music/OrchestralSuiteNo3.mp3"
-  ];
+var audioPlaying = 0;
+const audioFiles = [
+    "/src/music/In-the-hall-of-the-mountain-king.mp3",
+    "/src/music/flight-of-the-bumblebee.mp3",
+    "/src/music/OrchestralSuiteNo3.mp3"
+];
+const audioRef = ref(null);
 
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
