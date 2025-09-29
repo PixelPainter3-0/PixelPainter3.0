@@ -62,10 +62,10 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: see work dir
-        run: ls /home/runner/work/PixelPainter3.0
+        run: ls /home/runner/work/PixelPainter3.0/PixelPainter3.0
           
       - name: Transfer artifact to the remote server
-        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/Pixel-Painter3.0/* ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/app/
+        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/app/
 
       - name: Run the dotnet app
         uses: appleboy/ssh-action@v1.2.0
