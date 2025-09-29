@@ -65,13 +65,13 @@ jobs:
         run: ls /home/runner/work/PixelPainter3.0/PixelPainter3.0
           
       - name: Transfer artifact to the remote server
-        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/app/
+        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/app/
 
       - name: Run the dotnet app
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             PID=$(pgrep -fx 'dotnet /var/www/app/MyTestVueApp.Server.dll')
