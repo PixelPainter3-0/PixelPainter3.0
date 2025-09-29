@@ -18,23 +18,34 @@
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
     <Card class="w-20rem ml-5">
       <template #content>
-        <div>
-          By
-          <div
-            :style="{
-              textDecoration: hover ? 'underline' : 'none',
-              cursor: hover ? 'pointer' : 'none'
-            }"
-            v-for="(artist, index) in art.artistName"
-            :key="index"
-            class="py-1 font-semibold"
-            @click="router.push(`/accountpage/${artist}`)"
-            v-on:mouseover="hover = true"
-            v-on:mouseleave="hover = false"
-          >
-            {{ artist }}
-          </div>
-        </div>
+       <div>
+<div
+      :style="{
+        textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
+        cursor: hoverIndex === 'main' ? 'pointer' : 'default'
+      }"
+      class="py-1 font-semibold"
+      @click="router.push(`/accountpage/${art.artistName[0]}`)"
+      v-on:mouseover="hoverIndex = 'main'"
+      v-on:mouseleave="hoverIndex = null"
+>
+      By {{art.artistName[0]}}
+</div>
+<div
+    :style="{
+      textDecoration: hoverIndex === index ? 'underline' : 'none',
+      cursor: hoverIndex === index ? 'pointer' : 'default'
+    }"
+    v-for="(artist, index) in art.artistName.slice(1)"
+    :key="index"
+    class="py-1 font-semibold"
+    @click="router.push(`/accountpage/${artist}`)"
+    v-on:mouseover="hoverIndex = index"
+    v-on:mouseleave="hoverIndex = null"
+>
+    {{ artist }}
+</div>
+</div>
         <div>Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
         <div class="flex flex-column gap-2 mt-4">
@@ -44,6 +55,11 @@
               :art-id="id"
               :likes="art.numLikes"
             ></LikeButton>
+            <DislikeButton
+              class=""
+              :art-id="id"
+              :dislikes="art.numDislikes"
+            ></DislikeButton>
             <SaveImageToFile
               :art="art"
               :fps="art.gifFps"
@@ -169,6 +185,7 @@ import CommentAccessService from "../services/CommentAccessService";
 import NewComment from "@/components/Comment/NewComment.vue";
 import Card from "primevue/card";
 import LikeButton from "@/components/LikeButton.vue";
+import DislikeButton from "@/components/DislikeButton.vue";
 import Button from "primevue/button";
 import router from "@/router";
 import { useToast } from "primevue/usetoast";
@@ -185,7 +202,7 @@ const filtered = ref<boolean>(false);
 const duotone = ref<boolean>(false);
 const sepia = ref<boolean>(false);
 const prota = ref<boolean>(false);
-const hover = ref<boolean>(false);
+const hoverIndex = ref<string | number | null>(null);
 const deu = ref<boolean>(false);
 
 const route = useRoute();

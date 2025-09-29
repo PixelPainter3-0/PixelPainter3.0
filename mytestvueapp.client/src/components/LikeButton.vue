@@ -2,7 +2,7 @@
   <Button
     rounded
     :severity="liked ? 'primary' : 'secondary'"
-    :icon="liked ? 'pi pi-heart-fill' : 'pi pi-heart'"
+    :icon="liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"
     :label="(likes + localLike).toString()"
     @click.stop="likedClicked()"
   />

@@ -30,6 +30,7 @@
       <template #content>
         <div class="flex gap-2 m-2">
           <LikeButton :artId="props.art.id" :likes="props.art.numLikes" />
+          <DislikeButton :artId="props.art.id" :dislikes="props.art.numDislikes" />
           <Button
             rounded
             severity="secondary"
@@ -54,6 +55,7 @@ import { defineProps, ref, onMounted } from "vue";
 import Card from "primevue/card";
 import Button from "primevue/button";
 import LikeButton from "../LikeButton.vue";
+import DislikeButton from "../DislikeButton.vue";
 import MyCanvas from "../MyCanvas/MyCanvas.vue";
 import Art from "@/entities/Art";
 import router from "@/router";

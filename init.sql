@@ -54,6 +54,18 @@ BEGIN
     );
 END
 GO
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Dislikes')
+BEGIN
+    CREATE TABLE Dislikes (
+        ArtistId INT,
+        ArtId INT,
+        CreationDate DATETIME DEFAULT GETDATE(),
+        Viewed INT DEFAULT 0,
+        PRIMARY KEY (ArtistId, ArtId),
+        CONSTRAINT FK_Dislikes_Art FOREIGN KEY (ArtId) REFERENCES Art(Id) ON DELETE CASCADE
+    );
+END
+GO
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ContributingArtists')
 BEGIN
     CREATE TABLE ContributingArtists (
@@ -126,7 +138,6 @@ BEGIN
     WHERE A.Id != D.Id AND D.gifId != 0;
 END;
 GO
-
 
     ---------------------------------------------------------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM Artist)
@@ -205,6 +216,12 @@ BEGIN
     insert into Likes (ArtistId, ArtId) values (5, 10);
     insert into Likes (ArtistId, ArtId) values (2, 3);
     insert into Likes (ArtistId, ArtId) values (10, 9);
+END
+GO
+IF NOT EXISTS (SELECT * FROM Dislikes)
+BEGIN
+	insert into Dislikes (ArtistId, ArtId) values (6, 9);
+    
 END
 GO
 IF NOT EXISTS (SELECT * FROM Comment)
