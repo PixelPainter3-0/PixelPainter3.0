@@ -189,7 +189,6 @@ let connection = new SignalR.HubConnectionBuilder()
   })
   .build();
       
-const audioRef = ref(null);
   var audioPlaying = 0;
   const audioFiles = [
       "/src/music/In-the-hall-of-the-mountain-king.mp3",
