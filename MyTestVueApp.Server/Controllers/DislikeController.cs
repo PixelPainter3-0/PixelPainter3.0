@@ -85,7 +85,7 @@ namespace MyTestVueApp.Server.Controllers
         /// </summary>
         /// <param name="artId">Id of the art the user is undisliking</param>
         [HttpDelete]
-        [Route("RemoveDisike")]
+        [Route("RemoveDislike")]
         public async Task<IActionResult> RemoveDislike([FromQuery] int artId)
         {
             try
