@@ -1462,7 +1462,7 @@ function handleKeyDown(event: KeyboardEvent) {
       redo();
     }
   }
-}
+
 </script>
 <style scoped>
 .Rainbow,
