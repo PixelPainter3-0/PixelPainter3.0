@@ -67,6 +67,10 @@ var vite_config_default = defineConfig({
         target,
         secure: false
       },
+        "^/dislike": {
+        target,
+        secure: false
+      },
       "^/notification/": {
         target,
         secure: false
