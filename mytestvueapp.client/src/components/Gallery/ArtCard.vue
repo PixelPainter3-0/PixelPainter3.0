@@ -6,12 +6,16 @@
       @click="router.push(`/art/${art.id}`)"
     >
       <template #header>
-        <MyCanvas
-          :art="art"
-          :pixelSize="size"
-          :canvasNumber="position"
-          :model-value="'temp'"
-        />
+        <div
+          class="justify-content-center flex w-full h-full align-items-center"
+        >
+          <MyCanvas
+            :art="art"
+            :pixelSize="size"
+            :canvasNumber="position"
+            :model-value="'temp'"
+          />
+        </div>
       </template>
       <template #title>
         <div class="text-base font-bold m-0 px-2 pt-1">
