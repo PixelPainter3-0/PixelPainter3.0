@@ -16,7 +16,7 @@
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-20rem ml-5">
+    <Card class="w-28rem ml-5">
       <template #content>
         <div>
           By
@@ -46,6 +46,13 @@
             ></LikeButton>
             <SaveImageToFile
               :art="art"
+              :fps="art.gifFps"
+              :gifFromViewer="urls"
+              :filtered="filtered"
+              :filteredArt="squareColor"
+            />
+            <StartArtFromImage
+            :art="art"
               :fps="art.gifFps"
               :gifFromViewer="urls"
               :filtered="filtered"
@@ -176,6 +183,7 @@ import LoginService from "../services/LoginService";
 import GIFCreationService from "@/services/GIFCreationService";
 import { useLayerStore } from "@/store/LayerStore";
 import { PixelGrid } from "@/entities/PixelGrid";
+import StartArtFromImage from "@/components/PainterUi/StartArtFromImage.vue";
 
 const layerStore = useLayerStore();
 

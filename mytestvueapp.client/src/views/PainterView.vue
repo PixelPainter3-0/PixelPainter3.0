@@ -1244,7 +1244,6 @@ function toggleMusic(): void {
             audioPlaying = 1;
         }
         else {
-            //@ts-ignore
             audioRef.value.pause();
             audioPlaying = 0;
         }
