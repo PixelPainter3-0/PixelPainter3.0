@@ -3,13 +3,15 @@
     <!-- Container -->
     <Card
       class="art-card flex-shrink-0 overflow-hidden border-round-md cursor-pointer p-0 gallery-card"
-      @click="router.push(`/art/${art.id}`)">
+      @click="router.push(`/art/${art.id}`)"
+    >
       <template #header>
         <MyCanvas
           :art="art"
           :pixelSize="size"
           :canvasNumber="position"
-          :model-value="'temp'" />
+          :model-value="'temp'"
+        />
       </template>
       <template #title>
         <div class="text-base font-bold m-0 px-2 pt-1">
@@ -22,26 +24,35 @@
             v-for="(artist, index) in art.artistName"
             :key="index"
             class="py-1 font-semibold"
-            onclick="//thing to route">
+            onclick="//thing to route"
+          >
             {{ artist }}
           </div>
         </div>
       </template>
       <template #content>
         <div class="flex gap-2 m-2">
-          <LikeButton :artId="props.art.id" :likes="props.art.numLikes" />
-          <DislikeButton :artId="props.art.id" :dislikes="props.art.numDislikes" />
+          <LikeButton
+            :artId="props.art.id"
+            :likes="props.art.numLikes"
+            :is-disliked="isDisliked"
+            @liked="isLiked = true"
+            @unliked="isLiked = false"
+          />
+          <DislikeButton
+            :artId="props.art.id"
+            :dislikes="props.art.numDislikes"
+            :is-liked="isLiked"
+            @disliked="isDisliked = true"
+            @undisliked="isDisliked = false"
+          />
           <Button
             rounded
             severity="secondary"
             icon="pi pi-comment"
             :label="art.numComments?.toString() || ''"
           />
-          <Button
-            v-if="art.isGif"
-            rounded
-            severity="secondary"
-            disabled
+          <Button v-if="art.isGif" rounded severity="secondary" disabled
             >Gif</Button
           >
         </div>
@@ -61,18 +72,18 @@ import Art from "@/entities/Art";
 import router from "@/router";
 
 const title = ref<string>("");
+const isLiked = ref<boolean>(false);
+const isDisliked = ref<boolean>(false);
 
 onMounted(() => {
-    if (props.art.title.length > 20) {
-        const tempTitle = props.art.title.substring(0, 20);
-        const elipsis = "...";
-        title.value = tempTitle + elipsis;
-    }
-    else {
-        title.value = props.art.title;
-    }
+  if (props.art.title.length > 20) {
+    const tempTitle = props.art.title.substring(0, 20);
+    const elipsis = "...";
+    title.value = tempTitle + elipsis;
+  } else {
+    title.value = props.art.title;
   }
-);
+});
 
 const props = defineProps<{
   art: Art;
@@ -101,4 +112,3 @@ const props = defineProps<{
   gap: 0px !important;
 }
 </style>
-

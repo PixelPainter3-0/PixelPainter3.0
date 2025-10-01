@@ -13,16 +13,19 @@ import LoginService from "@/services/LoginService";
 import LikeService from "@/services/LikeService";
 import { useToast } from "primevue/usetoast";
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, defineEmits } from "vue";
 
 const props = defineProps<{
   likes: number;
   artId: number;
+  isDisliked: boolean;
 }>();
 
 const localLike = ref<number>(0);
 const liked = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
+
+const emit = defineEmits(["liked", "unliked"]);
 
 const toast = useToast();
 
@@ -43,6 +46,14 @@ watch(
     await isLiked();
   }
 );
+watch(
+  () => props.isDisliked,
+  async () => {
+    if (liked.value && props.isDisliked) {
+      likedClicked();
+    }
+  }
+);
 
 async function likedClicked(): Promise<void> {
   if (!loggedIn.value) {
@@ -60,6 +71,7 @@ async function likedClicked(): Promise<void> {
     LikeService.removeLike(props.artId).then((value) => {
       if (value) {
         liked.value = false;
+        emit("unliked");
       }
       if (localLike.value >= 0) {
         localLike.value--;
@@ -70,6 +82,7 @@ async function likedClicked(): Promise<void> {
     LikeService.insertLike(props.artId).then((value) => {
       if (value) {
         liked.value = true;
+        emit("liked");
       }
       if (localLike.value <= 0) {
         localLike.value++;

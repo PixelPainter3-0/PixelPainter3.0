@@ -1,5 +1,8 @@
 <template>
-  <div style="text-align: center" class="justify-content-center flex w-full h-full align-items-center">
+  <div
+    style="text-align: center"
+    class="justify-content-center flex w-full h-full align-items-center"
+  >
     <h2 class="flex">
       {{ art.title }}
     </h2>
@@ -19,50 +22,33 @@
     <Card class="w-20rem ml-5">
       <template #content>
         <div>
-          By
           <div
             :style="{
-              textDecoration: hover ? 'underline' : 'none',
-              cursor: hover ? 'pointer' : 'none'
+              textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
+              cursor: hoverIndex === 'main' ? 'pointer' : 'default'
             }"
-            v-for="(artist, index) in art.artistName"
+            class="py-1 font-semibold"
+            @click="router.push(`/accountpage/${art.artistName[0]}`)"
+            v-on:mouseover="hoverIndex = 'main'"
+            v-on:mouseleave="hoverIndex = null"
+          >
+            By {{ art.artistName[0] }}
+          </div>
+          <div
+            :style="{
+              textDecoration: hoverIndex === index ? 'underline' : 'none',
+              cursor: hoverIndex === index ? 'pointer' : 'default'
+            }"
+            v-for="(artist, index) in art.artistName.slice(1)"
             :key="index"
             class="py-1 font-semibold"
             @click="router.push(`/accountpage/${artist}`)"
-            v-on:mouseover="hover = true"
-            v-on:mouseleave="hover = false"
+            v-on:mouseover="hoverIndex = index"
+            v-on:mouseleave="hoverIndex = null"
           >
             {{ artist }}
           </div>
         </div>
-       <div>
-<div
-      :style="{
-        textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
-        cursor: hoverIndex === 'main' ? 'pointer' : 'default'
-      }"
-      class="py-1 font-semibold"
-      @click="router.push(`/accountpage/${art.artistName[0]}`)"
-      v-on:mouseover="hoverIndex = 'main'"
-      v-on:mouseleave="hoverIndex = null"
->
-      By {{art.artistName[0]}}
-</div>
-<div
-    :style="{
-      textDecoration: hoverIndex === index ? 'underline' : 'none',
-      cursor: hoverIndex === index ? 'pointer' : 'default'
-    }"
-    v-for="(artist, index) in art.artistName.slice(1)"
-    :key="index"
-    class="py-1 font-semibold"
-    @click="router.push(`/accountpage/${artist}`)"
-    v-on:mouseover="hoverIndex = index"
-    v-on:mouseleave="hoverIndex = null"
->
-    {{ artist }}
-</div>
-</div>
         <div>Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
         <div class="flex flex-column gap-2 mt-4">
@@ -71,11 +57,17 @@
               class=""
               :art-id="id"
               :likes="art.numLikes"
+              :is-disliked="isDisliked"
+              @liked="isLiked = true"
+              @unliked="isLiked = false"
             ></LikeButton>
             <DislikeButton
               class=""
               :art-id="id"
               :dislikes="art.numDislikes"
+              :is-liked="isLiked"
+              @disliked="isDisliked = true"
+              @undisliked="isDisliked = false"
             ></DislikeButton>
             <SaveImageToFile
               :art="art"
@@ -238,6 +230,8 @@ const names = ref<String[]>([]);
 const GifURL = ref<string>("");
 const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
+const isLiked = ref<boolean>(false);
+const isDisliked = ref<boolean>(false);
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {

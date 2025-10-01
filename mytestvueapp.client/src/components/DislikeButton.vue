@@ -13,15 +13,18 @@ import LoginService from "@/services/LoginService";
 import DislikeService from "@/services/DislikeService";
 import { useToast } from "primevue/usetoast";
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, defineEmits } from "vue";
 
 const props = defineProps<{
   artId: number;
   dislikes: number;
+  isLiked: boolean;
 }>();
 const loggedIn = ref<boolean>(false);
 const localDislike = ref<number>(0);
 const disliked = ref<boolean>(false);
+
+const emit = defineEmits(["disliked", "undisliked"]);
 
 const toast = useToast();
 
@@ -33,13 +36,23 @@ onMounted(async () => {
 
 async function isDisliked(): Promise<void> {
   if (loggedIn.value)
-    DislikeService.isDisliked(props.artId).then((value) => (disliked.value = value));
+    DislikeService.isDisliked(props.artId).then(
+      (value) => (disliked.value = value)
+    );
 }
 
 watch(
   () => props.artId,
   async () => {
     await isDisliked();
+  }
+);
+watch(
+  () => props.isLiked,
+  async () => {
+    if (disliked.value && props.isLiked) {
+      dislikedClicked();
+    }
   }
 );
 
@@ -59,6 +72,7 @@ async function dislikedClicked(): Promise<void> {
     DislikeService.removeDislike(props.artId).then((value) => {
       if (value) {
         disliked.value = false;
+        emit("undisliked");
       }
       if (localDislike.value >= 0) {
         localDislike.value--;
@@ -69,6 +83,7 @@ async function dislikedClicked(): Promise<void> {
     DislikeService.insertDislike(props.artId).then((value) => {
       if (value) {
         disliked.value = true;
+        emit("disliked");
       }
       if (localDislike.value <= 0) {
         localDislike.value++;
