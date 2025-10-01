@@ -148,6 +148,7 @@
   const showLayers = ref<boolean>(true);
   const greyscale = ref<boolean>(false);
   const loggedIn = ref<boolean>(false);
+  const selection = ref<String[][]>([]);
 
   // Connection Information
   const connected = ref<boolean>(false);
@@ -836,6 +837,25 @@
     }
   }
 
+  //returns array array of color strings
+  function getSelectPixels(start: Vector2, end: Vector2): String[][] {
+    let outArray: String[][] = [];
+    let leftBound = Math.min(start.x, end.x);
+    let rightBound = Math.max(start.x, end.x);
+    let lowerBound = Math.min(start.y, end.y);
+    let upperBound = Math.max(start.y, end.y);
+
+    let height = upperBound - lowerBound + 1;
+    let width = rightBound - leftBound + 1;
+
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        outArray[i][j] = layerStore.grids[layerStore.layer].grid[leftBound + i][lowerBound + j];
+      }
+    }
+    return outArray;
+  }
+
   function getRectanglePixels(start: Vector2, end: Vector2): Vector2[] {
     let coords: Vector2[] = [];
     let leftBound = Math.min(start.x, end.x);
@@ -1048,7 +1068,7 @@
       sendPixels(
         layerStore.layer,
         cursor.value.color,
-        getRectanglePixels(startPix.value, endPix.value)
+          getRectanglePixels(startPix.value, endPix.value)
       );
     }
     if (cursor.value.selectedTool.label == "Ellipse") {
@@ -1057,6 +1077,10 @@
         cursor.value.color,
         getEllipsePixels(startPix.value, endPix.value)
       );
+    }
+    if (cursor.value.selectedTool.label == "Select") {
+
+      selection.value = getSelectPixels(startPix.value, endPix.value)
     }
   }
 
@@ -1281,6 +1305,10 @@
       } else if (event.key === "l") {
         event.preventDefault();
         cursor.value.selectedTool.label = "Ellipse";
+        canvas?.value.updateCursor();
+      } else if (!event.ctrlKey && event.key === "s") {
+        event.preventDefault();
+        cursor.value.selectedTool.label = "Select";
         canvas?.value.updateCursor();
       } else if (event.key === "q" && cursor.value.size > 1) {
         event.preventDefault();
