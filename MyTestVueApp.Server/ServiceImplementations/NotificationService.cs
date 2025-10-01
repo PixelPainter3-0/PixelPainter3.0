@@ -16,13 +16,15 @@ namespace MyTestVueApp.Server.ServiceImplementations
         private readonly IArtAccessService artService;
         private readonly ICommentAccessService commentService;
         private readonly ILikeService likeService;
-        public NotificationService(IOptions<ApplicationConfiguration> AppConfig, ILogger<NotificationService> Logger, IArtAccessService ArtAccessService, ICommentAccessService CommentAccessService, ILikeService LikeService)
+        private readonly IDislikeService dislikeService;
+        public NotificationService(IOptions<ApplicationConfiguration> AppConfig, ILogger<NotificationService> Logger, IArtAccessService ArtAccessService, ICommentAccessService CommentAccessService, ILikeService LikeService, IDislikeService DislikeService)
         {
             appConfig = AppConfig;
             logger = Logger;
             artService = ArtAccessService;
             commentService = CommentAccessService;
             likeService = LikeService;
+            dislikeService = DislikeService;
         }
 
         public async Task<IEnumerable<Notification>> GetNotificationsForArtist(int artistId)
@@ -72,6 +74,26 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         Type = 1,
                         User = like.Artist,
                         Viewed = like.Viewed,
+                        ArtName = artwork.Title
+                    };
+                    notifications.Add(notification);
+                }
+                //Get notified on who liked your art
+                var dislikes = await dislikeService.GetDislikesByArtwork(artwork.Id);
+                foreach (Dislike dislike in dislikes)
+                {
+                    if (dislike.ArtistId == artistId || dislike.DislikedOn < thirtyDaysAgo) //Make sure it is not the user, or over 30 days old
+                    {
+                        continue;
+                    }
+                    var notification = new Notification
+                    {
+                        CommentId = -1,
+                        ArtId = dislike.ArtId,
+                        ArtistId = dislike.ArtistId,
+                        Type = 1,
+                        User = dislike.Artist,
+                        Viewed = dislike.Viewed,
                         ArtName = artwork.Title
                     };
                     notifications.Add(notification);
@@ -143,6 +165,36 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 string query =
                     $@"
                           Update Likes
+                          Set Viewed = 1
+                          Where ArtId = @artId and ArtistId = @artistId";
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@artId", artId);
+                    command.Parameters.AddWithValue("@artistId", artistId);
+
+                    int rowsChanged = await command.ExecuteNonQueryAsync();
+                    if (rowsChanged > 0)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        throw new Exception("Something went wrong with executing the query");
+                    }
+                }
+            }
+        }
+        public async Task<bool> MarkDislike(int artId, int artistId)
+        {
+            var connectionString = appConfig.Value.ConnectionString;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                //Need to Append Created On to query when added to database
+                string query =
+                    $@"
+                          Update Dislikes
                           Set Viewed = 1
                           Where ArtId = @artId and ArtistId = @artistId";
                 using (SqlCommand command = new SqlCommand(query, connection))

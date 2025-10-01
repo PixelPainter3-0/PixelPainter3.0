@@ -43,11 +43,13 @@ namespace MyTestVueApp.Server.ServiceImplementations
 	                    Art.isPublic, 
 						Art.IsGIF,
 	                    COUNT(distinct Likes.ArtistId) as Likes, 
+                        COUNT(distinct Dislikes.ArtistId) as Dislikes,
 	                    Count(distinct Comment.Id) as Comments,
                         Art.gifId,
                         Art.gifFrameNum
                     FROM ART  
 	                    LEFT JOIN Likes ON Art.ID = Likes.ArtID  
+                        LEFT JOIN Dislikes ON Art.ID = Dislikes.ArtID
 	                    LEFT JOIN Comment ON Art.ID = Comment.ArtID
 						Where Art.gifFrameNum <= 1
                     GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic, Art.IsGIF, Art.GifId, Art.gifFrameNum
@@ -73,9 +75,10 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 IsPublic = reader.GetBoolean(6),
                                 IsGif = reader.GetBoolean(7),
                                 NumLikes = reader.GetInt32(8),
-                                NumComments = reader.GetInt32(9),
-                                GifID = reader.GetInt32(10),
-                                GifFrameNum = reader.GetInt32(11),
+                                NumDislikes = reader.GetInt32(9),
+                                NumComments = reader.GetInt32(10),
+                                GifID = reader.GetInt32(11),
+                                GifFrameNum = reader.GetInt32(12),
                                 PixelGrid = pixelGrid,
                             };
 
@@ -113,9 +116,11 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         Art.IsGIF,
                         Art.GifId,
 	                    COUNT(distinct Likes.ArtistId) as Likes, 
+                        COUNT(distinct Dislikes.ArtistId) as Dislikes,
 	                    Count(distinct Comment.Id) as Comments  
                     FROM ART  
                     LEFT JOIN Likes ON Art.ID = Likes.ArtID  
+                    LEFT JOIN Dislikes on Art.ID = Dislikes.ArtID
                     LEFT JOIN Comment ON Art.ID = Comment.ArtID  
                     LEFT JOIN ContributingArtists ON Art.Id = ContributingArtists.ArtId
                     WHERE Art.ID = @artId 
@@ -144,7 +149,8 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 CreationDate = reader.GetDateTime(5),
                                 IsPublic = reader.GetBoolean(6),
                                 NumLikes = reader.GetInt32(9),
-                                NumComments = reader.GetInt32(10),
+                                NumDislikes = reader.GetInt32(10),
+                                NumComments = reader.GetInt32(11),
                                 IsGif = reader.GetBoolean(7),
                                 GifID = reader.GetInt32(8)
                             };
@@ -182,11 +188,13 @@ namespace MyTestVueApp.Server.ServiceImplementations
 	                    Art.isPublic, 
 						Art.IsGIF,
 	                    COUNT(distinct Likes.ArtistId) as Likes, 
+                        COUNT(distinct Dislikes.ArtistId) as Dislikes,
 	                    Count(distinct Comment.Id) as Comments,
                         Art.gifId,
                         Art.gifFrameNum
                     FROM ART  
 	                    LEFT JOIN Likes ON Art.ID = Likes.ArtID  
+                        LEFT JOIN Dislikes ON Art.ID = Dislikes.ArtID
 	                    LEFT JOIN Comment ON Art.ID = Comment.ArtID
                         left join  ContributingArtists as CA on CA.ArtId = Art.Id
                     WHERE CA.ArtistId = @ArtistID
@@ -213,9 +221,10 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 IsPublic = reader.GetBoolean(6),
                                 IsGif = reader.GetBoolean(7),
                                 NumLikes = reader.GetInt32(8),
-                                NumComments = reader.GetInt32(9),
-                                GifID = reader.GetInt32(10),
-                                GifFrameNum = reader.GetInt32(11),
+                                NumDislikes = reader.GetInt32(9),
+                                NumComments = reader.GetInt32(10),
+                                GifID = reader.GetInt32(11),
+                                GifFrameNum = reader.GetInt32(12),
                                 PixelGrid = pixelGrid,
                             };
 
@@ -282,6 +291,66 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 IsPublic = reader.GetBoolean(6),
                                 NumLikes = reader.GetInt32(7),
                                 NumComments = reader.GetInt32(8)
+                            };
+                            paintings.Add(painting);
+                        }
+                    }
+                    return paintings;
+                }
+            }
+        }
+
+        public async Task<IEnumerable<Art>> GetDislikedArt(int artistId)
+        {
+            var paintings = new List<Art>();
+            var connectionString = AppConfig.Value.ConnectionString;
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                var query =
+                    $@"
+                    SELECT
+	                      Dislikes.ArtId,
+                          Art.Title,
+	                      Art.Width, 
+	                      Art.Height, 
+	                      Art.Encode, 
+	                      Art.CreationDate,
+	                      Art.isPublic,
+	                      COUNT(distinct Dislikes.ArtistId) as Dislikes, 
+	                      Count(distinct Comment.Id) as Comments
+                      FROM Dislikes
+                      left join Art on Art.Id = Dislikes.ArtId
+                      LEFT JOIN Comment ON Art.ID = Comment.ArtID
+                      where Dislikes.ArtistId = @ArtistId
+                      GROUP BY Dislikes.ArtistId, Dislikes.ArtId, Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic;
+                        ";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ArtistID", artistId);
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            var pixelGrid = new PixelGrid()
+                            {
+                                Width = reader.GetInt32(2),
+                                Height = reader.GetInt32(3),
+                                EncodedGrid = reader.GetString(4)
+                            };
+                            var painting = new Art
+                            {   //ArtId, ArtName
+                                Id = reader.GetInt32(0),
+                                Title = reader.GetString(1),
+                                PixelGrid = pixelGrid,
+                                CreationDate = reader.GetDateTime(5),
+                                IsPublic = reader.GetBoolean(6),
+                                NumDislikes = reader.GetInt32(7),
+                                NumLikes = reader.GetInt32(8),
+                                NumComments = reader.GetInt32(9)
                             };
                             paintings.Add(painting);
                         }

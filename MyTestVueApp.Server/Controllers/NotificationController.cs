@@ -16,13 +16,15 @@ namespace MyTestVueApp.Server.Controllers
         private readonly INotificationService NotificationService;
         private readonly ICommentAccessService CommentService;
         private readonly ILikeService LikeService;
+        private readonly IDislikeService DislikeService;
 
-        public NotificationController(ILogger<NotificationController> logger, INotificationService notificationService, ICommentAccessService commentService, ILikeService likeService)
+        public NotificationController(ILogger<NotificationController> logger, INotificationService notificationService, ICommentAccessService commentService, ILikeService likeService, IDislikeService dislikeService)
         {
             Logger = logger;
             NotificationService = notificationService;
             CommentService = commentService;
             LikeService = likeService;
+            DislikeService = dislikeService;
         }
         /// <summary>
         /// Gets all notifications for a user
@@ -117,6 +119,47 @@ namespace MyTestVueApp.Server.Controllers
                 else
                 {
                     throw new ArgumentException("Like with art id: " + likeModel.ArtId + " and artist id: "+ likeModel.ArtistId+ " was not found");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Marks a dislike viewed in the database
+        /// </summary>
+        /// <param name="dislikeModel">Id of the art, and id of the artist</param>
+        [HttpPost]
+        [Route("MarkDislikeViewed")]
+        public async Task<IActionResult> MarkDislikeViewed([FromBody] DislikesModel dislikeModel)
+        {
+            try
+            {
+                Dislike dislike = await DislikeService.GetDislikeByIds(dislikeModel.ArtId, dislikeModel.ArtistId);
+                if (dislike != null)
+                {
+                    if (await NotificationService.MarkDislike(dislike.ArtId, dislike.ArtistId))
+                    {
+                        return Ok();
+                    }
+                    else
+                    {
+                        throw new Exception("An unknown Error has Occured");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Dislike with art id: " + dislikeModel.ArtId + " and artist id: " + dislikeModel.ArtistId + " was not found");
                 }
             }
             catch (HttpRequestException ex)
