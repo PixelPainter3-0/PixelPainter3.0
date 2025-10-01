@@ -70,25 +70,36 @@
                       v-model:greyscale="greyscale" />
     </template>
     <template #end>
-      <Button icon="pi pi-times"
-              class="mr-2"
-              severity="primary"
-              label="Clear"
-              @click="clear()" />
-      <Button icon="pi pi-expand"
-              class="mr-2"
-              severity="primary"
-              label="Recenter"
-              @click="canvas?.recenter()" />
-      <Button :disabled="connected"
-              :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
-              class="mr-2 Rainbow"
-              label="Gravity"
-              @click="runGravity()" />
-      <Button icon="pi pi-lightbulb"
-              class="Rainbow"
-              label="Give Me Color!"
-              @click="randomizeGrid()" />
+      
+      <Button
+        icon="pi pi-times"
+        class="mr-2"
+        severity="primary"
+        label="Clear"
+        @click="clear()"
+      />
+      <Button
+        icon="pi pi-expand"
+        class="mr-2"
+        severity="primary"
+        label="Recenter"
+        @click="canvas?.recenter()"
+      />
+      <Button
+        :disabled="connected"
+        :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
+        class="mr-2 Rainbow"
+        label="Gravity"
+        @click="runGravity()"
+      />
+      <Button
+        icon="pi pi-lightbulb"
+        class="Rainbow"
+        label="Give Me Color!"
+        @click="randomizeGrid()"
+      />
+      <Button label="Toggle Music"
+        @click="toggleMusic()" />
     </template>
   </Toolbar>
 </template>
@@ -150,15 +161,23 @@ import GIFCreationService from "@/services/GIFCreationService";
   const greyscale = ref<boolean>(false);
   const loggedIn = ref<boolean>(false);
 
-  // Connection Information
-  const connected = ref<boolean>(false);
-  const groupName = ref<string>("");
-  let connection = new SignalR.HubConnectionBuilder()
-    .withUrl("https://localhost:7154/signalhub", {
-      skipNegotiation: true,
-      transport: SignalR.HttpTransportType.WebSockets
-    })
-    .build();
+// Connection Information
+const connected = ref<boolean>(false);
+const groupName = ref<string>("");
+let connection = new SignalR.HubConnectionBuilder()
+  .withUrl("https://localhost:7154/signalhub", {
+    skipNegotiation: true,
+    transport: SignalR.HttpTransportType.WebSockets
+  })
+  .build();
+      
+var audioPlaying = 0;
+const audioFiles = [
+    "/src/music/In-the-hall-of-the-mountain-king.mp3",
+    "/src/music/flight-of-the-bumblebee.mp3",
+    "/src/music/OrchestralSuiteNo3.mp3"
+];
+const audioRef = ref(new Audio());
 
   connection.on("Send", (user: string, msg: string) => {
     console.log("Received Message", user + " " + msg);
@@ -1196,6 +1215,23 @@ async function saveGIFFromPainter(): Promise<void> {
   GIFCreationService.createGIF(urls, fps.value);
 }
 
+function toggleMusic(): void {
+        if (audioPlaying == 0) {
+            audioRef.value.pause();
+            audioRef.value.currentTime = 0;
+
+            var randomIndex = Math.floor(Math.random() * audioFiles.length);
+            var chosenMusic = audioFiles[randomIndex];
+            audioRef.value.src = chosenMusic;
+            audioRef.value.play();
+            audioPlaying = 1;
+        }
+        else {
+            audioRef.value.pause();
+            audioPlaying = 0;
+        }
+    }
+
 function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
     if (event.key === "p") {
@@ -1295,24 +1331,22 @@ function handleKeyDown(event: KeyboardEvent) {
       //@ts-ignore
       cursor.value.color = currentPallet.value._value[11];
     } else if (event.ctrlKey && event.key === "s") {
-      console.log("Ctrl+s was pressed.");
-      event.preventDefault();
-      console.log(art.value);
-      if (art.value.pixelGrid.isGif) {
-        saveGIFFromPainter();
-      } else {
-        saveToFile();
-
-      }
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
+        event.preventDefault();
+        if (art.value.pixelGrid.isGif) {
+          saveGIFFromPainter();
+        } else {
+          saveToFile();
+        }
+      } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
       event.preventDefault();
       undo();
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
-      event.preventDefault();
-      redo();
+      } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
+        event.preventDefault();
+        redo();
+      }
     }
   }
-}
+
 </script>
 <style scoped>
   .Rainbow,
