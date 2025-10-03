@@ -5,7 +5,7 @@ name: Publish Web Application
 
 on:
   push:
-    branches: [ "master" ] # Remove dev branch
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -46,34 +46,3 @@ jobs:
       with:
         name: published-app
         path: ./publish
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download published files
-        uses: actions/download-artifact@v4
-        with:
-          name: published-app
-
-      - name: Set up SSH agent with Server
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          
-      - name: Transfer artifact to the remote server
-        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/Pixel-Painter/Pixel-Painter/* ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/app/
-
-      - name: Run the dotnet app
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            PID=$(pgrep -fx 'dotnet /var/www/app/MyTestVueApp.Server.dll')
-            if [ -n "$PID" ]; then
-              kill $PID           
-            fi
-            nohup dotnet /var/www/app/MyTestVueApp.Server.dll > dotnet_logs_$(date +\"%Y-%m-%d_%H-%M-%S\").log 2>&1 &
-     
