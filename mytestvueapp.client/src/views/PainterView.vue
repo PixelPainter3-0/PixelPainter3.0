@@ -149,6 +149,8 @@
   const greyscale = ref<boolean>(false);
   const loggedIn = ref<boolean>(false);
   const selection = ref<String[][]>([]);
+  const copiedSelection = ref<String[][]>([]);
+
 
   // Connection Information
   const connected = ref<boolean>(false);
@@ -1079,7 +1081,6 @@
       );
     }
     if (cursor.value.selectedTool.label == "Select") {
-
       selection.value = getSelectPixels(startPix.value, endPix.value)
     }
   }
@@ -1309,6 +1310,10 @@
       } else if (!event.ctrlKey && event.key === "s") {
         event.preventDefault();
         cursor.value.selectedTool.label = "Select";
+        canvas?.value.updateCursor();
+      } else if (event.ctrlKey && event.key === "c") {
+        event.preventDefault();
+        copiedSelection = selection;
         canvas?.value.updateCursor();
       } else if (event.key === "q" && cursor.value.size > 1) {
         event.preventDefault();
