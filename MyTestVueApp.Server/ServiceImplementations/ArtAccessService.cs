@@ -364,65 +364,6 @@ namespace MyTestVueApp.Server.ServiceImplementations
             }
         }
 
-        public async Task<IEnumerable<Art>> GetDislikedArt(int artistId)
-        {
-            var paintings = new List<Art>();
-            var connectionString = AppConfig.Value.ConnectionString;
-
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-
-                var query =
-                    $@"
-                    SELECT
-	                      Dislikes.ArtId,
-                          Art.Title,
-	                      Art.Width, 
-	                      Art.Height, 
-	                      Art.Encode, 
-	                      Art.CreationDate,
-	                      Art.isPublic,
-	                      COUNT(distinct Dislikes.ArtistId) as Dislikes, 
-	                      Count(distinct Comment.Id) as Comments
-                      FROM Dislikes
-                      left join Art on Art.Id = Dislikes.ArtId
-                      LEFT JOIN Comment ON Art.ID = Comment.ArtID
-                      where Dislikes.ArtistId = @ArtistId
-                      GROUP BY Dislikes.ArtistId, Dislikes.ArtId, Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic;
-                        ";
-
-                using (var command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@ArtistID", artistId);
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        while (reader.Read())
-                        {
-                            var pixelGrid = new PixelGrid()
-                            {
-                                Width = reader.GetInt32(2),
-                                Height = reader.GetInt32(3),
-                                EncodedGrid = reader.GetString(4)
-                            };
-                            var painting = new Art
-                            {   //ArtId, ArtName
-                                Id = reader.GetInt32(0),
-                                Title = reader.GetString(1),
-                                PixelGrid = pixelGrid,
-                                CreationDate = reader.GetDateTime(5),
-                                IsPublic = reader.GetBoolean(6),
-                                NumDislikes = reader.GetInt32(7),
-                                NumLikes = reader.GetInt32(8),
-                                NumComments = reader.GetInt32(9)
-                            };
-                            paintings.Add(painting);
-                        }
-                    }
-                    return paintings;
-                }
-            }
-        }
         /// <summary>
         /// Adds a new artwork to the database
         /// </summary>
