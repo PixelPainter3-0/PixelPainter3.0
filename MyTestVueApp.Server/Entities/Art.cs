@@ -12,7 +12,6 @@ namespace MyTestVueApp.Server.Entities
         public bool IsPublic { get; set; }
         public DateTime CreationDate { get; set; }
         public PixelGrid PixelGrid { get; set; }
-       public List<Tag> Tags { get; set; }
 
 
 
@@ -25,6 +24,7 @@ namespace MyTestVueApp.Server.Entities
         public int NumLikes { get; set; }
         public int NumComments { get; set; }
         public bool CurrentUserIsOwner { get; set; } = false;
+        public List<Tag> Tags { get; set; }
 
 
         public void SetArtists(List<Artist> artists)

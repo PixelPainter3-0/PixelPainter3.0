@@ -3,10 +3,11 @@
     :label="isEditing ? 'Save Changes' : 'Upload'"
     :icon="isEditing ? 'pi pi-save' : 'pi pi-upload'"
     @click="toggleModal()"
+    :disabled="tagCreationLoading || loading"
   ></Button>
 
   <!---->
-  <Dialog v-model:visible="visible" modal :style="{ width: '26rem' }">
+  <Dialog v-model:visible="visible" modal :style="{ width: '40rem', maxWidth: '95vw' }">
     <template #header>
       <h1 class="mr-2">
         {{ isEditing ? "Save Your Changes?" : "Upload Your Art?" }}
@@ -22,28 +23,35 @@
           class="w-full"
         ></InputText>
       </div>
-      <!-- tag selection -->
+
+      <!-- tags (combined search + dropdown + checkboxes) -->
       <div class="flex align-items-center gap-3">
         <span>Tags:</span>
-        <div>
-          <div v-for="tag in allTags" :key="tag.id">
-            <input
-              type="checkbox"
-              :value="tag.id"
-              v-model="selectedTagIds"
-              :id="'tag-' + tag.id"
-            />
-            <label :for="'tag-' + tag.id">{{ tag.name }}</label>
-          </div>
-        </div>
+        <MultiSelect
+          v-model="selectedTagIds"
+          :options="displayedTags"
+          optionLabel="name"
+          optionValue="id"
+          filter
+          display="chip"
+          placeholder="Search & select tags"
+          :maxSelectedLabels="4"
+          :selectionLimit="4"
+          class="w-full min-w-15rem"
+          @filter="onTagFilter"
+          @change="onTagChange"
+        />
       </div>
+
       <!-- tag creation -->
       <div class="flex align-items-center gap-3 mt-2">
+        <span>New Tag:</span>
         <InputText
           v-model="newTagName"
-          placeholder="New tag name"
+          placeholder="New tag name.."
           class="w-10rem"
           :disabled="tagCreationLoading"
+          :maxlength="10"
         />
         <Button
           label="Add Tag"
@@ -52,6 +60,12 @@
           @click="createTag"
           :disabled="!newTagName || tagCreationLoading"
         />
+      </div>
+      <div class="text-xs text-color-secondary" v-if="selectedTagIds.length < 4">
+        {{ 4 - selectedTagIds.length }} tag(s) remaining*
+      </div>
+      <div class="text-xs text-color-secondary" v-else>
+        Tag limit reached! (4)
       </div>
       <div v-if="tagCreationError" class="text-danger small">
         {{ tagCreationError }}
@@ -82,12 +96,14 @@
       <Button
         :label="isEditing ? 'Save' : 'Upload'"
         severity="secondary"
-        @click="upload()"
+        :disabled="loading || tagCreationLoading"
+        @click="upload"
         autofocus
       />
     </template>
   </Dialog>
 </template>
+
 <script setup lang="ts">
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
@@ -102,6 +118,7 @@ import LoginService from "@/services/LoginService";
 import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
 import TagService from "@/services/TagService";
+import MultiSelect from "primevue/multiselect";
 
 const layerStore = useLayerStore();
 const artistStore = useArtistStore();
@@ -115,23 +132,88 @@ const newPrivacy = ref<boolean>(false);
 const allTags = ref<any[]>([]);
 const selectedTagIds = ref<number[]>([]);
 const newTagName = ref<string>("");
+
 const tagCreationError = ref<string>("");
 const tagCreationLoading = ref<boolean>(false);
 
-async function createTag() {
-  if (!newTagName.value) return;
-  tagCreationLoading.value = true;
+// --- Simplified tag creation (remove queue) ---
+let creatingTagsPromise: Promise<void> | null = null;
+
+const TAG_MAX_LENGTH = 15;
+function sanitizeTagInput(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, TAG_MAX_LENGTH);
+}
+
+function extractTokens(raw: string): string[] {
+  return raw
+    .split(/[,\s]+/)
+    .map(sanitizeTagInput)
+    .filter(t => t.length > 0);
+}
+
+watch(newTagName, (val) => {
+  if (!val) return;
+  const rebuilt = val
+    .split(/[,\s]+/)
+    .map(v => sanitizeTagInput(v))
+    .filter(Boolean)
+    .join(" ");
+  if (rebuilt !== val.trim()) newTagName.value = rebuilt;
+});
+
+async function createTag(): Promise<void> {
   tagCreationError.value = "";
-  try {
-    const newTag = await TagService.createTag(newTagName.value);
-    allTags.value.push(newTag);
-    selectedTagIds.value.push(newTag.id);
-    newTagName.value = "";
-  } catch (error: any) {
-    tagCreationError.value = error?.message || "Failed to create tag";
-  } finally {
-    tagCreationLoading.value = false;
+  const tokens = extractTokens(newTagName.value || "");
+  newTagName.value = "";
+  if (!tokens.length) {
+    tagCreationError.value = "Enter a tag.";
+    return;
   }
+
+  // Build list of tokens that are not already present
+  const toCreate = tokens.filter(token => {
+    const exists = allTags.value.some(t => t.name.toLowerCase() === token);
+    return !exists;
+  });
+
+  if (!toCreate.length) {
+    // If all already exist, auto-select any up to limit
+    tokens.forEach(tok => {
+      const tag = allTags.value.find(t => t.name.toLowerCase() === tok);
+      if (tag && selectedTagIds.value.length < 4 && !selectedTagIds.value.includes(Number(tag.id))) {
+        selectedTagIds.value.push(Number(tag.id));
+      }
+    });
+    onTagChange();
+    return;
+  }
+
+  tagCreationLoading.value = true;
+  creatingTagsPromise = (async () => {
+    const errors: string[] = [];
+    await Promise.all(
+      toCreate.map(async (token) => {
+        try {
+          const newTag = await TagService.createTag(token);
+          newTag.id = Number(newTag.id);
+          allTags.value.push(newTag);
+          if (selectedTagIds.value.length < 4) {
+            selectedTagIds.value.push(newTag.id);
+          }
+        } catch (e) {
+          console.error("Failed creating tag:", token, e);
+          errors.push(token);
+        }
+      })
+    );
+    if (errors.length) {
+      tagCreationError.value = `Failed: ${errors.join(", ")}`;
+    }
+    tagCreationLoading.value = false;
+    creatingTagsPromise = null;
+    onTagChange();
+  })();
+  await creatingTagsPromise; // keep button responsive only after finish
 }
 
 const props = defineProps<{
@@ -158,6 +240,53 @@ watch(visible, () => {
 //   newPrivacy.value = props.art.isPublic;
 // }
 
+const filterQuery = ref<string>("");
+
+const displayedTags = computed(() => {
+  const src = allTags.value || [];
+  const q = filterQuery.value.trim().toLowerCase();
+
+  // No query: stable alphabetical
+  if (!q) {
+    return [...src].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  // Score matches but DO NOT remove non‑matches; just push them after matches
+  const scored = src.map(t => {
+    const name = t.name?.toLowerCase() || "";
+    let score = 0;
+    if (name === q) score = 5;
+    else if (name.startsWith(q)) score = 4;
+    else if (name.includes(q)) score = 3;
+    else {
+      const overlap = [...new Set(q)].filter(ch => name.includes(ch)).length;
+      if (overlap) score = 1;
+    }
+    return { ref: t, score };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score || a.ref.name.localeCompare(b.ref.name))
+    .map(x => x.ref);
+});
+
+function onTagFilter(e: any) {
+  filterQuery.value = e.value || "";
+}
+
+function onTagChange() {
+  if (selectedTagIds.value.length > 4) {
+    // Clamp to 4 if somehow exceeded (race or manual mutation)
+    selectedTagIds.value = selectedTagIds.value.slice(0, 4);
+    toast.add({
+      severity: "warn",
+      summary: "Limit Reached",
+      detail: "You can select up to 4 tags.",
+      life: 2000
+    });
+  }
+}
+
 async function toggleModal(): Promise<void> {
   visible.value = !visible.value;
   newName.value = props.art.title;
@@ -167,8 +296,28 @@ async function toggleModal(): Promise<void> {
   newPrivacy.value = props.art.isPublic;
 
   if (visible.value) {
-    allTags.value = await TagService.getAllTags();
-    selectedTagIds.value = []; // Reset or load existing tags if editing
+    try {
+      allTags.value = await TagService.getAllTags();
+      allTags.value = allTags.value.map(t => ({ ...t, id: Number(t.id) }));
+      if (isEditing.value && props.art.id) {
+        try {
+          const existing = await TagService.getTagsForArt(props.art.id);
+            selectedTagIds.value = existing
+            .map((t: any) => Number(t.id))
+            .filter((v, i, arr) => arr.indexOf(v) === i)
+            .slice(0, 4);
+        } catch (e) {
+          console.warn("Failed to load existing tags for art", e);
+          selectedTagIds.value = [];
+        }
+      } else {
+        selectedTagIds.value = [];
+      }
+    } catch (e) {
+      console.error("Failed loading tags", e);
+      allTags.value = [];
+      selectedTagIds.value = [];
+    }
   }
 }
 
@@ -220,28 +369,47 @@ function handleNotLoggedIn(): void {
   visible.value = false;
 }
 
-function finalizeUpload(success: boolean, artId?: number): void {
+async function finalizeUpload(success: boolean, artId?: number): Promise<void> {
   loading.value = false;
   visible.value = false;
 
   if (success && artId) {
-    // Assign tags after successful upload
-    if (selectedTagIds.value.length > 0) {
-      TagService.assignTagsToArt(artId, selectedTagIds.value)
-        .catch((e) => {
-          console.error("Failed to assign tags:", e);
-        });
+    // Removed re-fetch & filtering of newly created tag ids to avoid race
+    let tagError = false;
+    const ids = selectedTagIds.value
+      .map(id => Number(id))
+      .filter(id => Number.isFinite(id) && id > 0);
+
+    if (ids.length) {
+      try {
+        await TagService.assignTagsToArt(artId, ids);
+      } catch (e) {
+        console.error("Failed to assign tags:", e);
+        tagError = true;
+      }
     }
+
     toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Art uploaded successfully",
-      life: 3000
+      severity: tagError ? "warn" : "success",
+      summary: tagError ? "Partial Success" : (isEditing.value ? "Saved" : "Uploaded"),
+      detail: tagError ? "Art saved, but some tags failed. You can edit and re-apply." : "Art uploaded successfully",
+      life: 3500
     });
+
+    console.debug("Navigating to art detail:", artId);
     layerStore.empty();
     artistStore.empty();
-    localStorage.clear();
-    router.push("/art/" + artId);
+    try {
+      await router.push("/art/" + artId);
+      // Fallback if route name differs or push silently ignored
+      if (!router.currentRoute.value.path.endsWith("/" + artId)) {
+        console.warn("Primary router.push did not change route, retrying replace");
+        await router.replace("/art/" + artId);
+      }
+    } catch (navErr) {
+      console.error("Navigation failed, forcing location change:", navErr);
+      window.location.href = "/art/" + artId;
+    }
   } else if (!success) {
     toast.add({
       severity: "error",
@@ -251,56 +419,64 @@ function finalizeUpload(success: boolean, artId?: number): void {
     });
   }
 }
-function upload(): void {
+async function upload(): Promise<void> {
+  // Wait for any in-progress tag creations
+  if (creatingTagsPromise) {
+    await creatingTagsPromise;
+  }
+
   emit("disconnect");
   loading.value = true;
 
-  LoginService.isLoggedIn().then((isLoggedIn) => {
-    if (!isLoggedIn) {
-      handleNotLoggedIn();
-      return;
-    }
+  const isLoggedIn = await LoginService.isLoggedIn();
+  if (!isLoggedIn) {
+    handleNotLoggedIn();
+    return;
+  }
 
-    if (props.art.isGif) {
-      const paintings: Art[] = layerStore.grids.map((grid, i) => {
-        const newArt = new Art();
-        newArt.title = newName.value;
-        newArt.isPublic = newPrivacy.value;
-        newArt.pixelGrid.deepCopy(grid);
-        newArt.id = props.art.id;
-        newArt.gifFrameNum = i + 1;
-        newArt.isGif = true;
-        newArt.pixelGrid.encodedGrid = FlattenFrameEncode(i);
-        newArt.artistId = props.art.artistId;
-        newArt.artistName = props.art.artistName;
-        newArt.gifFps = props.fps;
-        return newArt;
-      });
-
-      ArtAccessService.saveGif(paintings)
-        .then((data: Art) => finalizeUpload(!!data.id, data.id))
-        .catch((error) => {
-          console.error(error);
-          finalizeUpload(false);
-        });
-    } else {
+  if (props.art.isGif) {
+    const paintings: Art[] = layerStore.grids.map((grid, i) => {
       const newArt = new Art();
       newArt.title = newName.value;
       newArt.isPublic = newPrivacy.value;
-      newArt.pixelGrid.deepCopy(layerStore.grids[0]);
+      newArt.pixelGrid.deepCopy(grid);
       newArt.id = props.art.id;
-      newArt.pixelGrid.encodedGrid = flattenArtEncode();
+      newArt.gifFrameNum = i + 1;
+      newArt.isGif = true;
+      newArt.pixelGrid.encodedGrid = FlattenFrameEncode(i);
       newArt.artistId = props.art.artistId;
       newArt.artistName = props.art.artistName;
-      //foreach Selected Tag, add tag to tag[] in art
+      newArt.gifFps = props.fps;
+      return newArt;
+    });
 
-      ArtAccessService.saveArt(newArt)
-        .then((data: Art) => finalizeUpload(!!data.id, data.id))
-        .catch((error) => {
-          console.error(error);
-          finalizeUpload(false);
-        });
+    try {
+      const savedGif = await ArtAccessService.saveGif(paintings);
+      console.debug("saveGif result:", savedGif);
+      const newId = Array.isArray(savedGif) ? savedGif[0]?.id : savedGif?.id;
+      await finalizeUpload(!!newId, newId);
+    } catch (error) {
+      console.error("Upload (saveGif) failed", error);
+      await finalizeUpload(false);
     }
-  });
+  } else {
+    const newArt = new Art();
+    newArt.title = newName.value;
+    newArt.isPublic = newPrivacy.value;
+    newArt.pixelGrid.deepCopy(layerStore.grids[0]);
+    newArt.id = props.art.id;
+    newArt.pixelGrid.encodedGrid = flattenArtEncode();
+    newArt.artistId = props.art.artistId;
+    newArt.artistName = props.art.artistName;
+
+    try {
+      const saved = await ArtAccessService.saveArt(newArt);
+      console.debug("saveArt result:", saved);
+      await finalizeUpload(!!saved?.id, saved?.id);
+    } catch (error) {
+      console.error("Upload (saveArt) failed", error);
+      await finalizeUpload(false);
+    }
+  }
 }
 </script>

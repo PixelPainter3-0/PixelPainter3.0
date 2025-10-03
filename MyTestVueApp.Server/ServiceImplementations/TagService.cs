@@ -63,6 +63,16 @@ namespace MyTestVueApp.Server.ServiceImplementations
             using (var conn = new SqlConnection(_appConfig.Value.ConnectionString))
             {
                 await conn.OpenAsync();
+
+                // Check if artId exists
+                var checkArtCmd = new SqlCommand("SELECT COUNT(1) FROM Art WHERE Id = @ArtId", conn);
+                checkArtCmd.Parameters.AddWithValue("@ArtId", artId);
+                var exists = (int)await checkArtCmd.ExecuteScalarAsync() > 0;
+                if (!exists)
+                {
+                    throw new ArgumentException($"Art with Id {artId} does not exist.");
+                }
+
                 using (var tran = conn.BeginTransaction())
                 {
                     try

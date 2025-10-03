@@ -9,7 +9,7 @@ export default class Art {
   isPublic: boolean;
   creationDate: string;
 
-  Tags: Tag[];
+  tags: Tag[];
 
   //may be null if new
   pixelGrid: PixelGrid;
@@ -45,6 +45,6 @@ export default class Art {
     this.gifFps = 0;
     this.isLiked = false;
 
-    this.Tags = []; // Initialize Tags as an empty array
+    this.tags = []; // Initialize Tags as an empty array
   }
 }

@@ -81,10 +81,10 @@ export default defineConfig({
         target,
         secure: false,
       },
-      "^/Tag": {
+      "^/tag": {
         target,
         secure: false,
-      },
+      }
     },
     port: 5173,
     https: {

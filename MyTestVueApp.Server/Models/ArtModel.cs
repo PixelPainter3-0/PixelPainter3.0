@@ -6,5 +6,6 @@ namespace MyTestVueApp.Server.Models
     {
         public Art Art { get; set; }
         public List<Tag> Tags { get; set; }
+
     }
 }
