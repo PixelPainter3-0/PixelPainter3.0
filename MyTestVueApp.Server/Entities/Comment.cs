@@ -10,6 +10,9 @@ namespace MyTestVueApp.Server.Entities
         public DateTime CreationDate { get; set; }
         public bool Viewed { get; set; }
 
+        public int NumLikes { get; set; }
+        public int NumDislikes { get; set; }
+
         //Represents the id that this comment is replying to
         public int ReplyId { get; set; }
         public bool CurrentUserIsOwner { get; set; } = false;

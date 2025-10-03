@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import Button from "primevue/button";
 import LoginService from "@/services/LoginService";
+import CommentAccessService from "@/services/CommentAccessService";
 import CommentDislikeService from "@/services/CommentDislikeService";
 import { useToast } from "primevue/usetoast";
 
@@ -18,6 +19,7 @@ import { ref, onMounted, watch } from "vue";
 const props = defineProps<{
   commentId: number;
   commentdislikes: number;
+  isLiked: boolean;
 }>();
 const loggedIn = ref<boolean>(false);
 const localCommentDislike = ref<number>(0);
@@ -32,9 +34,16 @@ onMounted(async () => {
 });
 
 async function isDisliked(): Promise<void> {
-  if (loggedIn.value)
-    CommentDislikeService.isCommentDisliked(props.commentId).then((value) => (disliked.value = value));
+  if (!loggedIn.value) return;
+  disliked.value = await CommentDislikeService.isCommentDisliked(props.commentId);
 }
+
+watch(
+  () => props.commentdislikes,
+  (newVal) => {
+    localCommentDislike.value = newVal;
+  }
+);
 
 watch(
   () => props.commentId,
@@ -55,25 +64,17 @@ async function dislikedClicked(): Promise<void> {
     return;
   }
   if (disliked.value) {
-    // Try to undislike
-    CommentDislikeService.removeCommentDislike(props.commentId).then((value) => {
-      if (value) {
-        disliked.value = false;
-      }
-      if (localCommentDislike.value >= 0) {
-        localCommentDislike.value--;
-      }
-    });
-  } else {
-    // Try to Dislike
-    CommentDislikeService.insertCommentDislike(props.commentId).then((value) => {
-      if (value) {
-        disliked.value = true;
-      }
-      if (localCommentDislike.value <= 0) {
-        localCommentDislike.value++;
-      }
-    });
+  const success = await CommentDislikeService.removeCommentDislike(props.commentId);
+  if (success) {
+    disliked.value = false;
+    localCommentDislike.value--;
   }
+} else {
+  const success = await CommentDislikeService.insertCommentDislike(props.commentId);
+  if (success) {
+    disliked.value = true;
+    localCommentDislike.value++;
+  }
+}
 }
 </script>

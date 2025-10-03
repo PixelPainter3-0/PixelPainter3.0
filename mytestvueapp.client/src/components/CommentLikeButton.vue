@@ -9,6 +9,7 @@
 </template>
 <script setup lang="ts">
 import Button from "primevue/button";
+import CommentAccessService from "@/services/CommentAccessService";
 import LoginService from "@/services/LoginService";
 import CommentLikeService from "@/services/CommentLikeService";
 import { useToast } from "primevue/usetoast";
@@ -17,6 +18,7 @@ import { ref, onMounted, watch } from "vue";
 
 const props = defineProps<{
   commentId: number;
+  artistId: number;
   commentlikes: number;
   isLiked: boolean;
 }>();
@@ -55,26 +57,18 @@ async function likedClicked(): Promise<void> {
     });
     return;
   }
-  if (liked.value) {
-    // Try to unlike
-    CommentLikeService.removeCommentLike(props.commentId).then((value) => {
-      if (value) {
-        liked.value = false;
-      }
-      if (localCommentLike.value >= 0) {
-        localCommentLike.value--;
-      }
-    });
-  } else {
-    // Try to like
-    CommentLikeService.insertCommentLike(props.commentId).then((value) => {
-      if (value) {
-        liked.value = true;
-      }
-      if (localCommentLike.value <= 0) {
-        localCommentLike.value++;
-      }
-    });
+    if (liked.value) {
+  const success = await CommentLikeService.removeCommentLike(props.commentId);
+  if (success) {
+    liked.value = false;
+    localCommentLike.value--;
   }
+} else {
+  const success = await CommentLikeService.insertCommentLike(props.commentId);
+  if (success) {
+    liked.value = true;
+    localCommentLike.value++;
+  }
+}
 }
 </script>

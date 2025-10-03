@@ -9,8 +9,8 @@ export default class Comment {
   currentUserIsOwner?: boolean;
   replies: Comment[];
   isViewed: boolean;
-  numLikes: number;
-  numDislikes: number;
+  numLikes: number = 0;
+  numDislikes: number = 0;
   isLiked: boolean;
   isDisliked: boolean;
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MyTestVueApp.Server.Configuration;
@@ -32,11 +33,9 @@ namespace MyTestVueApp.Server.Controllers
         /// <summary>
         /// Marks the current user to like an artwork
         /// </summary>
-        /// <param name="commentId">Id of the comment the user is liking</param>
-        /// <param name="artId">Id of the art the user is liking the comment on</param>
         [HttpPost]
         [Route("InsertCommentLike")]
-        public async Task<IActionResult> InsertCommentLike([FromQuery] int commentId, int artId)
+        public async Task<IActionResult> InsertCommentLike([FromQuery]int commentId)
         {
             try
             {
@@ -47,7 +46,7 @@ namespace MyTestVueApp.Server.Controllers
                     if (artist != null)
                     {
                         // You can add additional checks here if needed
-                        var rowsChanged = await CommentLikeService.InsertCommentLike(artId, artist, commentId);
+                        var rowsChanged = await CommentLikeService.InsertCommentLike(artist, commentId);
                         if (rowsChanged > 0) // If the like has sucessfully been inserted
                         {
                             return Ok();
@@ -84,11 +83,10 @@ namespace MyTestVueApp.Server.Controllers
         /// <summary>
         /// Remove a like from the database
         /// </summary>
-        /// <param name="artId">Id of the art the user is unliking</param>
-        /// <param name="commentId">Id of the comment the user is unliking</param>
+
         [HttpDelete]
         [Route("RemoveCommentLike")]
-        public async Task<IActionResult> RemoveCommentLike([FromQuery] int artId, int commentId)
+        public async Task<IActionResult> RemoveCommentLike([FromQuery] int commentId)
         {
             try
             {
@@ -99,7 +97,7 @@ namespace MyTestVueApp.Server.Controllers
                     if (artist != null)
                     {
                         // You can add additional checks here if needed
-                        var rowsChanged = await CommentLikeService.RemoveCommentLike(artId, artist, commentId);
+                        var rowsChanged = await CommentLikeService.RemoveCommentLike(artist, commentId);
                         if (rowsChanged > 0) // If the like has sucessfully been removed
                         {
                             return Ok();
@@ -136,28 +134,28 @@ namespace MyTestVueApp.Server.Controllers
         /// <summary>
         /// Checks if artwork is liked by current user
         /// </summary>
-        /// <param name="artId">Id of the art being checked</param>
-        /// <param name="commentId">Id of the comment being checked</param>
         /// <returns>True if it is liked, false otherwise</returns>
         [HttpGet]
         [Route("IsCommentLiked")]
         [ProducesResponseType(typeof(bool), 200)]
-        public async Task<IActionResult> IsCommentLiked([FromQuery] int artId, int commentId)
+        public async Task<IActionResult> IsCommentLiked([FromQuery] int commentId)
         {
             try
             {
-                var comment = CommentService.GetCommentsByArtId(artId);
                 if (Request.Cookies.TryGetValue("GoogleOAuth", out var userId))
                 {
                     var artist = await LoginService.GetUserBySubId(userId);
-                    if (await comment == null)
-                    {
-                        throw new ArgumentOutOfRangeException("Art was not found.");
-                    }
                     if (artist != null)
                     {
-                        var liked = await CommentLikeService.IsCommentLiked(artId, artist, commentId);
-                        return Ok(liked);
+                        var liked = await CommentLikeService.IsCommentLiked(artist, commentId);
+                        if (liked == null)
+                        {
+                            return NotFound("Comment not found.");
+                        }
+                        else
+                        {
+                            return Ok(liked);
+                        }
                     }
                     else
                     {

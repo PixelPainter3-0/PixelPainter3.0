@@ -95,11 +95,10 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CommentDislikes')
 BEGIN
     CREATE TABLE CommentDislikes (
         ArtistId INT,
-        ArtId INT,
         CommentId INT,
         CreationDate DATETIME DEFAULT GETDATE(),
         Viewed INT DEFAULT 0,
-        PRIMARY KEY (ArtistId, ArtId, CommentId),
+        PRIMARY KEY (ArtistId, CommentId),
         CONSTRAINT FK_CommentDislikes_Art FOREIGN KEY (CommentId) REFERENCES Comment(Id) ON DELETE CASCADE
     );
 END
@@ -108,11 +107,10 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CommentLikes')
 BEGIN
     CREATE TABLE CommentLikes (
         ArtistId INT,
-        ArtId INT,
         CommentId INT,
         CreationDate DATETIME DEFAULT GETDATE(),
         Viewed INT DEFAULT 0,
-        PRIMARY KEY (ArtistId, ArtId, CommentId),
+        PRIMARY KEY (ArtistId, CommentId),
         CONSTRAINT FK_CommentLikes_Art FOREIGN KEY (CommentId) REFERENCES Comment(Id) ON DELETE CASCADE
     );
 END

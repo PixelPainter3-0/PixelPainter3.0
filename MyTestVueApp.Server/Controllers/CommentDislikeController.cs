@@ -32,11 +32,9 @@ namespace MyTestVueApp.Server.Controllers
         /// <summary>
         /// Marks the current user to dislike an artwork
         /// </summary>
-        /// <param name="commentId">Id of the comment the user is disliking</param>
-        /// <param name="artId">Id of the art the user is disliking the comment on</param>
         [HttpPost]
         [Route("InsertCommentDislike")]
-        public async Task<IActionResult> InsertCommentDislike([FromQuery] int commentId, int artId)
+        public async Task<IActionResult> InsertCommentDislike([FromQuery] int commentId)
         {
             try
             {
@@ -47,7 +45,7 @@ namespace MyTestVueApp.Server.Controllers
                     if (artist != null)
                     {
                         // You can add additional checks here if needed
-                        var rowsChanged = await CommentDislikeService.InsertCommentDislike(artId, artist, commentId);
+                        var rowsChanged = await CommentDislikeService.InsertCommentDislike(artist, commentId);
                         if (rowsChanged > 0) // If the dislike has sucessfully been inserted
                         {
                             return Ok();
@@ -84,11 +82,9 @@ namespace MyTestVueApp.Server.Controllers
         /// <summary>
         /// Remove a dislike from the database
         /// </summary>
-        /// <param name="artId">Id of the art the user is undisliking</param>
-        /// <param name="commentId">Id of the comment the user is undisliking</param>
         [HttpDelete]
         [Route("RemoveCommentDislike")]
-        public async Task<IActionResult> RemoveCommentDislike([FromQuery] int artId, int commentId)
+        public async Task<IActionResult> RemoveCommentDislike([FromQuery] int commentId)
         {
             try
             {
@@ -99,7 +95,7 @@ namespace MyTestVueApp.Server.Controllers
                     if (artist != null)
                     {
                         // You can add additional checks here if needed
-                        var rowsChanged = await CommentDislikeService.RemoveCommentDislike(artId, artist, commentId);
+                        var rowsChanged = await CommentDislikeService.RemoveCommentDislike(artist, commentId);
                         if (rowsChanged > 0) // If the dislike has sucessfully been removed
                         {
                             return Ok();
@@ -136,27 +132,20 @@ namespace MyTestVueApp.Server.Controllers
         /// <summary>
         /// Checks if artwork is disliked by current user
         /// </summary>
-        /// <param name="artId">Id of the art being checked</param>
-        /// <param name="commentId">Id of the comment being checked</param>
         /// <returns>True if it is disliked, false otherwise</returns>
         [HttpGet]
         [Route("IsCommentDisliked")]
         [ProducesResponseType(typeof(bool), 200)]
-        public async Task<IActionResult> IsCommentDisliked([FromQuery] int artId, int commentId)
+        public async Task<IActionResult> IsCommentDisliked([FromQuery]int commentId)
         {
             try
             {
-                var comment = CommentService.GetCommentsByArtId(artId);
                 if (Request.Cookies.TryGetValue("GoogleOAuth", out var userId))
                 {
                     var artist = await LoginService.GetUserBySubId(userId);
-                    if (await comment == null)
-                    {
-                        throw new ArgumentOutOfRangeException("Art was not found.");
-                    }
                     if (artist != null)
                     {
-                        var disliked = await CommentDislikeService.IsCommentDisliked(artId, artist, commentId);
+                        var disliked = await CommentDislikeService.IsCommentDisliked(artist, commentId);
                         return Ok(disliked);
                     }
                     else
