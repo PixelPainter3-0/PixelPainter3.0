@@ -4,7 +4,10 @@
       <Card class="h-fit">
         <template #content>
           <Avatar icon="pi pi-user" class="mr-2" size="xlarge" shape="circle" />
-          <div class="text-3xl p-font-bold">{{ curUsername.name }}</div>
+          <div class="text-3xl p-font-bold">{{ 
+          //@ts-ignore
+           curUsername.name 
+           }}</div>
           <div class="flex mt-4 p-2 gap-2 flex-column">
             <Button
               :disabled="!canEdit"
@@ -163,6 +166,7 @@ var likedArt = ref<Art[]>([]);
 onMounted(async () => {
   await LoginService.getCurrentUser().then((user: Artist) => {
     curUser.value = user;
+    // @ts-ignore
     curUsername.value = curUser.value;
     if (user.id == 0) {
       router.go(-1);
@@ -176,7 +180,7 @@ onMounted(async () => {
 
     isAdmin.value = user.isAdmin;
   });
-  //
+
   await LoginService.GetArtistByName(name).then((promise: Artist) => {
     curArtist.value = promise;
     newUsername.value = promise.name;
@@ -243,6 +247,7 @@ async function updateUsername(): Promise<void> {
           detail: "Username successfully changed",
           life: 3000
         });
+        // @ts-ignore
         curUsername.value.name = newUsername.value;
         artist.value.name = newUsername.value;
         isEditing.value = false;
