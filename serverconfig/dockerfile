@@ -10,7 +10,7 @@ COPY . .
 # Build in root directory
 
 WORKDIR /app/mytestvueapp.client
-RUN npm install --legacy-peer-deps --force
+RUN npm install --legacy-peer-deps
 
 # Moves config file in serverconfig to the proper configuration location
 RUN mv /app/serverconfig/appsettings.json /app/MyTestVueApp.Server/Configuration
