@@ -1,0 +1,35 @@
+version: '3.8'
+
+#Only used for development. Database will be setup differently in prod
+
+services:
+  pixek:
+    image: pixelpainter:v1.0.0
+    container_name: pixelpainter
+    ports:
+      - "5173:5173"
+    # Add volumes for branch and https certs
+    networks:
+      - pixel_network
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver
+    environment:
+      - SA_PASSWORD=LocalPassword123 # Retrieves password from .env file
+      - ACCEPT_EULA=Y
+    ports:
+      - "1433:1433"
+    volumes:
+      - ../init.sql:/init.sql # Copies the init sql script to the container
+      - ./entrypoint.sh:/entrypoint.sh # Copies the entrypoint script to the container
+      # - sqlserverdata:/var/opt/mssql # Uncomment this line and volumes to persist data
+    command: ["sh", "/entrypoint.sh"] # Runs the entrypoint script on startup
+    networks:
+      - pixel_network
+
+networks:
+  pixel_network:
+
+# volumes: 
+#   sqlserverdata:
+    
