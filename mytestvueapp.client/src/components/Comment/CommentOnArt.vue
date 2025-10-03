@@ -54,6 +54,20 @@
           label="Reply"
           severity="secondary"
         />
+        <CommentLikeButton
+          :comment-id="props.comment.id!"
+          :commentlikes="props.comment.numLikes"
+          :is-disliked="props.comment.isDisliked"
+          @liked="props.comment.isLiked = true; props.comment.numLikes++"
+          @unliked="props.comment.isLiked = false; props.comment.numLikes--"
+         ></CommentLikeButton>
+        <CommentDislikeButton
+          :comment-id="props.comment.id!"
+          :commentdislikes="props.comment.numDislikes"
+          :is-liked="props.comment.isLiked"
+          @disliked="props.comment.isDisliked = true; props.comment.numDislikes++"
+          @undisliked="props.comment.isDisliked = false; props.comment.numDislikes--"
+        ></CommentDislikeButton>
         <Button
           v-if="comment.currentUserIsOwner || user"
           icon="pi pi-ellipsis-h"
@@ -92,25 +106,38 @@
 import CommentAccessService from "../../services/CommentAccessService";
 
 import type Comment from "@/entities/Comment";
+import Comments from "@/entities/Comment";
+import Art from "@/entities/Art";
 import { ref, watch, onMounted } from "vue";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import Menu from "primevue/menu";
 import { useToast } from "primevue/usetoast";
+import { useRoute } from "vue-router";
 import NewComment from "./NewComment.vue";
 import LoginService from "../../services/LoginService";
 import router from "@/router";
+import CommentLikeButton from "../CommentLikeButton.vue"
+import CommentDislikeButton from "../CommentDislikeButton.vue";
+import CommentLikeService from "@/services/CommentLikeService";
+import CommentDislikeService from "@/services/CommentDislikeService";
 
 const emit = defineEmits(["deleteComment"]);
 
 const editing = ref<boolean>(false);
+const comments = ref<Comments>(new Comments());
+const art = ref<Art>(new Art());
 const newMessage = ref<string>("");
 const toast = useToast();
+const route = useRoute();
 const showReply = ref<boolean>(false);
 const menu = ref<any>();
 const user = ref<boolean>(false);
 const dateFormatted = ref<string>("");
 const hover = ref<boolean>(false);
+const id = Number(route.params.id);
+const isCommentLiked = ref<boolean>(false);
+const isCommentDisliked = ref<boolean>(false);
 
 function openMenu(): void {
   menu.value.toggle(event);
@@ -152,6 +179,11 @@ onMounted(async () => {
   const differenceMinutes = Math.round(differenceMs / (1000 * 60));
 
   dateFormatted.value = getRelativeTime(differenceMinutes);
+
+  if (await LoginService.isLoggedIn()) {
+    isCommentLiked.value = await CommentLikeService.isCommentLiked(props.comment.numLikes);
+    isCommentDisliked.value = await CommentDislikeService.isCommentDisliked(props.comment.numDislikes);
+  }
 });
 
 const props = defineProps<{

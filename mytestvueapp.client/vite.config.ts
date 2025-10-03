@@ -73,6 +73,14 @@ export default defineConfig({
         target,
         secure: false
       },
+      "^/commentlike": {
+        target,
+        secure: false
+      },
+      "^/commentdislike": {
+        target,
+        secure: false
+      },
       "^/notification/": {
         target,
         secure: false
