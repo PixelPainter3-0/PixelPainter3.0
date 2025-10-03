@@ -1,7 +1,5 @@
 version: '3.8'
 
-#Only used for development. Database will be setup differently in prod
-
 services:
   pixek:
     image: pixelpainter:v1.0.0
