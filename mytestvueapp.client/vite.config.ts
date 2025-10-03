@@ -84,6 +84,10 @@ export default defineConfig({
       "^/socket/": {
         target,
         secure: false,
+      },
+      "^/tag": {
+        target,
+        secure: false,
       }
     },
     port: 5173,
