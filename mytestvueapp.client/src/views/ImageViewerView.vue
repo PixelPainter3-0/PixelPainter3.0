@@ -178,6 +178,7 @@
       :comment="Comment"
       @delete-comment="updateComments"
     ></CommentOnArt>
+
   </div>
 </template>
 <script setup lang="ts">
@@ -195,6 +196,7 @@ import NewComment from "@/components/Comment/NewComment.vue";
 import Card from "primevue/card";
 import LikeButton from "@/components/LikeButton.vue";
 import DislikeButton from "@/components/DislikeButton.vue";
+import CommentDislikeButton from "@/components/CommentDislikeButton.vue";
 import Button from "primevue/button";
 import router from "@/router";
 import { useToast } from "primevue/usetoast";
@@ -232,6 +234,7 @@ const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
+const isCommentDisliked = ref<boolean>(false);
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {

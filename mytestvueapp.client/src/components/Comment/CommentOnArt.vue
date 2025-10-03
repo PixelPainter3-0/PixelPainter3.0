@@ -54,6 +54,22 @@
           label="Reply"
           severity="secondary"
         />
+        <CommentLikeButton
+        class=""
+        :comment-id="id"
+        :commentlikes="comments.numLikes"
+        :is-liked="isCommentLiked"
+        @liked="isCommentLiked = true"
+        @unliked="isCommentLiked = false"
+        ></CommentLikeButton>
+        <CommentDislikeButton
+        class=""
+        :comment-id="id"
+        :commentdislikes="comments.numDislikes"
+        :is-liked="isCommentLiked"
+        @disliked="isCommentDisliked = true"
+        @undisliked="isCommentDisliked = false"
+        ></CommentDislikeButton>
         <Button
           v-if="comment.currentUserIsOwner || user"
           icon="pi pi-ellipsis-h"
@@ -92,25 +108,34 @@
 import CommentAccessService from "../../services/CommentAccessService";
 
 import type Comment from "@/entities/Comment";
+import Comments from "@/entities/Comment";
 import { ref, watch, onMounted } from "vue";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import Menu from "primevue/menu";
 import { useToast } from "primevue/usetoast";
+import { useRoute } from "vue-router";
 import NewComment from "./NewComment.vue";
 import LoginService from "../../services/LoginService";
 import router from "@/router";
+import CommentLikeButton from "../CommentLikeButton.vue"
+import CommentDislikeButton from "../CommentDislikeButton.vue";
 
 const emit = defineEmits(["deleteComment"]);
 
 const editing = ref<boolean>(false);
+const comments = ref<Comments>(new Comments());
 const newMessage = ref<string>("");
 const toast = useToast();
+const route = useRoute();
 const showReply = ref<boolean>(false);
 const menu = ref<any>();
 const user = ref<boolean>(false);
 const dateFormatted = ref<string>("");
 const hover = ref<boolean>(false);
+const id = Number(route.params.id);
+const isCommentLiked = ref<boolean>(false);
+const isCommentDisliked = ref<boolean>(false);
 
 function openMenu(): void {
   menu.value.toggle(event);
