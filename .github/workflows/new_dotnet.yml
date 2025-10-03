@@ -58,6 +58,13 @@ jobs:
       #   with:
       #     name: published-app
 
+      - name: Get version number from package.json
+        run: echo "VERSION=$( npm pkg get version )" >> $GITHUB_ENV
+        working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
+
+      - name: Use dynamic variable
+        run: echo "The dynamic variable is ${{ env.VERSION }}"
+
       - name: Set up SSH agent with Server
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -76,7 +83,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker buildx build -f /var/www/app/serverconfig/dockerfile . -t pixelpainter:v1.0.0
+            docker buildx build -f /var/www/app/serverconfig/dockerfile . -t pixelpainter:v${{ env.version }}
 
 
       # - name: Run the dotnet app
