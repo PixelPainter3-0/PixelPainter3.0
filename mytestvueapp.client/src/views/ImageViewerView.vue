@@ -19,7 +19,7 @@
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-20rem ml-5">
+    <Card class="w-35rem ml-5">
       <template #content>
         <div>
           <div
@@ -51,6 +51,21 @@
         </div>
         <div>Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
+         <!-- Tags Section -->
+        <div v-if="art.tags && art.tags.length" class="mt-3">
+          <h4 class="text-sm font-semibold mb-2">Tags:</h4>
+          <ul class="tag-list">
+            <li
+              v-for="tag in art.tags"
+              :key="tag.id || tag.name"
+              class="tag-pill"
+              title="Tag"
+            >
+              {{ tag.name }}
+            </li>
+          </ul>
+        </div>
+
         <div class="flex flex-column gap-2 mt-4">
           <div class="flex gap-2">
             <LikeButton
@@ -71,6 +86,13 @@
             ></DislikeButton>
             <SaveImageToFile
               :art="art"
+              :fps="art.gifFps"
+              :gifFromViewer="urls"
+              :filtered="filtered"
+              :filteredArt="squareColor"
+            />
+            <StartArtFromImage
+            :art="art"
               :fps="art.gifFps"
               :gifFromViewer="urls"
               :filtered="filtered"
@@ -196,14 +218,15 @@ import NewComment from "@/components/Comment/NewComment.vue";
 import Card from "primevue/card";
 import LikeButton from "@/components/LikeButton.vue";
 import DislikeButton from "@/components/DislikeButton.vue";
-import CommentDislikeButton from "@/components/CommentDislikeButton.vue";
 import Button from "primevue/button";
+import Tag from "primevue/tag"; // Add this import
 import router from "@/router";
 import { useToast } from "primevue/usetoast";
 import LoginService from "../services/LoginService";
 import GIFCreationService from "@/services/GIFCreationService";
 import { useLayerStore } from "@/store/LayerStore";
 import { PixelGrid } from "@/entities/PixelGrid";
+import StartArtFromImage from "@/components/PainterUi/StartArtFromImage.vue";
 
 const layerStore = useLayerStore();
 
@@ -234,7 +257,6 @@ const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
-const isCommentDisliked = ref<boolean>(false);
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {
@@ -902,3 +924,38 @@ async function gifDisplay(): Promise<void> {
   );
 }
 </script>
+<style scoped>
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tag-pill {
+  background: #2a313a;              /* Dark gray */
+  color: #ffffff;                   /* White text */
+  padding: .40rem .75rem;
+  font-size: .7rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 9999px;
+  border: 1px solid #4b5563;        /* Slightly lighter border */
+  letter-spacing: .3px;
+  cursor: default;
+  user-select: none;
+  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
+}
+
+.tag-pill:hover {
+  background: #4b5563;              /* Lighter on hover */
+  border-color: #6b7280;
+}
+
+.tag-pill:focus-visible {
+  outline: 2px solid #545862;
+  outline-offset: 2px;
+}
+</style>

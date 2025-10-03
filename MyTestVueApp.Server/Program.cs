@@ -34,6 +34,7 @@ builder.Services.AddTransient<ICommentLikeService, CommentLikeService>();
 builder.Services.AddTransient<ICommentAccessService, CommentAccessService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
+builder.Services.AddTransient<ITagService, TagService>();
 
 var app = builder.Build();
 
