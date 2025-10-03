@@ -28,6 +28,7 @@ builder.Services.Configure<ApplicationConfiguration>(builder.Configuration.GetSe
 builder.Services.AddTransient<IArtAccessService, ArtAccessService>();
 builder.Services.AddTransient<ILoginService, LoginService>();
 builder.Services.AddTransient<ILikeService, LikeService>();
+builder.Services.AddTransient<IDislikeService, DislikeService>();
 builder.Services.AddTransient<ICommentAccessService, CommentAccessService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();

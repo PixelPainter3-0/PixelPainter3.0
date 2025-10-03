@@ -1,4 +1,12 @@
 <template>
+  <div
+    style="text-align: center"
+    class="justify-content-center flex w-full h-full align-items-center"
+  >
+    <h2 class="flex">
+      {{ art.title }}
+    </h2>
+  </div>
   <div class="justify-content-center flex w-full h-full align-items-center">
     <div v-if="!art.isGif && art" class="border-2">
       <MyCanvas
@@ -11,26 +19,39 @@
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-20rem ml-5">
+    <Card class="w-28rem ml-5">
       <template #content>
         <h3 class="flex">
           {{ art.title }}
         </h3>
+        <div></div>
           <div
             :style="{
-              textDecoration: hover ? 'underline' : 'none',
-              cursor: hover ? 'pointer' : 'none'
+              textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
+              cursor: hoverIndex === 'main' ? 'pointer' : 'default'
             }"
-            v-for="(artist, index) in art.artistName"
+            class="py-1 font-semibold"
+            @click="router.push(`/accountpage/${art.artistName[0]}`)"
+            v-on:mouseover="hoverIndex = 'main'"
+            v-on:mouseleave="hoverIndex = null"
+          >
+            By {{ art.artistName[0] }}
+          </div>
+          <div
+            :style="{
+              textDecoration: hoverIndex === index ? 'underline' : 'none',
+              cursor: hoverIndex === index ? 'pointer' : 'default'
+            }"
+            v-for="(artist, index) in art.artistName.slice(1)"
             :key="index"
             class="py-1 font-semibold"
             @click="router.push(`/accountpage/${artist}`)"
-            v-on:mouseover="hover = true"
-            v-on:mouseleave="hover = false"
+            v-on:mouseover="hoverIndex = index"
+            v-on:mouseleave="hoverIndex = null"
           >
             {{ artist }}
           </div>
-        
+        </div>
         <div>Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
          <!-- Tags Section -->
@@ -54,9 +75,27 @@
               class=""
               :art-id="id"
               :likes="art.numLikes"
+              :is-disliked="isDisliked"
+              @liked="isLiked = true"
+              @unliked="isLiked = false"
             ></LikeButton>
+            <DislikeButton
+              class=""
+              :art-id="id"
+              :dislikes="art.numDislikes"
+              :is-liked="isLiked"
+              @disliked="isDisliked = true"
+              @undisliked="isDisliked = false"
+            ></DislikeButton>
             <SaveImageToFile
               :art="art"
+              :fps="art.gifFps"
+              :gifFromViewer="urls"
+              :filtered="filtered"
+              :filteredArt="squareColor"
+            />
+            <StartArtFromImage
+            :art="art"
               :fps="art.gifFps"
               :gifFromViewer="urls"
               :filtered="filtered"
@@ -180,6 +219,7 @@ import CommentAccessService from "../services/CommentAccessService";
 import NewComment from "@/components/Comment/NewComment.vue";
 import Card from "primevue/card";
 import LikeButton from "@/components/LikeButton.vue";
+import DislikeButton from "@/components/DislikeButton.vue";
 import Button from "primevue/button";
 import Tag from "primevue/tag"; // Add this import
 import router from "@/router";
@@ -188,6 +228,7 @@ import LoginService from "../services/LoginService";
 import GIFCreationService from "@/services/GIFCreationService";
 import { useLayerStore } from "@/store/LayerStore";
 import { PixelGrid } from "@/entities/PixelGrid";
+import StartArtFromImage from "@/components/PainterUi/StartArtFromImage.vue";
 
 const layerStore = useLayerStore();
 
@@ -197,7 +238,7 @@ const filtered = ref<boolean>(false);
 const duotone = ref<boolean>(false);
 const sepia = ref<boolean>(false);
 const prota = ref<boolean>(false);
-const hover = ref<boolean>(false);
+const hoverIndex = ref<string | number | null>(null);
 const deu = ref<boolean>(false);
 
 const route = useRoute();
@@ -216,6 +257,8 @@ const names = ref<String[]>([]);
 const GifURL = ref<string>("");
 const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
+const isLiked = ref<boolean>(false);
+const isDisliked = ref<boolean>(false);
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {

@@ -22,6 +22,7 @@ namespace MyTestVueApp.Server.Entities
         public int GifFrameNum { get; set; }
         public int GifFps { get; set; }
         public int NumLikes { get; set; }
+        public int NumDislikes { get; set; }
         public int NumComments { get; set; }
         public bool CurrentUserIsOwner { get; set; } = false;
         public List<Tag> Tags { get; set; }

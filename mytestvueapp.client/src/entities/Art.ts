@@ -17,9 +17,11 @@ export default class Art {
   //optional
   artistName: string[];
   numLikes: number;
+  numDislikes: number;
   numComments: number;
   currentUserIsOwner: boolean;
   isLiked: boolean;
+  isDisliked: boolean;
 
   isGif: boolean;
   gifID: number;
@@ -35,6 +37,7 @@ export default class Art {
     this.creationDate = "";
     this.isPublic = false;
     this.numLikes = 0;
+    this.numDislikes = 0;
     this.numComments = 0;
     this.pixelGrid = new PixelGrid(1, 1, "FF0000", false);
     this.currentUserIsOwner = false;
@@ -46,5 +49,6 @@ export default class Art {
     this.isLiked = false;
 
     this.tags = []; // Initialize Tags as an empty array
+    this.isDisliked = false;
   }
 }
