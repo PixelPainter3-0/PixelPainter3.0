@@ -21,10 +21,7 @@
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
     <Card class="w-28rem ml-5">
       <template #content>
-        <h3 class="flex">
-          {{ art.title }}
-        </h3>
-        <div></div>
+        <div>
           <div
             :style="{
               textDecoration: hoverIndex === 'main' ? 'underline' : 'none',

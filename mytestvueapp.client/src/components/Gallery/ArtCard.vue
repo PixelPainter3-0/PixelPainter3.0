@@ -96,19 +96,19 @@ import MyCanvas from "../MyCanvas/MyCanvas.vue";
 import Art from "@/entities/Art";
 import router from "@/router";
 
-const title = ref<string>("");
+//const title = ref<string>("");
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
 
-onMounted(() => {
-  if (props.art.title.length > 20) {
-    const tempTitle = props.art.title.substring(0, 20);
-    const elipsis = "...";
-    title.value = tempTitle + elipsis;
-  } else {
-    title.value = props.art.title;
-  }
-});
+// onMounted(() => {
+//   if (props.art.title.length > 20) {
+//     const tempTitle = props.art.title.substring(0, 20);
+//     const elipsis = "...";
+//     title.value = tempTitle + elipsis;
+//   } else {
+//     title.value = props.art.title;
+//   }
+// });
 
 const props = defineProps<{
   art: Art;
@@ -123,6 +123,15 @@ const overflowCount = computed(() =>
 const overflowTitle = computed(() =>
   (props.art.tags || []).slice(6).map(t => t.name).join(", ")
 );
+const title = computed(() => {
+  if (props.art.title.length > 20) {
+    const tempTitle = props.art.title.substring(0, 20);
+    const elipsis = "...";
+    return tempTitle + elipsis;
+  } else {
+    return props.art.title;
+  }
+});
 </script>
 
 <style scoped>
