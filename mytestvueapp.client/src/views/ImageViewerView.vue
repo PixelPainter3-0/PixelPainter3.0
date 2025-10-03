@@ -19,7 +19,7 @@
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-28rem ml-5">
+    <Card class="w-35rem ml-5">
       <template #content>
         <div>
           <div
