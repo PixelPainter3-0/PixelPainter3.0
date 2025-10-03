@@ -73,6 +73,7 @@ const isImage = ref<boolean>(true);
 
 function updateLocalStorage(): void {
   layerStore.empty(); //just in case
+  
   let pixelGrid = new PixelGrid(
     resolution.value,
     resolution.value,
@@ -89,6 +90,7 @@ onMounted(() => {
     router.push("/paint");
   }
 });
+
 </script>
 <style>
 .p-colorpicker-preview {

@@ -50,14 +50,4 @@ describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
       .click();
     browser.assert.urlEquals(this.pixelpainterurl_base + "gallery");
   });
-
-  // it('Light mode button', (browser) => {
-  //   browser
-  //     .element.
-  //     .assert.visible();
-  //   browser
-  //     .element.findByText('Gallery')
-  //     .click();
-  //   browser.assert.urlEquals(this.pixelpainterurl_base + "gallery");
-  // });
 });

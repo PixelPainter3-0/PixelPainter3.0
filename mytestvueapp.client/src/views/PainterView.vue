@@ -70,25 +70,36 @@
                       v-model:greyscale="greyscale" />
     </template>
     <template #end>
-      <Button icon="pi pi-times"
-              class="mr-2"
-              severity="primary"
-              label="Clear"
-              @click="clear()" />
-      <Button icon="pi pi-expand"
-              class="mr-2"
-              severity="primary"
-              label="Recenter"
-              @click="canvas?.recenter()" />
-      <Button :disabled="connected"
-              :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
-              class="mr-2 Rainbow"
-              label="Gravity"
-              @click="runGravity()" />
-      <Button icon="pi pi-lightbulb"
-              class="Rainbow"
-              label="Give Me Color!"
-              @click="randomizeGrid()" />
+      
+      <Button
+        icon="pi pi-times"
+        class="mr-2"
+        severity="primary"
+        label="Clear"
+        @click="clear()"
+      />
+      <Button
+        icon="pi pi-expand"
+        class="mr-2"
+        severity="primary"
+        label="Recenter"
+        @click="canvas?.recenter()"
+      />
+      <Button
+        :disabled="connected"
+        :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
+        class="mr-2 Rainbow"
+        label="Gravity"
+        @click="runGravity()"
+      />
+      <Button
+        icon="pi pi-lightbulb"
+        class="Rainbow"
+        label="Give Me Color!"
+        @click="randomizeGrid()"
+      />
+      <Button label="Toggle Music"
+        @click="toggleMusic()" />
     </template>
   </Toolbar>
 </template>
@@ -116,7 +127,9 @@
   import { Pixel } from "@/entities/Pixel";
   import Artist from "@/entities/Artist";
 
-  import LoginService from "@/services/LoginService";
+//services
+import LoginService from "@/services/LoginService";
+import GIFCreationService from "@/services/GIFCreationService";
 
   //vue
   import { ref, watch, computed, onMounted, onUnmounted } from "vue";
@@ -128,7 +141,6 @@
   import ArtAccessService from "@/services/ArtAccessService";
   import Art from "@/entities/Art";
   import ConnectButton from "@/components/PainterUi/ConnectButton.vue";
-  import GIFCreationService from "@/services/GIFCreationService";
 
   //Other
   import * as SignalR from "@microsoft/signalr";
@@ -149,15 +161,23 @@
   const greyscale = ref<boolean>(false);
   const loggedIn = ref<boolean>(false);
 
-  // Connection Information
-  const connected = ref<boolean>(false);
-  const groupName = ref<string>("");
-  let connection = new SignalR.HubConnectionBuilder()
-    .withUrl("https://localhost:7154/signalhub", {
-      skipNegotiation: true,
-      transport: SignalR.HttpTransportType.WebSockets
-    })
-    .build();
+// Connection Information
+const connected = ref<boolean>(false);
+const groupName = ref<string>("");
+let connection = new SignalR.HubConnectionBuilder()
+  .withUrl("https://localhost:7154/signalhub", {
+    skipNegotiation: true,
+    transport: SignalR.HttpTransportType.WebSockets
+  })
+  .build();
+      
+var audioPlaying = 0;
+const audioFiles = [
+    "/src/music/In-the-hall-of-the-mountain-king.mp3",
+    "/src/music/flight-of-the-bumblebee.mp3",
+    "/src/music/OrchestralSuiteNo3.mp3"
+];
+const audioRef = ref(new Audio());
 
   connection.on("Send", (user: string, msg: string) => {
     console.log("Received Message", user + " " + msg);
@@ -371,25 +391,25 @@
           artist.value.name = "Guest";
         }
 
-        if (route.params.id) {
-          const id: number = parseInt(route.params.id as string);
-          ArtAccessService.getArtById(id)
-            .then((data) => {
-              if (!data.artistId.includes(artist.value.id)) {
-                console.log(artist.value);
-                router.go(-1);
-                toast.add({
-                  severity: "error",
-                  summary: "Forbid",
-                  detail: "Don't do that.",
-                  life: 3000
-                });
-              }
-              art.value.id = data.id;
-              art.value.title = data.title;
-              art.value.isPublic = data.isPublic;
-              art.value.pixelGrid.isGif = data.isGif;
-              art.value.isGif = data.isGif;
+      if (route.params.id) {
+        const id: number = parseInt(route.params.id as string);
+        ArtAccessService.getArtById(id)
+          .then((data) => {
+            if (!data.artistId.includes(artist.value.id)) {
+              console.log(artist.value);
+              router.go(-1);
+              toast.add({
+                severity: "error",
+                summary: "Forbid",
+                detail: "Don't do that.",
+                life: 3000
+              });
+            }
+            art.value.id = data.id;
+            art.value.title = data.title;
+            art.value.isPublic = data.isPublic;
+            art.value.pixelGrid.isGif = data.isGif;
+            art.value.isGif = data.isGif;
 
               canvas.value?.recenter();
               art.value.pixelGrid.backgroundColor =
@@ -507,20 +527,19 @@
     }
   );
 
-  //functions
-
-  function runGravity() {
-    if (intervalId.value != -1) {
-      clearInterval(intervalId.value);
-      intervalId.value = -1;
-    } else {
-      intervalId.value = setInterval(
-        fallingSand,
-        30,
-        layerStore.grids[layerStore.layer]
-      );
-    }
+//functions
+function runGravity() {
+  if (intervalId.value != -1) {
+    clearInterval(intervalId.value);
+    intervalId.value = -1;
+  } else {
+    intervalId.value = setInterval(
+      fallingSand,
+      30,
+      layerStore.grids[layerStore.layer]
+    );
   }
+}
 
   function getLinePixels(start: Vector2, end: Vector2): Vector2[] {
     const pixels: Vector2[] = [];
@@ -599,35 +618,34 @@
   function drawAtCoords(coords: Vector2[]) {
     let coordinates: Vector2[] = [];
 
-    if (
-      cursor.value.selectedTool.label === "Rectangle" ||
-      cursor.value.selectedTool.label === "Ellipse"
-    ) {
-      if (tempGrid) {
-        for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
-          for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
-            layerStore.grids[layerStore.layer].grid[i][j] = tempGrid[i][j];
-
-            canvas.value?.updateCell(layerStore.layer, i, j, tempGrid[i][j]);
-          }
+  if (
+    cursor.value.selectedTool.label === "Rectangle" ||
+    cursor.value.selectedTool.label === "Ellipse"
+  ) {
+    if (tempGrid) {
+      for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
+        for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
+          layerStore.grids[layerStore.layer].grid[i][j] = tempGrid[i][j];
+          canvas.value?.updateCell(layerStore.layer, i, j, tempGrid[i][j]);
         }
       }
     }
-    coords.forEach((coord: Vector2) => {
-      if (mouseButtonHeldDown.value) {
-        if (cursor.value.selectedTool.label === "Brush") {
-          for (let i = 0; i < cursor.value.size; i++) {
-            for (let j = 0; j < cursor.value.size; j++) {
-              if (
-                coord.x + i >= 0 &&
-                coord.x + i < layerStore.grids[layerStore.layer].width &&
-                coord.y + j >= 0 &&
-                coord.y + j < layerStore.grids[layerStore.layer].height
-              ) {
-                coordinates.push(new Vector2(coord.x + i, coord.y + j));
-                layerStore.grids[layerStore.layer].grid[coord.x + i][
-                  coord.y + j
-                ] = cursor.value.color;
+  }
+  coords.forEach((coord: Vector2) => {
+    if (mouseButtonHeldDown.value) {
+      if (cursor.value.selectedTool.label === "Brush") {
+        for (let i = 0; i < cursor.value.size; i++) {
+          for (let j = 0; j < cursor.value.size; j++) {
+            if (
+              coord.x + i >= 0 &&
+              coord.x + i < layerStore.grids[layerStore.layer].width &&
+              coord.y + j >= 0 &&
+              coord.y + j < layerStore.grids[layerStore.layer].height
+            ) {
+              coordinates.push(new Vector2(coord.x + i, coord.y + j));
+              layerStore.grids[layerStore.layer].grid[coord.x + i][
+                coord.y + j
+              ] = cursor.value.color;
 
                 if (!layerStore.grids[0].isGif) {
                   canvas.value?.updateCell(
@@ -867,32 +885,35 @@
 
     let boundary = art.value.pixelGrid.height;
 
-    let stepX = start.x;
-    while (stepX != end.x) {
-      if (stepX >= 0 && stepX < boundary) {
-        if (start.y >= 0 && start.y < boundary) coords.push(new Vector2(stepX, start.y));
-        if (end.y >= 0 && end.y < boundary) coords.push(new Vector2(stepX, end.y));
-      }
+  let stepX = start.x;
+  while (stepX != end.x) {
+    if (stepX >= 0 && stepX < boundary) {
+      if (start.y >= 0 && start.y < boundary)
+        coords.push(new Vector2(stepX, start.y));
+      if (end.y >= 0 && end.y < boundary)
+        coords.push(new Vector2(stepX, end.y));
+    }
 
       if (stepX < end.x) stepX++;
       else if (stepX > end.x) stepX--;
     }
 
-    let stepY = start.y;
-    while (stepY != end.y) {
-      if (stepY >= 0 && stepY < boundary) {
-        if (start.x >= 0 && start.x < boundary) coords.push(new Vector2(start.x, stepY));
-        if (end.x >= 0 && end.x < boundary) coords.push(new Vector2(end.x, stepY));
-      }
+  let stepY = start.y;
+  while (stepY != end.y) {
+    if (stepY >= 0 && stepY < boundary) {
+      if (start.x >= 0 && start.x < boundary)
+        coords.push(new Vector2(start.x, stepY));
+      if (end.x >= 0 && end.x < boundary)
+        coords.push(new Vector2(end.x, stepY));
+    }
 
       if (stepY < end.y) stepY++;
       else if (stepY > end.y) stepY--;
     }
 
-    if (end.x >= 0 && end.x < boundary &&
-      end.y >= 0 && end.y < boundary) {
-      coords.push(end);
-    }
+  if (end.x >= 0 && end.x < boundary && end.y >= 0 && end.y < boundary) {
+    coords.push(end);
+  }
 
     return coords;
   }
@@ -946,8 +967,8 @@
 
     let center = new Vector2(leftBound + xOffset / 2, lowerBound + yOffset / 2);
 
-    let a = Math.max(xOffset, yOffset) / 2; //Major Axis length
-    let b = Math.min(xOffset, yOffset) / 2; //Minor Axis length
+  let a = Math.max(xOffset, yOffset) / 2; //Major Axis length
+  let b = Math.min(xOffset, yOffset) / 2; //Minor Axis length
 
     if (xOffset > yOffset) {
       // Major Axis is Horrizontal
@@ -1043,219 +1064,275 @@
     router.push("/new");
   }
 
-  function onMouseUp() {
-    if (cursor.value.selectedTool.label == "Rectangle") {
-      sendPixels(
-        layerStore.layer,
-        cursor.value.color,
-        getRectanglePixels(startPix.value, endPix.value)
-      );
-    }
-    if (cursor.value.selectedTool.label == "Ellipse") {
-      sendPixels(
-        layerStore.layer,
-        cursor.value.color,
-        getEllipsePixels(startPix.value, endPix.value)
-      );
-    }
-  }
-
-
-  //Save to file functions
-  const props = defineProps<{
-  fps: number;
-  gifFromViewer?: string[];
-  filtered?: boolean;
-  filteredArt?: string;
-}>();
-    function flattenArt(): string[][] {
-    let width = layerStore.grids[0].width;
-    let height = layerStore.grids[0].height;
-    let arr: string[][] = Array.from({ length: height }, () =>
-      Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
+function onMouseUp() {
+  if (cursor.value.selectedTool.label == "Rectangle") {
+    sendPixels(
+      layerStore.layer,
+      cursor.value.color,
+      getRectanglePixels(startPix.value, endPix.value)
     );
+  } else if (cursor.value.selectedTool.label == "Ellipse") {
+    sendPixels(
+      layerStore.layer,
+      cursor.value.color,
+      getEllipsePixels(startPix.value, endPix.value)
+    );
+  }
+  layerStore.updateGrid();
+}
 
-    for (let length = 0; length < layerStore.grids.length; length++) {
-      for (let i = 0; i < height; i++) {
-        for (let j = 0; j < width; j++) {
-          //only set empty cells to background color if its the first layer
-          //layers above the first will just replace cells if they have a value
-          if (layerStore.grids[length].grid[i][j] !== "empty") {
-            arr[i][j] = layerStore.grids[length].grid[i][j];
-          }
+function undo() {
+  layerStore.undo();
+  canvas?.value.drawLayers(layerStore.layer);
+}
+function redo() {
+  layerStore.redo();
+  canvas?.value.drawLayers(layerStore.layer);
+}
+
+//Save to file functions
+function flattenArt(): string[][] {
+  let width = layerStore.grids[0].width;
+  let height = layerStore.grids[0].height;
+  let arr: string[][] = Array.from({ length: height }, () =>
+    Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
+  );
+
+  for (let length = 0; length < layerStore.grids.length; length++) {
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        //only set empty cells to background color if its the first layer
+        //layers above the first will just replace cells if they have a value
+        if (layerStore.grids[length].grid[i][j] !== "empty") {
+          arr[i][j] = layerStore.grids[length].grid[i][j];
         }
       }
     }
-    return arr;
   }
+  return arr;
+}
 
-    async function saveToFile(): Promise<void> {
-      const grid: string[][] = flattenArt();
+async function saveToFile(): Promise<void> {
+  const grid: string[][] = flattenArt();
 
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      if (!context) {
-        throw new Error("Could not get context");
-      }
-      const image = context.createImageData(grid.length, grid.length);
-
-      canvas.width = grid.length;
-      canvas.height = grid.length;
-
-      for (let x = 0; x < grid.length; x++) {
-        for (let y = 0; y < grid.length; y++) {
-          let pixelHex = grid[x][y];
-          pixelHex = pixelHex.replace("#", "").toUpperCase();
-          const index = (x + y * grid.length) * 4;
-          image?.data.set(
-            [
-              parseInt(pixelHex.substring(0, 2), 16),
-              parseInt(pixelHex.substring(2, 4), 16),
-              parseInt(pixelHex.substring(4, 6), 16),
-              255
-            ],
-            index
-          );
-        }
-      }
-      context?.putImageData(image, 0, 0);
-
-      //upscale the image to 1080
-      var upsizedCanvas = document.createElement("canvas");
-      upsizedCanvas.width = 1080;
-      upsizedCanvas.height = 1080;
-      var upsizedContext = upsizedCanvas.getContext("2d");
-      if (!upsizedContext) {
-        throw new Error("Could not get context");
-      }
-      upsizedContext.imageSmoothingEnabled = false; // Disable image smoothing
-      upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
-
-      const link = document.createElement("a");
-      link.download = "image.png";
-      link.href = upsizedCanvas.toDataURL("image/png");
-      link.click();
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Could not get context");
   }
+  const image = context.createImageData(grid.length, grid.length);
 
-  async function saveGIFFromPainter(): Promise<void> {
-    let urls: string[] = [];
-    let grids = layerStore.grids;
-    for (let i = 0; i < grids.length; i++) {
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      if (!context) {
-        throw new Error("Could not get context");
-      }
-      const image = context.createImageData(grids[i].width, grids[i].height);
+  canvas.width = grid.length;
+  canvas.height = grid.length;
 
-      canvas.width = grids[i].width;
-      canvas.height = grids[i].height;
-
-      for (let x = 0; x < grids[i].height; x++) {
-        for (let y = 0; y < grids[i].width; y++) {
-          let pixelHex;
-          if (grids[i].grid[x][y] === "empty") {
-            pixelHex = grids[i].backgroundColor;
-          } else {
-            pixelHex = grids[i].grid[x][y];
-          }
-          pixelHex = pixelHex.replace("#", "").toUpperCase();
-          const index = (x + y * grids[i].width) * 4;
-          image?.data.set(
-            [
-              parseInt(pixelHex.substring(0, 2), 16),
-              parseInt(pixelHex.substring(2, 4), 16),
-              parseInt(pixelHex.substring(4, 6), 16),
-              255
-            ],
-            index
-          );
-        }
-      }
-      context?.putImageData(image, 0, 0);
-
-      let upsizedCanvas = document.createElement("canvas");
-      upsizedCanvas.width = 1080;
-      upsizedCanvas.height = 1080;
-      let upsizedContext = upsizedCanvas.getContext("2d");
-      if (!upsizedContext) {
-        throw new Error("Could not get context");
-      }
-      upsizedContext.imageSmoothingEnabled = false;
-      upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
-
-      let dataURL = upsizedCanvas.toDataURL("image/png");
-      const strings = dataURL.split(",");
-      urls.push(strings[1]);
+  for (let x = 0; x < grid.length; x++) {
+    for (let y = 0; y < grid.length; y++) {
+      let pixelHex = grid[x][y];
+      pixelHex = pixelHex.replace("#", "").toUpperCase();
+      const index = (x + y * grid.length) * 4;
+      image?.data.set(
+        [
+          parseInt(pixelHex.substring(0, 2), 16),
+          parseInt(pixelHex.substring(2, 4), 16),
+          parseInt(pixelHex.substring(4, 6), 16),
+          255
+        ],
+        index
+      );
     }
-    GIFCreationService.createGIF(urls, fps.value);
   }
+  context?.putImageData(image, 0, 0);
 
-  async function saveGifFromImage() {
-    GIFCreationService.createGIF(props.gifFromViewer!, fps.value);
+  //upscale the image to 1080
+  var upsizedCanvas = document.createElement("canvas");
+  upsizedCanvas.width = 1080;
+  upsizedCanvas.height = 1080;
+  var upsizedContext = upsizedCanvas.getContext("2d");
+  if (!upsizedContext) {
+    throw new Error("Could not get context");
   }
+  upsizedContext.imageSmoothingEnabled = false; // Disable image smoothing
+  upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
 
-  // function saveFilteredImage() {
-  //   const canvas = document.createElement("canvas");
-  //   canvas.width = art.value.pixelGrid.width;
-  //   canvas.height = art.value.pixelGrid.width;
-  //   createContextFilter(canvas);
-  //   const upsizedCanvas = document.createElement("canvas");
-  //   upsizedCanvas.width = 1080;
-  //   upsizedCanvas.height = 1080;
-  //   const upsizedContext = upsizedCanvas.getContext("2d");
-  //   if (upsizedContext) upsizedContext.imageSmoothingEnabled = false;
-  //   upsizedContext?.translate(upsizedCanvas.width, 0); //its rotated for some reason
-  //   upsizedContext?.rotate(Math.PI / 2);
-  //   upsizedContext?.translate(0, upsizedCanvas.height);
-  //   upsizedContext?.scale(1, -1);
-  //   upsizedContext?.drawImage(
-  //     canvas,
-  //     0,
-  //     0,
-  //     upsizedCanvas.width,
-  //     upsizedCanvas.height
-  //   );
-  //   const link = document.createElement("a");
-  //   link.download = "image.png";
-  //   link.href = upsizedCanvas.toDataURL("image/png");
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-  // }
+  const link = document.createElement("a");
+  link.download = "image.png";
+  link.href = upsizedCanvas.toDataURL("image/png");
+  link.click();
+}
 
-  // function createContextFilter(canvas: HTMLCanvasElement) {
-  //   const ctx = canvas.getContext("2d")!;
-  //   const imageData = ctx.createImageData(
-  //     art.value.pixelGrid.width,
-  //     art.value.pixelGrid.width
-  //   );
-  //   const numPixels = art.value.pixelGrid.width * art.value.pixelGrid.width;
-  //   const expectedLength = numPixels * 6;
-  //   if (props.filteredArt?.length !== expectedLength) {
-  //     throw new Error(
-  //       `Expected hex string length ${expectedLength}, but got ${props.filteredArt!.length}`
-  //     );
-  //   }
-  //   for (let i = 0; i < numPixels; i++) {
-  //     const hex = props.filteredArt.slice(i * 6, i * 6 + 6);
-  //     const r = parseInt(hex.slice(0, 2), 16);
-  //     const g = parseInt(hex.slice(2, 4), 16);
-  //     const b = parseInt(hex.slice(4, 6), 16);
-  //     const index = i * 4;
-  //     imageData.data[index] = r;
-  //     imageData.data[index + 1] = g;
-  //     imageData.data[index + 2] = b;
-  //     imageData.data[index + 3] = 255; // alpha
-  //   }
-  //   ctx.putImageData(imageData, 0, 0);
-  // }
+async function saveGIFFromPainter(): Promise<void> {
+  let urls: string[] = [];
+  let grids = layerStore.grids;
+  for (let i = 0; i < grids.length; i++) {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Could not get context");
+    }
+    const image = context.createImageData(grids[i].width, grids[i].height);
 
+    canvas.width = grids[i].width;
+    canvas.height = grids[i].height;
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if (keyBindActive.value) {
-      if (event.key === "p") {
+    for (let x = 0; x < grids[i].height; x++) {
+      for (let y = 0; y < grids[i].width; y++) {
+        let pixelHex;
+        if (grids[i].grid[x][y] === "empty") {
+          pixelHex = grids[i].backgroundColor;
+        } else {
+          pixelHex = grids[i].grid[x][y];
+        }
+        pixelHex = pixelHex.replace("#", "").toUpperCase();
+        const index = (x + y * grids[i].width) * 4;
+        image?.data.set(
+          [
+            parseInt(pixelHex.substring(0, 2), 16),
+            parseInt(pixelHex.substring(2, 4), 16),
+            parseInt(pixelHex.substring(4, 6), 16),
+            255
+          ],
+          index
+        );
+      }
+    }
+    context?.putImageData(image, 0, 0);
+
+    let upsizedCanvas = document.createElement("canvas");
+    upsizedCanvas.width = 1080;
+    upsizedCanvas.height = 1080;
+    let upsizedContext = upsizedCanvas.getContext("2d");
+    if (!upsizedContext) {
+      throw new Error("Could not get context");
+    }
+    upsizedContext.imageSmoothingEnabled = false;
+    upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
+
+    let dataURL = upsizedCanvas.toDataURL("image/png");
+    const strings = dataURL.split(",");
+    urls.push(strings[1]);
+  }
+  
+  GIFCreationService.createGIF(urls, fps.value);
+}
+
+function toggleMusic(): void {
+        if (audioPlaying == 0) {
+            audioRef.value.pause();
+            audioRef.value.currentTime = 0;
+
+            var randomIndex = Math.floor(Math.random() * audioFiles.length);
+            var chosenMusic = audioFiles[randomIndex];
+            audioRef.value.src = chosenMusic;
+            audioRef.value.play();
+            audioPlaying = 1;
+        }
+        else {
+            audioRef.value.pause();
+            audioPlaying = 0;
+        }
+    }
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (keyBindActive.value) {
+    if (event.key === "p") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Pan";
+      canvas?.value.updateCursor();
+    } else if (event.key === "b") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Brush";
+      canvas?.value.updateCursor();
+    } else if (event.key === "e") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Eraser";
+      canvas?.value.updateCursor();
+    } else if (event.key === "d") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Pipette";
+      canvas?.value.updateCursor();
+    } else if (event.key === "f") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Bucket";
+      canvas?.value.updateCursor();
+    } else if (event.key === "r") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Rectangle";
+      canvas?.value.updateCursor();
+    } else if (event.key === "l") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Ellipse";
+      canvas?.value.updateCursor();
+    } else if (event.key === "q" && cursor.value.size > 1) {
+      event.preventDefault();
+      cursor.value.size -= 1;
+      canvas?.value.updateCursor();
+    } else if (event.key === "w" && cursor.value.size < 32) {
+      event.preventDefault();
+      cursor.value.size += 1;
+      canvas?.value.updateCursor();
+    } else if (event.key === "1") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[0];
+    } else if (event.key === "2") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[1];
+    } else if (event.key === "3") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[2];
+    } else if (event.key === "4") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[3];
+    } else if (event.key === "5") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[4];
+    } else if (event.key === "6") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[5];
+    } else if (event.key === "7") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[6];
+    } else if (event.key === "8") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[7];
+    } else if (event.key === "9") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[8];
+    } else if (event.key === "0") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[9];
+    } else if (event.key === "-") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[10];
+    } else if (event.key === "=") {
+      event.preventDefault();
+      updatePallet();
+      //@ts-ignore
+      cursor.value.color = currentPallet.value._value[11];
+    } else if (event.ctrlKey && event.key === "s") {
         event.preventDefault();
+<<<<<<< HEAD
         cursor.value.selectedTool.label = "Pan";
         canvas?.value.updateCursor();
       } else if (event.key === "b") {
@@ -1354,18 +1431,23 @@
         console.log("Ctrl+s was pressed.");
         event.preventDefault();
         console.log(art.value);
+=======
+>>>>>>> main
         if (art.value.pixelGrid.isGif) {
           saveGIFFromPainter();
-        // } else if (art.filtered) {
-        //   saveFilteredImage();
-        } else if (art.value.isGif) {
-          saveGifFromImage();
         } else {
           saveToFile();
         }
+      } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
+      event.preventDefault();
+      undo();
+      } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
+        event.preventDefault();
+        redo();
       }
     }
   }
+
 </script>
 <style scoped>
   .Rainbow,
