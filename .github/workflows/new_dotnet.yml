@@ -70,11 +70,17 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: see work dir
-        run: ls /home/runner/work/PixelPainter3.0/PixelPainter3.0
+      - name: Run deploy script
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir /var/www/app/v${{ env.version }}
           
       - name: Transfer artifact to the remote server
-        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/app/
+        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/app/v${{ env.version }}
 
       - name: Run deploy script
         uses: appleboy/ssh-action@v1.2.0
