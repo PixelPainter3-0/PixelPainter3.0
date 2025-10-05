@@ -363,6 +363,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 }
             }
         }
+
         /// <summary>
         /// Adds a new artwork to the database
         /// </summary>
