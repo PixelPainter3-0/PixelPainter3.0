@@ -3,27 +3,28 @@
     rounded
     :severity="disliked ? 'primary' : 'secondary'"
     :icon="disliked ? 'pi pi-thumbs-down-fill' : 'pi pi-thumbs-down'"
-    :label="(commentdislikes + localCommentDislike).toString()"
+    :label="(commentDislikes + localCommentDislike).toString()"
     @click.stop="dislikedClicked()"
   />
 </template>
 <script setup lang="ts">
 import Button from "primevue/button";
 import LoginService from "@/services/LoginService";
-import CommentAccessService from "@/services/CommentAccessService";
 import CommentDislikeService from "@/services/CommentDislikeService";
 import { useToast } from "primevue/usetoast";
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, defineEmits } from "vue";
 
 const props = defineProps<{
   commentId: number;
-  commentdislikes: number;
+  commentDislikes: number;
   isLiked: boolean;
 }>();
 const loggedIn = ref<boolean>(false);
 const localCommentDislike = ref<number>(0);
 const disliked = ref<boolean>(false);
+
+const emit = defineEmits(["disliked", "undisliked"]);
 
 const toast = useToast();
 
@@ -34,21 +35,24 @@ onMounted(async () => {
 });
 
 async function isDisliked(): Promise<void> {
-  if (!loggedIn.value) return;
-  disliked.value = await CommentDislikeService.isCommentDisliked(props.commentId);
+  if (loggedIn.value)
+    CommentDislikeService.isCommentDisliked(props.commentId).then(
+      (value) => (disliked.value = value)
+    );
 }
-
-watch(
-  () => props.commentdislikes,
-  (newVal) => {
-    localCommentDislike.value = newVal;
-  }
-);
 
 watch(
   () => props.commentId,
   async () => {
     await isDisliked();
+  }
+);
+watch(
+  () => props.isLiked,
+  async () => {
+    if (disliked.value && props.isLiked) {
+      dislikedClicked();
+    }
   }
 );
 
@@ -64,17 +68,23 @@ async function dislikedClicked(): Promise<void> {
     return;
   }
   if (disliked.value) {
-  const success = await CommentDislikeService.removeCommentDislike(props.commentId);
-  if (success) {
-    disliked.value = false;
-    localCommentDislike.value--;
+    const success = await CommentDislikeService.removeCommentDislike(
+      props.commentId
+    );
+    if (success) {
+      disliked.value = false;
+      localCommentDislike.value--;
+      emit("undisliked");
+    }
+  } else {
+    const success = await CommentDislikeService.insertCommentDislike(
+      props.commentId
+    );
+    if (success) {
+      disliked.value = true;
+      localCommentDislike.value++;
+      emit("disliked");
+    }
   }
-} else {
-  const success = await CommentDislikeService.insertCommentDislike(props.commentId);
-  if (success) {
-    disliked.value = true;
-    localCommentDislike.value++;
-  }
-}
 }
 </script>

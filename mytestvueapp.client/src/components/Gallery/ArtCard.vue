@@ -38,20 +38,20 @@
 
       <template #content>
         <!-- Tag pills -->
-        <ul
-          v-if="art.tags && art.tags.length"
-          class="tag-list px-2 pt-1 pb-0">
+        <ul v-if="art.tags && art.tags.length" class="tag-list px-2 pt-1 pb-0">
           <li
             v-for="t in limitedTags"
             :key="t.id || t.name"
             class="tag-pill"
-            :title="t.name">
+            :title="t.name"
+          >
             {{ t.name }}
           </li>
           <li
             v-if="overflowCount > 0"
             class="tag-pill more"
-            :title="overflowTitle">
+            :title="overflowTitle"
+          >
             +{{ overflowCount }}
           </li>
         </ul>
@@ -77,9 +77,6 @@
             icon="pi pi-comment"
             :label="art.numComments?.toString() || ''"
           />
-          <Button v-if="art.isGif" rounded severity="secondary" disabled
-            >Gif</Button
-          >
         </div>
       </template>
     </Card>
@@ -87,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, onMounted, computed } from "vue";
+import { defineProps, ref, computed } from "vue";
 import Card from "primevue/card";
 import Button from "primevue/button";
 import LikeButton from "../LikeButton.vue";
@@ -118,10 +115,13 @@ const props = defineProps<{
 
 const limitedTags = computed(() => (props.art.tags || []).slice(0, 6));
 const overflowCount = computed(() =>
-  (props.art.tags?.length || 0) > 6 ? (props.art.tags.length - 6) : 0
+  (props.art.tags?.length || 0) > 6 ? props.art.tags.length - 6 : 0
 );
 const overflowTitle = computed(() =>
-  (props.art.tags || []).slice(6).map(t => t.name).join(", ")
+  (props.art.tags || [])
+    .slice(6)
+    .map((t) => t.name)
+    .join(", ")
 );
 const title = computed(() => {
   if (props.art.title.length > 20) {
@@ -145,18 +145,18 @@ const title = computed(() => {
 .tag-list {
   list-style: none;
   margin: 0;
-  padding: 0 0 .25rem 0;
+  padding: 0 0 0.25rem 0;
   display: flex;
   flex-wrap: wrap;
-  gap: .35rem;
+  gap: 0.35rem;
 }
 
 .tag-pill {
   background: #2a313a;
   color: #fff;
-  font-size: .55rem;
+  font-size: 0.55rem;
   font-weight: 600;
-  padding: .30rem .55rem;
+  padding: 0.3rem 0.55rem;
   line-height: 1;
   border-radius: 9999px;
   border: 1px solid #434b55;
@@ -165,7 +165,7 @@ const title = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   user-select: none;
-  transition: .15s;
+  transition: 0.15s;
 }
 .tag-pill.more {
   background: #444155;

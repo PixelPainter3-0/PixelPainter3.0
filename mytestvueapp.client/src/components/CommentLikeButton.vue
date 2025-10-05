@@ -3,13 +3,13 @@
     rounded
     :severity="liked ? 'primary' : 'secondary'"
     :icon="liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"
-    :label="(commentlikes + localCommentLike).toString()"
+    :label="(commentLikes + localCommentLike).toString()"
     @click.stop="likedClicked()"
   />
 </template>
 <script setup lang="ts">
 import Button from "primevue/button";
-import CommentAccessService from "@/services/CommentAccessService";
+//import CommentAccessService from "@/services/CommentAccessService";
 import LoginService from "@/services/LoginService";
 import CommentLikeService from "@/services/CommentLikeService";
 import { useToast } from "primevue/usetoast";
@@ -18,13 +18,14 @@ import { ref, onMounted, watch } from "vue";
 
 const props = defineProps<{
   commentId: number;
-  artistId: number;
-  commentlikes: number;
-  isLiked: boolean;
+  commentLikes: number;
+  isDisliked: boolean;
 }>();
 const loggedIn = ref<boolean>(false);
 const localCommentLike = ref<number>(0);
 const liked = ref<boolean>(false);
+
+const emit = defineEmits(["liked", "unliked"]);
 
 const toast = useToast();
 
@@ -36,13 +37,23 @@ onMounted(async () => {
 
 async function isLiked(): Promise<void> {
   if (loggedIn.value)
-    CommentLikeService.isCommentLiked(props.commentId).then((value) => (liked.value = value));
+    CommentLikeService.isCommentLiked(props.commentId).then(
+      (value) => (liked.value = value)
+    );
 }
 
 watch(
   () => props.commentId,
   async () => {
     await isLiked();
+  }
+);
+watch(
+  () => props.isDisliked,
+  async () => {
+    if (liked.value && props.isDisliked) {
+      likedClicked();
+    }
   }
 );
 
@@ -57,18 +68,24 @@ async function likedClicked(): Promise<void> {
     });
     return;
   }
-    if (liked.value) {
-  const success = await CommentLikeService.removeCommentLike(props.commentId);
-  if (success) {
-    liked.value = false;
-    localCommentLike.value--;
+  if (liked.value) {
+    const success = await CommentLikeService.removeCommentLike(props.commentId);
+    if (success) {
+      liked.value = false;
+      emit("unliked");
+      if (localCommentLike.value >= 0) {
+        localCommentLike.value--;
+      }
+    }
+  } else {
+    const success = await CommentLikeService.insertCommentLike(props.commentId);
+    if (success) {
+      liked.value = true;
+      emit("liked");
+      if (localCommentLike.value <= 0) {
+        localCommentLike.value++;
+      }
+    }
   }
-} else {
-  const success = await CommentLikeService.insertCommentLike(props.commentId);
-  if (success) {
-    liked.value = true;
-    localCommentLike.value++;
-  }
-}
 }
 </script>
