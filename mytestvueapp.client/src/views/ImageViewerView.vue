@@ -200,6 +200,7 @@
       :comment="Comment"
       @delete-comment="updateComments"
     ></CommentOnArt>
+
   </div>
 </template>
 <script setup lang="ts">
