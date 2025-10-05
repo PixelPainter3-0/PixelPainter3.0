@@ -95,13 +95,13 @@
       <Button
         icon="pi pi-lightbulb"
         class="Rainbow"
-        label="Give Me Color!"
+        label="Color Blast!"
         @click="randomizeGrid()"
       />
       <Button 
         :icon="audioOn !=-1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
         :severity="audioOn !=-1 ? 'primary' : 'secondary'"
-        label="Music"
+        label=""
         class="ml-2"
         @click="toggleMusic()" />
     </template>
