@@ -1,3 +1,4 @@
+using MyTestVueApp.Server.Models;
 using System.Reflection.Metadata.Ecma335;
 
 namespace MyTestVueApp.Server.Entities
@@ -13,6 +14,7 @@ namespace MyTestVueApp.Server.Entities
         public PixelGrid PixelGrid { get; set; }
 
 
+
         //Optional external values
         public string[] ArtistName { get; set; }
         public bool IsGif { get; set; }
@@ -20,8 +22,10 @@ namespace MyTestVueApp.Server.Entities
         public int GifFrameNum { get; set; }
         public int GifFps { get; set; }
         public int NumLikes { get; set; }
+        public int NumDislikes { get; set; }
         public int NumComments { get; set; }
         public bool CurrentUserIsOwner { get; set; } = false;
+        public List<Tag> Tags { get; set; }
 
 
         public void SetArtists(List<Artist> artists)

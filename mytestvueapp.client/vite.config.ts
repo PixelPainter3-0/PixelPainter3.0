@@ -69,6 +69,10 @@ export default defineConfig({
         target,
         secure: false
       },
+      "^/dislike": {
+        target,
+        secure: false
+      },
       "^/notification/": {
         target,
         secure: false
@@ -78,6 +82,10 @@ export default defineConfig({
         secure: false,
       },
       "^/socket/": {
+        target,
+        secure: false,
+      },
+      "^/tag": {
         target,
         secure: false,
       }

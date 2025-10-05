@@ -80,6 +80,9 @@ async function markComment(commentId: number): Promise<boolean> {
 async function markLike(artId: number, artistId: number): Promise<boolean> {
   return await NotificationService.markLikeViewed(artId, artistId);
 }
+async function markDislike(artId: number, artistId: number): Promise<boolean> {
+  return await NotificationService.markLikeViewed(artId, artistId);
+}
 </script>
 <style scoped>
 .lCard {

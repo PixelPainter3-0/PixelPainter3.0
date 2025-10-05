@@ -1,10 +1,11 @@
+using ImageMagick;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using MyTestVueApp.Server.Configuration;
 using MyTestVueApp.Server.Entities;
 using MyTestVueApp.Server.Interfaces;
-using Microsoft.Data.SqlClient;
+using MyTestVueApp.Server.Models;
 using System.Linq;
-using ImageMagick;
 
 namespace MyTestVueApp.Server.ServiceImplementations
 {
@@ -12,12 +13,14 @@ namespace MyTestVueApp.Server.ServiceImplementations
     {
         private readonly IOptions<ApplicationConfiguration> AppConfig; 
         private readonly ILogger<ArtAccessService> Logger;
+        private readonly ITagService TagService;
         private readonly ILoginService LoginService;
-        public ArtAccessService(IOptions<ApplicationConfiguration> appConfig, ILogger<ArtAccessService> logger, ILoginService loginService)
+        public ArtAccessService(IOptions<ApplicationConfiguration> appConfig, ILogger<ArtAccessService> logger, ILoginService loginService, ITagService tagService)
         {
             AppConfig = appConfig;
             Logger = logger;
             LoginService = loginService;
+            TagService = tagService;
         }
         /// <summary>
         /// Gets all artworks from the database
@@ -34,25 +37,26 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 var query1 =
                     @"
                     Select 
-	                    Art.Id, 
-	                    Art.Title,   
-	                    Art.Width, 
-	                    Art.Height, 
-	                    Art.Encode, 
-	                    Art.CreationDate, 
-	                    Art.isPublic, 
-						Art.IsGIF,
-	                    COUNT(distinct Likes.ArtistId) as Likes, 
-	                    Count(distinct Comment.Id) as Comments,
+                        Art.Id, 
+                        Art.Title,   
+                        Art.Width, 
+                        Art.Height, 
+                        Art.Encode, 
+                        Art.CreationDate, 
+                        Art.isPublic, 
+                        Art.IsGIF,
+                        COUNT(distinct Likes.ArtistId) as Likes, 
+                        COUNT(distinct Dislikes.ArtistId) as Dislikes,
+                        COUNT(distinct Comment.Id) as Comments,
                         Art.gifId,
                         Art.gifFrameNum
                     FROM ART  
-	                    LEFT JOIN Likes ON Art.ID = Likes.ArtID  
-	                    LEFT JOIN Comment ON Art.ID = Comment.ArtID
-						Where Art.gifFrameNum <= 1
-                    GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic, Art.IsGIF, Art.GifId, Art.gifFrameNum
-                    ";
-
+                        LEFT JOIN Likes ON Art.ID = Likes.ArtID  
+                        LEFT JOIN Dislikes ON Art.ID = Dislikes.ArtID
+                        LEFT JOIN Comment ON Art.ID = Comment.ArtID
+                    WHERE Art.gifFrameNum <= 1
+                    GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, 
+                             Art.CreationDate, Art.isPublic, Art.IsGIF, Art.GifId, Art.gifFrameNum;";
                 using (var command = new SqlCommand(query1, connection))
                 {
                     using (var reader = await command.ExecuteReaderAsync())
@@ -73,12 +77,14 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 IsPublic = reader.GetBoolean(6),
                                 IsGif = reader.GetBoolean(7),
                                 NumLikes = reader.GetInt32(8),
-                                NumComments = reader.GetInt32(9),
-                                GifID = reader.GetInt32(10),
-                                GifFrameNum = reader.GetInt32(11),
+                                NumDislikes = reader.GetInt32(9),
+                                NumComments = reader.GetInt32(10),
+                                GifID = reader.GetInt32(11),
+                                GifFrameNum = reader.GetInt32(12),
                                 PixelGrid = pixelGrid,
                             };
-
+                            //painting.Tags = (conect to tag service, get all tags for art)
+                            painting.Tags = (await TagService.GetTagsForArt(painting.Id)).ToList();
                             painting.SetArtists((await GetArtistsByArtId(painting.Id)).ToList());
                             paintings.Add(painting);
                         }
@@ -99,29 +105,30 @@ namespace MyTestVueApp.Server.ServiceImplementations
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                //var query = "SELECT Date, TemperatureC, Summary FROM WeatherForecasts";
                 var query =
                     $@"
                     Select	
-	                    Art.ID,
-	                    Art.Title, 
-	                    Art.Width, 
-	                    Art.Height, 
-	                    Art.Encode, 
-	                    Art.CreationDate,
-	                    Art.isPublic,
+                        Art.ID,
+                        Art.Title, 
+                        Art.Width, 
+                        Art.Height, 
+                        Art.Encode, 
+                        Art.CreationDate,
+                        Art.isPublic,
                         Art.IsGIF,
                         Art.GifId,
-	                    COUNT(distinct Likes.ArtistId) as Likes, 
-	                    Count(distinct Comment.Id) as Comments  
+                        COUNT(distinct Likes.ArtistId) as Likes, 
+                        COUNT(distinct Dislikes.ArtistId) as Dislikes,
+                        Count(distinct Comment.Id) as Comments  
                     FROM ART  
                     LEFT JOIN Likes ON Art.ID = Likes.ArtID  
+                    LEFT JOIN Dislikes on Art.ID = Dislikes.ArtID
                     LEFT JOIN Comment ON Art.ID = Comment.ArtID  
                     LEFT JOIN ContributingArtists ON Art.Id = ContributingArtists.ArtId
                     WHERE Art.ID = @artId 
                     GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic, Art.IsGIF, Art.gifId;
                     ";
-
+                
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@artId", id);
@@ -144,11 +151,14 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 CreationDate = reader.GetDateTime(5),
                                 IsPublic = reader.GetBoolean(6),
                                 NumLikes = reader.GetInt32(9),
-                                NumComments = reader.GetInt32(10),
+                                NumDislikes = reader.GetInt32(10),
+                                NumComments = reader.GetInt32(11),
                                 IsGif = reader.GetBoolean(7),
                                 GifID = reader.GetInt32(8)
                             };
                             painting.SetArtists((await GetArtistsByArtId(painting.Id)).ToList());
+                            // Add this line to fetch and assign tags
+                            painting.Tags = (await TagService.GetTagsForArt(painting.Id)).ToList();
                             return painting;
                         }
                     }
@@ -182,11 +192,13 @@ namespace MyTestVueApp.Server.ServiceImplementations
 	                    Art.isPublic, 
 						Art.IsGIF,
 	                    COUNT(distinct Likes.ArtistId) as Likes, 
+                        COUNT(distinct Dislikes.ArtistId) as Dislikes,
 	                    Count(distinct Comment.Id) as Comments,
                         Art.gifId,
                         Art.gifFrameNum
                     FROM ART  
 	                    LEFT JOIN Likes ON Art.ID = Likes.ArtID  
+                        LEFT JOIN Dislikes ON Art.ID = Dislikes.ArtID
 	                    LEFT JOIN Comment ON Art.ID = Comment.ArtID
                         left join  ContributingArtists as CA on CA.ArtId = Art.Id
                     WHERE CA.ArtistId = @ArtistID
@@ -213,9 +225,10 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 IsPublic = reader.GetBoolean(6),
                                 IsGif = reader.GetBoolean(7),
                                 NumLikes = reader.GetInt32(8),
-                                NumComments = reader.GetInt32(9),
-                                GifID = reader.GetInt32(10),
-                                GifFrameNum = reader.GetInt32(11),
+                                NumDislikes = reader.GetInt32(9),
+                                NumComments = reader.GetInt32(10),
+                                GifID = reader.GetInt32(11),
+                                GifFrameNum = reader.GetInt32(12),
                                 PixelGrid = pixelGrid,
                             };
 
@@ -290,13 +303,73 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 }
             }
         }
+
+        public async Task<IEnumerable<Art>> GetDislikedArt(int artistId)
+        {
+            var paintings = new List<Art>();
+            var connectionString = AppConfig.Value.ConnectionString;
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                var query =
+                    $@"
+                    SELECT
+	                      Dislikes.ArtId,
+                          Art.Title,
+	                      Art.Width, 
+	                      Art.Height, 
+	                      Art.Encode, 
+	                      Art.CreationDate,
+	                      Art.isPublic,
+	                      COUNT(distinct Dislikes.ArtistId) as Dislikes, 
+	                      Count(distinct Comment.Id) as Comments
+                      FROM Dislikes
+                      left join Art on Art.Id = Dislikes.ArtId
+                      LEFT JOIN Comment ON Art.ID = Comment.ArtID
+                      where Dislikes.ArtistId = @ArtistId
+                      GROUP BY Dislikes.ArtistId, Dislikes.ArtId, Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic;
+                        ";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ArtistID", artistId);
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            var pixelGrid = new PixelGrid()
+                            {
+                                Width = reader.GetInt32(2),
+                                Height = reader.GetInt32(3),
+                                EncodedGrid = reader.GetString(4)
+                            };
+                            var painting = new Art
+                            {   //ArtId, ArtName
+                                Id = reader.GetInt32(0),
+                                Title = reader.GetString(1),
+                                PixelGrid = pixelGrid,
+                                CreationDate = reader.GetDateTime(5),
+                                IsPublic = reader.GetBoolean(6),
+                                NumDislikes = reader.GetInt32(7),
+                                NumLikes = reader.GetInt32(8),
+                                NumComments = reader.GetInt32(9)
+                            };
+                            paintings.Add(painting);
+                        }
+                    }
+                    return paintings;
+                }
+            }
+        }
         /// <summary>
         /// Adds a new artwork to the database
         /// </summary>
         /// <param name="artist">User who is creating the art</param>
         /// <param name="art">Artwork being added to the database</param>
         /// <returns>The id of the art created</returns>
-        public async Task<Art> SaveNewArt(Artist artist, Art art) //Single Artist
+        public async Task<Art> SaveNewArt(Artist artist, Art art)
         {
             try
             {
@@ -304,16 +377,15 @@ namespace MyTestVueApp.Server.ServiceImplementations
 
                 using (var connection = new SqlConnection(AppConfig.Value.ConnectionString))
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
 
-                    var query = @"
-                    INSERT INTO Art (Title, Width, Height, Encode, CreationDate, IsPublic)
-                    VALUES (@Title, @Width, @Height, @Encode, @CreationDate, @IsPublic);
-                    SELECT SCOPE_IDENTITY();
-                    INSERT INTO ContributingArtists(ArtId,ArtistId) values (@@IDENTITY,@ArtistId);
-                ";
-
-                    using (var command = new SqlCommand(query, connection))
+                    // Insert Art and get new ID
+                    var insertArtQuery = @"
+                INSERT INTO Art (Title, Width, Height, Encode, CreationDate, IsPublic)
+                VALUES (@Title, @Width, @Height, @Encode, @CreationDate, @IsPublic);
+                SELECT SCOPE_IDENTITY();
+            ";
+                    using (var command = new SqlCommand(insertArtQuery, connection))
                     {
                         command.Parameters.AddWithValue("@Title", art.Title);
                         command.Parameters.AddWithValue("@Width", art.PixelGrid.Width);
@@ -321,12 +393,29 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         command.Parameters.AddWithValue("@Encode", art.PixelGrid.EncodedGrid);
                         command.Parameters.AddWithValue("@CreationDate", art.CreationDate);
                         command.Parameters.AddWithValue("@IsPublic", art.IsPublic);
-                        command.Parameters.AddWithValue("@ArtistId", artist.Id);
 
-                            var newArtId = await command.ExecuteScalarAsync();
-                            art.Id = Convert.ToInt32(newArtId);
-                        }
+                        var newArtIdObj = await command.ExecuteScalarAsync();
+                        art.Id = Convert.ToInt32(newArtIdObj);
                     }
+
+                    // Insert into ContributingArtists
+                    var insertArtistQuery = @"
+                INSERT INTO ContributingArtists(ArtId,ArtistId) values (@ArtId,@ArtistId);
+            ";
+                    using (var command = new SqlCommand(insertArtistQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@ArtId", art.Id);
+                        command.Parameters.AddWithValue("@ArtistId", artist.Id);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // ASSIGN TAGS via TagService 
+                if (art.Tags != null && art.Tags.Count > 0)
+                {
+                    var tagIds = art.Tags.Select(t => t.Id).ToList();
+                    await TagService.AssignTagsToArt(art.Id, tagIds);
+                }
 
                 return art;
             }
@@ -738,6 +827,25 @@ namespace MyTestVueApp.Server.ServiceImplementations
             {
                 Logger.LogCritical(ex, "Error in DeleteContributingArtist");
                 throw;
+            }
+        }
+        public async Task AddTagsToArtAsync(int artId, IEnumerable<Tag> tags)
+        {
+            var connectionString = AppConfig.Value.ConnectionString;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var uniqueTags = tags.GroupBy(t => t.Id).Select(g => g.First());
+                foreach (var tag in uniqueTags)
+                {
+                    var query = "INSERT INTO ArtTags (ArtId, TagId) VALUES (@ArtId, @TagId);";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@ArtId", artId);
+                        command.Parameters.AddWithValue("@TagId", tag.Id);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
             }
         }
 
