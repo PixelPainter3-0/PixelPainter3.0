@@ -288,7 +288,7 @@ namespace MyTestVueApp.Server.Controllers
         [HttpPut]
         [Route("SaveArt")]
         [ProducesResponseType(typeof(Art), 200)]
-        public async Task<IActionResult> SaveArt([FromBody, BindRequired]Art art)
+        public async Task<IActionResult> SaveArt([FromBody, BindRequired] Art art)
         {
             try
             {
