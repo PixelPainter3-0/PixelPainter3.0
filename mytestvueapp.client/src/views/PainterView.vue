@@ -98,7 +98,11 @@
         label="Give Me Color!"
         @click="randomizeGrid()"
       />
-      <Button label="Toggle Music"
+      <Button 
+        :icon="audioOn !=-1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+        :severity="audioOn !=-1 ? 'primary' : 'secondary'"
+        label="Music"
+        class="ml-2"
         @click="toggleMusic()" />
     </template>
   </Toolbar>
@@ -152,6 +156,7 @@ import GIFCreationService from "@/services/GIFCreationService";
   const canvas = ref<any>();
   const toast = useToast();
   const intervalId = ref<number>(-1);
+  const audioOn = ref<number>(-1);
   const keyBindActive = ref<boolean>(true);
   const artist = ref<Artist>(new Artist());
   const layerStore = useLayerStore();
@@ -171,7 +176,6 @@ let connection = new SignalR.HubConnectionBuilder()
   })
   .build();
       
-var audioPlaying = 0;
 const audioFiles = [
     "/src/music/In-the-hall-of-the-mountain-king.mp3",
     "/src/music/flight-of-the-bumblebee.mp3",
@@ -1216,21 +1220,20 @@ async function saveGIFFromPainter(): Promise<void> {
 }
 
 function toggleMusic(): void {
-        if (audioPlaying == 0) {
-            audioRef.value.pause();
-            audioRef.value.currentTime = 0;
+  if (audioOn.value != -1) {
+    audioOn.value = -1;
+    audioRef.value.pause();
+  } else {
+    audioOn.value = 1;
+    audioRef.value.pause();
+    audioRef.value.currentTime = 0;
 
-            var randomIndex = Math.floor(Math.random() * audioFiles.length);
-            var chosenMusic = audioFiles[randomIndex];
-            audioRef.value.src = chosenMusic;
-            audioRef.value.play();
-            audioPlaying = 1;
-        }
-        else {
-            audioRef.value.pause();
-            audioPlaying = 0;
-        }
-    }
+    var randomIndex = Math.floor(Math.random() * audioFiles.length);
+    var chosenMusic = audioFiles[randomIndex];
+    audioRef.value.src = chosenMusic;
+    audioRef.value.play();
+  }
+}
 
 function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
