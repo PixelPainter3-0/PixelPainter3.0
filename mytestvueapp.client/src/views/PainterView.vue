@@ -894,18 +894,11 @@ function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   let height = upperBound - lowerBound + 1;
   let width = rightBound - leftBound + 1;
 
-<<<<<<< HEAD
     for (let i = 0; i < height; i++) {
       outArray[i] = []; // initialize the row?
       for (let j = 0; j < width; j++) {
           outArray[i][j] = layerStore.grids[layerStore.layer].grid[leftBound + j][lowerBound + i];
       }
-=======
-  for (let i = 0; i < height; i++) {
-    outArray[i] = []; // initialize the row?
-    for (let j = 0; j < width; j++) {
-        outArray[i][j] = layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
->>>>>>> 85f67581db84a2360832bfc552102341a7bc46e1
     }
   }
   return outArray;
