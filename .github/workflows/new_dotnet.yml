@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set VERSION
-        run: echo "VERSION=$( npm pkg get version )" >> $GITHUB_ENV
+        run: echo "VERSION=`npm pkg get version`" >> $GITHUB_ENV
         working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
 
       - name: Set APP_DIR
