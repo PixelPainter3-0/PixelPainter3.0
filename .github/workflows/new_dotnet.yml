@@ -87,7 +87,7 @@ jobs:
           APP_DIR: ${{ env.APP_DIR }}
 
       - name: Use dynamic variable
-        run: echo "The dynamic variable is ${{ env.APP_DIR }}"
+        run: echo "The dynamic variable is ${{ env.VERSION }}"
 
       - name: Set up SSH agent with Server
         uses: webfactory/ssh-agent@v0.9.0
