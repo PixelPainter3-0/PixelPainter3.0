@@ -113,10 +113,16 @@
       <Button
         icon="pi pi-lightbulb"
         class="Rainbow"
-        label="Give Me Color!"
+        label="Color Blast!"
         @click="randomizeGrid()"
       />
-      <Button label="Toggle Music" @click="toggleMusic" />
+      <Button
+        :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+        :severity="audioOn != -1 ? 'primary' : 'secondary'"
+        label=""
+        class="ml-2"
+        @click="toggleMusic()"
+      />
     </template>
   </Toolbar>
 </template>
@@ -163,21 +169,22 @@ import * as SignalR from "@microsoft/signalr";
 import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
 
-  //variables
-  const route = useRoute();
-  const canvas = ref<any>();
-  const toast = useToast();
-  const intervalId = ref<number>(-1);
-  const keyBindActive = ref<boolean>(true);
-  const artist = ref<Artist>(new Artist());
-  const layerStore = useLayerStore();
-  const artistStore = useArtistStore();
-  const updateLayers = ref<number>(0);
-  const showLayers = ref<boolean>(true);
-  const greyscale = ref<boolean>(false);
-  const loggedIn = ref<boolean>(false);
-  let selection = ref<string[][]>([]);
-  let copiedSelection = ref<string[][]>([]);
+//variables
+const route = useRoute();
+const canvas = ref<any>();
+const toast = useToast();
+const intervalId = ref<number>(-1);
+const audioOn = ref<number>(-1);
+const keyBindActive = ref<boolean>(true);
+const artist = ref<Artist>(new Artist());
+const layerStore = useLayerStore();
+const artistStore = useArtistStore();
+const updateLayers = ref<number>(0);
+const showLayers = ref<boolean>(true);
+const greyscale = ref<boolean>(false);
+const loggedIn = ref<boolean>(false);
+let selection = ref<string[][]>([]);
+let copiedSelection = ref<string[][]>([]);
 
 // Connection Information
 const connected = ref<boolean>(false);
@@ -189,7 +196,6 @@ let connection = new SignalR.HubConnectionBuilder()
   })
   .build();
 
-var audioPlaying = 0;
 const audioFiles = [
   "/src/music/In-the-hall-of-the-mountain-king.mp3",
   "/src/music/flight-of-the-bumblebee.mp3",
@@ -478,30 +484,30 @@ function toggleKeybinds(disable: boolean) {
   }
 }
 
-  watch(
-    cursorPositionComputed,
-    (start: Vector2, end: Vector2) => {
-      if (cursor.value.selectedTool.label === "Rectangle") {
-        if (mouseButtonHeldDown.value) {
-          setEndVector();
-          drawAtCoords(getRectanglePixels(startPix.value, endPix.value));
-        }
-      } else if (cursor.value.selectedTool.label === "Ellipse") {
-        if (mouseButtonHeldDown.value) {
-          setEndVector();
-          drawAtCoords(getEllipsePixels(startPix.value, endPix.value));
-        }
-      } else if (cursor.value.selectedTool.label === "Select") {
-        if (mouseButtonHeldDown.value) {
-          setEndVector();
-          selection = ref<string[][]>(getSelectPixels(startPix.value, endPix.value));
-        }
-      } else {
-        drawAtCoords(getLinePixels(start, end));
+watch(
+  cursorPositionComputed,
+  (start: Vector2, end: Vector2) => {
+    if (cursor.value.selectedTool.label === "Rectangle") {
+      if (mouseButtonHeldDown.value) {
+        setEndVector();
+        drawAtCoords(getRectanglePixels(startPix.value, endPix.value));
       }
-    },
-    { deep: true }
-  );
+    } else if (cursor.value.selectedTool.label === "Ellipse") {
+      if (mouseButtonHeldDown.value) {
+        setEndVector();
+        drawAtCoords(getEllipsePixels(startPix.value, endPix.value));
+      }
+    } else if (cursor.value.selectedTool.label === "Select") {
+      if (mouseButtonHeldDown.value) {
+        setEndVector();
+          selection = ref<string[][]>(getSelectPixels(startPix.value, endPix.value));
+      }
+    } else {
+      drawAtCoords(getLinePixels(start, end));
+    }
+  },
+  { deep: true }
+);
 
 watch(mouseButtonHeldDown, async () => {
   drawAtCoords([cursor.value.position]);
@@ -877,25 +883,33 @@ function clear(): void {
   }
 }
 
-  //returns array array of color strings
-  function getSelectPixels(start: Vector2, end: Vector2): string[][] {
-    let outArray: string[][] = [];
-    let leftBound = Math.min(start.x, end.x);
-    let rightBound = Math.max(start.x, end.x);
-    let lowerBound = Math.min(start.y, end.y);
-    let upperBound = Math.max(start.y, end.y);
+//returns array array of color strings
+function getSelectPixels(start: Vector2, end: Vector2): string[][] {
+  let outArray: string[][] = [];
+  let leftBound = Math.min(start.x, end.x);
+  let rightBound = Math.max(start.x, end.x);
+  let lowerBound = Math.min(start.y, end.y);
+  let upperBound = Math.max(start.y, end.y);
 
   let height = upperBound - lowerBound + 1;
   let width = rightBound - leftBound + 1;
 
+<<<<<<< HEAD
     for (let i = 0; i < height; i++) {
       outArray[i] = []; // initialize the row?
       for (let j = 0; j < width; j++) {
           outArray[i][j] = layerStore.grids[layerStore.layer].grid[leftBound + j][lowerBound + i];
       }
+=======
+  for (let i = 0; i < height; i++) {
+    outArray[i] = []; // initialize the row?
+    for (let j = 0; j < width; j++) {
+        outArray[i][j] = layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
+>>>>>>> 85f67581db84a2360832bfc552102341a7bc46e1
     }
-    return outArray;
   }
+  return outArray;
+}
 
 function getRectanglePixels(start: Vector2, end: Vector2): Vector2[] {
   let coords: Vector2[] = [];
@@ -1274,7 +1288,11 @@ async function saveGIFFromPainter(): Promise<void> {
 }
 
 function toggleMusic(): void {
-  if (audioPlaying == 0) {
+  if (audioOn.value != -1) {
+    audioOn.value = -1;
+    audioRef.value.pause();
+  } else {
+    audioOn.value = 1;
     audioRef.value.pause();
     audioRef.value.currentTime = 0;
 
@@ -1282,10 +1300,6 @@ function toggleMusic(): void {
     var chosenMusic = audioFiles[randomIndex];
     audioRef.value.src = chosenMusic;
     audioRef.value.play();
-    audioPlaying = 1;
-  } else {
-    audioRef.value.pause();
-    audioPlaying = 0;
   }
 }
 

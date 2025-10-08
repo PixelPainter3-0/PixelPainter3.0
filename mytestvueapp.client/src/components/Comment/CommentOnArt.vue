@@ -54,6 +54,20 @@
           label="Reply"
           severity="secondary"
         />
+        <CommentLikeButton
+          :comment-id="props.comment.id!"
+          :comment-likes="props.comment.numLikes"
+          :is-disliked="isCommentDisliked"
+          @liked="isCommentLiked = true"
+          @unliked="isCommentLiked = false"
+        ></CommentLikeButton>
+        <CommentDislikeButton
+          :comment-id="props.comment.id!"
+          :comment-dislikes="props.comment.numDislikes"
+          :is-liked="isCommentLiked"
+          @disliked="isCommentDisliked = true"
+          @undisliked="isCommentDisliked = false"
+        ></CommentDislikeButton>
         <Button
           v-if="comment.currentUserIsOwner || user"
           icon="pi pi-ellipsis-h"
@@ -91,7 +105,7 @@
 <script setup lang="ts">
 import CommentAccessService from "../../services/CommentAccessService";
 
-import type Comment from "@/entities/Comment";
+import Comment from "@/entities/Comment";
 import { ref, watch, onMounted } from "vue";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
@@ -100,6 +114,10 @@ import { useToast } from "primevue/usetoast";
 import NewComment from "./NewComment.vue";
 import LoginService from "../../services/LoginService";
 import router from "@/router";
+import CommentLikeButton from "../CommentLikeButton.vue";
+import CommentDislikeButton from "../CommentDislikeButton.vue";
+import CommentLikeService from "@/services/CommentLikeService";
+import CommentDislikeService from "@/services/CommentDislikeService";
 
 const emit = defineEmits(["deleteComment"]);
 
@@ -111,6 +129,8 @@ const menu = ref<any>();
 const user = ref<boolean>(false);
 const dateFormatted = ref<string>("");
 const hover = ref<boolean>(false);
+const isCommentLiked = ref<boolean>(false);
+const isCommentDisliked = ref<boolean>(false);
 
 function openMenu(): void {
   menu.value.toggle(event);
@@ -152,6 +172,15 @@ onMounted(async () => {
   const differenceMinutes = Math.round(differenceMs / (1000 * 60));
 
   dateFormatted.value = getRelativeTime(differenceMinutes);
+
+  if (await LoginService.isLoggedIn()) {
+    isCommentLiked.value = await CommentLikeService.isCommentLiked(
+      props.comment.numLikes
+    );
+    isCommentDisliked.value = await CommentDislikeService.isCommentDisliked(
+      props.comment.numDislikes
+    );
+  }
 });
 
 const props = defineProps<{
