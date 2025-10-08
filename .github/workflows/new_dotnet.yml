@@ -128,7 +128,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ${{ env.APP_DIR }}
-            docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.version }}
+            docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.VERSION }}
 
 
       # - name: Run the dotnet app
