@@ -8,8 +8,8 @@
   "AllowedHosts": "*",
   "ApplicationConfiguration": {
     "ConnectionString": "Server=127.0.0.1,{{env['DB_PORT']}};Database={{env['DB_NAME']}};User Id=SA;Password={{env['DB_PASSWORD']}};Encrypt=true;TrustServerCertificate=true;",
-    "ClientId": "1030066146136-ld3kl9j8k7mllto6camk0psucphudvm8.apps.googleusercontent.com",
-    "ClientSecret": "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",
+    "ClientId": "{{env['CLIENT_ID']}}",
+    "ClientSecret": "{{env['CLIENT_SECRET']}}",
     "HomeUrl": "https://localhost:{{env['PIXEL_PORT']}}/"
 
   }

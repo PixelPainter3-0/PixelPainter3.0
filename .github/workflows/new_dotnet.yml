@@ -88,6 +88,9 @@ jobs:
           DB_PORT: 2222
           PIXEL_PORT: 1111
           APP_DIR: ${{ env.APP_DIR }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
 
       - name: Use dynamic variable
         run: echo "The dynamic variable is ${{ env.VERSION }}"
