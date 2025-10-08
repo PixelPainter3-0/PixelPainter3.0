@@ -20,7 +20,7 @@ services:
     volumes:
       - ../init.sql:/init.sql # Copies the init sql script to the container
       - ./entrypoint.sh:/entrypoint.sh # Copies the entrypoint script to the container
-      - /www/:/var/opt/mssql # Uncomment this line and volumes to persist data
+      - /var/www/app/db:/var/opt/mssql # Uncomment this line and volumes to persist data
     command: ["sh", "/entrypoint.sh"] # Runs the entrypoint script on startup
     networks:
       - pixel_network

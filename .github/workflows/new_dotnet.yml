@@ -70,21 +70,29 @@ jobs:
           output_file: serverconfig/docker-compose.yml
         env:
           PIXEL_VERSION: ${{ env.VERSION }}
-          DB_PASSWORD: DB_PASSWORD
-          DB_NAME: DB_NAME
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: PixelPainter
           DB_PORT: 2222
           PIXEL_PORT: 1111
           APP_DIR: ${{ env.APP_DIR }}
 
-      - name: Template server dockercompose file
+      - name: Template entrypoint script
+        uses: cuchi/jinja2-action@v1.3.0
+        with:
+          template: serverconfig/entrypoint.sh.j2
+          output_file: serverconfig/entrypoint.sh
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Template appsettings
         uses: cuchi/jinja2-action@v1.3.0
         with:
           template: serverconfig/appsettings.json.j2
           output_file: serverconfig/appsettings.json
         env:
           PIXEL_VERSION: ${{ env.VERSION }}
-          DB_PASSWORD: DB_PASSWORD
-          DB_NAME: DB_NAME
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: PixelPainter
           DB_PORT: 2222
           PIXEL_PORT: 1111
           APP_DIR: ${{ env.APP_DIR }}
