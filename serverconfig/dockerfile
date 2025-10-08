@@ -6,7 +6,7 @@ RUN apt-get install -y npm dotnet-sdk-8.0
 RUN mkdir /app
 
 WORKDIR /app
-COPY /var/www/app/. .
+COPY . .
 # Build in root directory
 
 WORKDIR /app/mytestvueapp.client

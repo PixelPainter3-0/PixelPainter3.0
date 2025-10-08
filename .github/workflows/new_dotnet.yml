@@ -89,7 +89,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker buildx build -f /var/www/app/serverconfig/dockerfile . -t pixelpainter:v${{ env.version }}
+            cd /var/www/app/
+            docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.version }}
 
 
       # - name: Run the dotnet app
