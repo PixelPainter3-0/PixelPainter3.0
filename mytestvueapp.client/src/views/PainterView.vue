@@ -891,7 +891,7 @@ function clear(): void {
     for (let i = 0; i < height; i++) {
       outArray[i] = []; // initialize the row?
       for (let j = 0; j < width; j++) {
-        outArray[i][j] = layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
+          outArray[i][j] = layerStore.grids[layerStore.layer].grid[leftBound + j][lowerBound + i];
       }
     }
     return outArray;
@@ -1135,8 +1135,6 @@ function onMouseUp() {
       cursor.value.color,
       getEllipsePixels(startPix.value, endPix.value)
     );
-  } else if (cursor.value.selectedTool.label == "Select") {
-    selection.value = getSelectPixels(startPix.value, endPix.value);
   }
   layerStore.updateGrid();
 }
