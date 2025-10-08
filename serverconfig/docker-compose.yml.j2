@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   pixelpainter:
-    image: pixelpainter:v{{PIXEL_VERSION}}
+    image: pixelpainter:v{{env['PIXEL_VERSION']}}
     container_name: pixelpainter
     ports:
-      - "{{PIXEL_PORT}}:{{PIXEL_PORT}}"
+      - "{{env['PIXEL_PORT']}}:{{env['PIXEL_PORT']}}"
     # Add volumes for branch and https certs
     networks:
       - pixel_network
@@ -13,10 +13,10 @@ services:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: sqlserver
     environment:
-      - SA_PASSWORD={{DB_PASSWORD}} # Retrieves password from .env file
+      - SA_PASSWORD={{env['DB_PASSWORD']}} # Retrieves password from .env file
       - ACCEPT_EULA=Y
     ports:
-      - "{{DB_PORT}}:{{DB_PORT}}"
+      - "{{env['DB_PORT']}}:{{env['DB_PORT']}}"
     volumes:
       - ../init.sql:/init.sql # Copies the init sql script to the container
       - ./entrypoint.sh:/entrypoint.sh # Copies the entrypoint script to the container

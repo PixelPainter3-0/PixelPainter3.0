@@ -106,10 +106,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            mkdir ${{ env.APP_DIR }}v${{ env.version }} -p
+            mkdir ${{ env.APP_DIR }}v${{ env.VERSION }} -p
           
       - name: Transfer artifact to the remote server
-        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.APP_DIR }}v${{ env.version }}
+        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.APP_DIR }}v${{ env.VERSION }}
 
       - name: Run deploy script
         uses: appleboy/ssh-action@v1.2.0
