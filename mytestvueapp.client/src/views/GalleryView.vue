@@ -2,7 +2,7 @@
   <div class="w-9 mx-auto my-0">
     <header>
       <h1 class="flex align-items-center gap-3">
-        Search for Art
+        <span>Search for Art</span>
         <InputText
           class="mt-2"
           v-model.trim="search"
@@ -46,6 +46,12 @@
           @click="sortGallery()"
         />
       </h1>
+
+      <!-- Centered tag title below the search bars -->
+      <div v-if="activeTag" class="tag-banner">
+        Showing '{{ activeTag }}' Art
+      </div>
+
       <div style="display: inline-flex">
         <p>Art per page: &nbsp;</p>
         <Dropdown
@@ -70,6 +76,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch, computed } from "vue";
+import { useRoute } from "vue-router";
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import Art from "@/entities/Art";
 import ArtAccessService from "@/services/ArtAccessService";
@@ -83,6 +90,11 @@ const displayArt = ref<Art[]>([]);
 const search = ref<string>("");
 const filter = ref<string>("");
 const loading = ref<boolean>(true);
+
+// NEW: Active tag from route
+const route = useRoute();
+const activeTag = ref<string | null>((route.params.tag as string) || null);
+
 interface sortFilter {
   sort: string;
   code: string;
@@ -119,51 +131,71 @@ watch(perPage, () => {
   flicker.value = true;
 });
 
+// Helper: recompute displayArt based on activeTag, search, and filter
+function updateDisplay(): void {
+  let list = publicArt.value;
+
+  if (activeTag.value) {
+    const tagLower = activeTag.value.toLowerCase();
+    list = list.filter(a =>
+      (a.tags || []).some(t => (t.name || "").toLowerCase() === tagLower)
+    );
+  }
+
+  if (filter.value) {
+    list = list.filter(a =>
+      a.artistName.toString().toLowerCase().includes(filter.value.toLowerCase())
+    );
+  }
+
+  if (search.value) {
+    list = list.filter(a =>
+      a.title.toLowerCase().includes(search.value.toLowerCase())
+    );
+  }
+
+  displayArt.value = list.slice(); // new array in current sorted order
+  isModified.value = true;
+  // reset to first page if current page would be out of range
+  if (currentPage.value > Math.max(1, Math.ceil(displayArt.value.length / perPage.value))) {
+    currentPage.value = 1;
+  }
+}
+
 onMounted(async () => {
-  ArtAccessService.getAllArt() // Get All Art
+  ArtAccessService.getAllArt()
     .then((data) => {
       publicArt.value = data;
-      displayArt.value = data;
+      // initial sort by date desc as before
+      sortGallery();
+      updateDisplay();
     })
     .finally(() => {
       loading.value = false;
     });
 });
 
-watch(search, () => {
-  if (publicArt.value) {
-    isModified.value = true;
-    displayArt.value = publicArt.value.filter((Art) =>
-      Art.artistName
-        .toString()
-        .toLowerCase()
-        .includes(filter.value.toLowerCase())
-    );
-
-    displayArt.value = displayArt.value.filter((Art) =>
-      Art.title.toLowerCase().includes(search.value.toLowerCase())
-    );
+// Recompute when route tag changes
+watch(
+  () => route.params.tag,
+  (newTag) => {
+    activeTag.value = newTag ? String(newTag) : null;
+    changePage(1);
+    updateDisplay();
   }
+);
+
+// Search and artist filter now just recompute
+watch(search, () => {
+  updateDisplay();
+});
+
+watch(filter, () => {
+  updateDisplay();
 });
 
 watch(sortType, () => {
   sortGallery();
-});
-
-watch(filter, () => {
-  if (publicArt.value) {
-    isModified.value = true;
-    displayArt.value = publicArt.value.filter((Art) =>
-      Art.title.toLowerCase().includes(search.value.toLowerCase())
-    );
-
-    displayArt.value = displayArt.value.filter((Art) =>
-      Art.artistName
-        .toString()
-        .toLowerCase()
-        .includes(filter.value.toLowerCase())
-    );
-  }
 });
 
 function changePage(page: number): void {
@@ -176,33 +208,45 @@ function sortGallery(): void {
 
   isSortedByDate.value = false;
   if (sortCode == "L") {
-    // Sort By Likes
     if (checkAscending.value) {
-      publicArt.value.sort((artA, artB) => artA.numLikes - artB.numLikes); // Sort to Descending
+      publicArt.value.sort((artA, artB) => artA.numLikes - artB.numLikes);
     } else {
-      publicArt.value.sort((artA, artB) => artB.numLikes - artA.numLikes); // Sort to Ascending
+      publicArt.value.sort((artA, artB) => artB.numLikes - artA.numLikes);
     }
   } else if (sortCode == "C") {
-    // Sort By Comments
     if (checkAscending.value) {
-      publicArt.value.sort((artA, artB) => artA.numComments - artB.numComments); // Sort to Descending
+      publicArt.value.sort((artA, artB) => artA.numComments - artB.numComments);
     } else {
-      publicArt.value.sort((artA, artB) => artB.numComments - artA.numComments); // Sort to Ascending
+      publicArt.value.sort((artA, artB) => artB.numComments - artA.numComments);
     }
   } else if (sortCode == "D") {
+    isSortedByDate.value = true;
     if (checkAscending.value) {
       publicArt.value.sort(
         (artA, artB) =>
           new Date(artA.creationDate).getTime() -
           new Date(artB.creationDate).getTime()
-      ); // Sort to Descending
+      );
     } else {
       publicArt.value.sort(
         (artA, artB) =>
           new Date(artB.creationDate).getTime() -
           new Date(artA.creationDate).getTime()
-      ); // Sort to Ascending
+      );
     }
   }
+  // After sorting the master list, refresh the filtered view
+  updateDisplay();
 }
 </script>
+
+<style scoped>
+.tag-banner {
+  width: 100%;
+  text-align: center;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+</style>

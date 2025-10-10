@@ -47,6 +47,12 @@ const router = createRouter({
       path: "/accountpage/:artist",
       name: "AccountPage",
       component: () => import("../views/AccountPage.vue")
+    },
+    {
+      path: "/tag/:tag",
+      name: "TagGallery",
+      component: () => import('@/views/GalleryView.vue'),
+      props: true
     }
   ]
 });
