@@ -48,6 +48,12 @@ const router = createRouter({
       name: "AccountPage",
       component: () => import("../views/AccountPage.vue")
     }
+    ,
+    {
+      path: "/map",
+      name: "MapViewer",
+      component: () => import("../views/MapViewer.vue")
+    }
   ]
 });
 export default router;
