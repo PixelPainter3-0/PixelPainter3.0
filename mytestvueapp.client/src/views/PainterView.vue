@@ -87,6 +87,9 @@
         v-model:showLayers="showLayers"
         v-model:greyscale="greyscale"
       />
+      <HelpPopUp
+      
+      />
     </template>
     <template #end>
       <Button
@@ -168,6 +171,7 @@ import ConnectButton from "@/components/PainterUi/ConnectButton.vue";
 import * as SignalR from "@microsoft/signalr";
 import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
+import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 
 //variables
 const route = useRoute();
@@ -1111,22 +1115,6 @@ function resetArt() {
   }
   router.push("/new");
 }
-
-//Save to file functions
-//   const props = defineProps<{
-//   fps: number;
-//   gifFromViewer?: string[];
-//   filtered?: boolean;
-//   filteredArt?: string;
-// }>();
-
-// function flattenArt(): string[][] {
-//   let width = layerStore.grids[0].width;
-//   let height = layerStore.grids[0].height;
-//   let arr: string[][] = Array.from({ length: height }, () =>
-//     Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
-//   );
-// }
 
 function onMouseUp() {
   if (cursor.value.selectedTool.label == "Rectangle") {
