@@ -10,13 +10,13 @@
   >
   
   <div>
-    <p> ctrl + s ) Upload canvas </p>
-    <p> ctrl + d ) Download canvas</p>
-    <p> ctrl + z ) Undo last stroke</p>
-    <p> ctrl + y ) Redo last undo</p>
+    <p> CTRL + S ) Upload canvas </p>
+    <p> CTRL + D ) Download canvas</p>
+    <p> CTRL + Z ) Undo last stroke</p>
+    <p> CTRL + Y ) Redo last undo</p>
     <p> 1-9 ) Color selection for the brush</p>
-    <p> q ) Decrease brush size by 1</p>
-    <p> w ) Increase brush size by 1</p>
+    <p> Q ) Decrease brush size by 1</p>
+    <p> W ) Increase brush size by 1</p>
   </div>
 
   </FloatingCard>
