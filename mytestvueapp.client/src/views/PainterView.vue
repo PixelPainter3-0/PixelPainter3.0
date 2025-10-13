@@ -119,7 +119,8 @@
       <Button
         icon="pi pi-lightbulb"
         class="Rainbow"
-        label="Color Blast!"
+        label=""
+        title="Color Blast!"
         @click="randomizeGrid()"
       />
       <Button
