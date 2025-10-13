@@ -1,6 +1,6 @@
 <template>
   <Button
-    :label="isEditing ? 'Save Changes' : 'Upload'"
+    :title="isEditing ? 'Save Changes' : 'Upload'"
     :icon="isEditing ? 'pi pi-save' : 'pi pi-upload'"
     @click="toggleModal()"
     :disabled="tagCreationLoading || loading"
