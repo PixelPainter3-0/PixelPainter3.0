@@ -15,8 +15,8 @@ RUN npm install --legacy-peer-deps
 # Moves config file in serverconfig to the proper configuration location
 RUN mv /app/serverconfig/appsettings.json /app/MyTestVueApp.Server/Configuration
 
-RUN mkdir -p /root/.aspnet/https
-RUN dotnet dev-certs https --export-path /root/.aspnet/https/mytestvueapp.client.pem 
+# RUN mkdir -p /root/.aspnet/https
+# RUN dotnet dev-certs https --export-path /root/.aspnet/https/mytestvueapp.client.pem 
 
 WORKDIR /app/MyTestVueApp.Server
-ENTRYPOINT ["dotnet", "run" ,"--host"]
+ENTRYPOINT ["dotnet", "run"]
