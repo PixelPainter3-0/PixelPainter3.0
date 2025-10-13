@@ -1,7 +1,7 @@
 <template>
-  <div class="w-9 mx-auto my-0">
+  <div class="w-11 mx-auto my-0">
     <header>
-      <h1 class="flex align-items-center gap-3">
+      <h1 class="flex align-items-center justify-center gap-3">
         Search for Art
         <InputText
           class="mt-2"
@@ -60,7 +60,7 @@
         v-for="index in displayAmount"
         :key="index"
         :art="displayArt[index + offset]"
-        :size="6"
+        :size="8"
         :position="index"
       />
     </div>

@@ -56,7 +56,7 @@
           </li>
         </ul>
 
-        <div class="flex gap-2 m-2 mt-2">
+        <div class="flex gap-2 m-2 mt-2 gap-x-2">
           <LikeButton
             :artId="props.art.id"
             :likes="props.art.numLikes"
@@ -75,7 +75,7 @@
             rounded
             severity="secondary"
             icon="pi pi-comment"
-            :label="art.numComments?.toString() || ''"
+            :label="numComments.toString() || ''"
           />
         </div>
       </template>
@@ -132,6 +132,26 @@ const title = computed(() => {
     return props.art.title;
   }
 });
+const numComments = computed(() => {
+ let commentLabel = "";
+  const tempComments = props.art.numComments;
+  if(tempComments > 999999)
+  {
+    commentLabel = Math.floor(tempComments / 1000000) + "M";
+    return commentLabel;
+  }
+  else if (tempComments > 999)
+  {
+      commentLabel = Math.floor(tempComments / 1000) + "K";
+      return commentLabel;
+  }
+  else
+  {
+    commentLabel = (tempComments) + "";
+    return commentLabel;
+  }
+});
+
 </script>
 
 <style scoped>
