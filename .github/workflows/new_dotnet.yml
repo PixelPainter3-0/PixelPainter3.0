@@ -72,8 +72,8 @@ jobs:
           PIXEL_VERSION: ${{ env.VERSION }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: PixelPainter
-          DB_PORT: 2222
-          PIXEL_PORT: 1111
+          DB_PORT: 1433
+          PIXEL_PORT: 5173
           APP_DIR: ${{ env.APP_DIR }}
 
       - name: Template entrypoint script
@@ -93,8 +93,8 @@ jobs:
           PIXEL_VERSION: ${{ env.VERSION }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: PixelPainter
-          DB_PORT: 2222
-          PIXEL_PORT: 1111
+          DB_PORT: 1433
+          PIXEL_PORT: 5173
           APP_DIR: ${{ env.APP_DIR }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
