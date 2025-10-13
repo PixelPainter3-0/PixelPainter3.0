@@ -1,5 +1,5 @@
 <template>
-  <Button label="Download" icon="pi pi-save" @click="handleClick()"></Button>
+  <Button title="Download" icon="pi pi-save" @click="handleClick()"></Button>
 </template>
 <script setup lang="ts">
 import Art from "@/entities/Art";

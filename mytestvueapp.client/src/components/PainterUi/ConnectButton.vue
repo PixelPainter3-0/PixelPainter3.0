@@ -1,6 +1,6 @@
 <template>
   <Button
-    :label="connected ? 'Disconnect' : 'Connect'"
+    :title="connected ? 'Disconnect' : 'Connect'"
     :severity="connected ? 'danger' : 'primary'"
     :disabled="isGif"
     icon="pi pi-wifi"
