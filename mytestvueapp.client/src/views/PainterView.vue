@@ -96,21 +96,24 @@
         icon="pi pi-times"
         class="mr-2"
         severity="primary"
-        label="Clear"
+        label=""
+        title="Clear"
         @click="clear()"
       />
       <Button
         icon="pi pi-expand"
         class="mr-2"
         severity="primary"
-        label="Recenter"
+        label=""
+        title="Recenter"
         @click="canvas?.recenter()"
       />
       <Button
         :disabled="connected"
         :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
         class="mr-2 Rainbow"
-        label="Gravity"
+        label=""
+        title="Gravity"
         @click="runGravity()"
       />
       <Button

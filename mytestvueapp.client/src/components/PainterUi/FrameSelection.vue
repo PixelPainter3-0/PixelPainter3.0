@@ -4,6 +4,7 @@
     header="Frames"
     button-icon="pi pi-images"
     button-label=""
+    button-title="Frame Selection"
     width=""
     :default-open="true"
   >

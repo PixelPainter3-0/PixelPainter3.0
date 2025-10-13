@@ -5,6 +5,7 @@
     width="13rem"
     :button-icon="props.isBackground ? 'pi pi-tablet' : 'pi pi-palette'"
     button-label=""
+    :button-title="props.isBackground ? 'Background Color' : 'Brush Color'"
     :default-open="!props.isBackground"
   >
     <Tabs value="0">

@@ -5,6 +5,7 @@
     width="13rem"
     button-icon="pi pi-pencil"
     button-label=""
+    button-title="Brush Selection"
     :default-open="true">
     <div
       v-for="tool in PainterTool.getDefaults()"
