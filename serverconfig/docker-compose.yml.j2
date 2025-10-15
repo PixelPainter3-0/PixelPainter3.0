@@ -6,7 +6,6 @@ services:
     container_name: pixelpainter
     ports:
       - "{{env['PIXEL_PORT']}}:{{env['PIXEL_PORT']}}"
-    # Add volumes for branch and https certs
     networks:
       - pixel_network
 
