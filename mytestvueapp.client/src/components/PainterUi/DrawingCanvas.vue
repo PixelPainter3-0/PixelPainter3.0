@@ -46,6 +46,9 @@ const cursor = defineModel<Cursor>({
   )
 });
 
+let isDragging = false;
+let dragStart = { x: 0, y: 0 }
+
 //Runs on mounted, creates the canvas
 onMounted(() => {
   document.getElementById("canvas")?.appendChild(app.view as any);
@@ -202,7 +205,30 @@ function filterGreyScale(hex: string): string {
 viewport.on("pointermove", (e) => {
   pos.value = viewport.toWorld(e.globalX, e.globalY);
 
-  updateCursor();
+  if (cursor.value.selectedTool.label === "Pan" && isDragging) {
+    const dx = e.globalX - dragStart.x;
+    const dy = e.globalY - dragStart.y;
+    viewport.x += dx;
+    viewport.y += dy;
+    dragStart = { x: e.globalX, y: e.globalY };
+  } else {
+    updateCursor();
+  }
+});
+
+viewport.on("pointerdown", (e) => {
+  if (cursor.value.selectedTool.label === "Pan") {
+    isDragging = true;
+    dragStart = { x: e.globalX, y: e.globalY };
+  }
+});
+
+viewport.on("pointerup", () => {
+  isDragging = false;
+});
+
+viewport.on("pointerupoutside", () => {
+  isDragging = false;
 });
 
 //update cursor, not full canvas

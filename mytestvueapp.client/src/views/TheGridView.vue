@@ -19,44 +19,6 @@
     @contextmenu.prevent
   />
   <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
-    <template #start>
-      <div class="flex gap-2">
-        <Button
-          icon="pi pi-ban"
-          label="Quit"
-          severity="secondary"
-          @click="
-            resetArt();
-            disconnect();
-          "
-        >
-        </Button>
-        <UploadButton
-          :art="art"
-          :fps="fps"
-          :connection="connection"
-          :connected="connected"
-          :group-name="groupName"
-          @disconnect="disconnect"
-          @OpenModal="toggleKeybinds"
-        />
-        <SaveImageToFile
-          :art="art"
-          :fps="fps"
-          :filtered="false"
-          :filtered-art="''"
-          :gif-from-viewer="['']"
-        >
-        </SaveImageToFile>
-        <ConnectButton
-          @openModal="toggleKeybinds"
-          @connect="connect"
-          @disconnect="disconnect"
-          :connected="connected"
-          :isGif="art.pixelGrid.isGif"
-        />
-      </div>
-    </template>
 
     <template #center>
       <ColorSelection
@@ -67,65 +29,20 @@
         @disable-key-binds="keyBindActive = false"
       />
       <BrushSelection v-model="cursor.selectedTool" />
-      <ColorSelection
-        v-model:color="art.pixelGrid.backgroundColor"
-        v-model:size="cursor.size"
-        :isBackground="true"
-        @enable-key-binds="keyBindActive = true"
-        @disable-key-binds="keyBindActive = false"
-      />
-      <FrameSelection
-        v-if="art.pixelGrid.isGif"
-        v-model:selFrame="selectedFrame"
-        v-model:showLayers="showLayers"
-      />
-      <FPSSlider v-if="art.pixelGrid.isGif" v-model:fps="fps" />
-      <LayerSelection
-        v-if="!art.pixelGrid.isGif"
-        :updateLayers="updateLayers"
-        :connected="connected"
-        v-model:showLayers="showLayers"
-        v-model:greyscale="greyscale"
-      />
-      <HelpPopUp/>
-    </template>
-    <template #end>
-      <Button
-        icon="pi pi-times"
-        class="mr-2"
-        severity="primary"
-        label=""
-        title="Clear"
-        @click="clear()"
-      />
       <Button
         icon="pi pi-expand"
         class="mr-2"
-        severity="primary"
+        severity="secondary"
         label=""
         title="Recenter"
         @click="canvas?.recenter()"
       />
-      <Button
-        :disabled="connected"
-        :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
-        class="mr-2 Rainbow"
-        label=""
-        title="Gravity"
-        @click="runGravity()"
-      />
-      <Button
-        icon="pi pi-lightbulb"
-        class="Rainbow"
-        label=""
-        title="Color Blast!"
-        @click="randomizeGrid()"
-      />
+      <HelpPopUp/>
       <Button
         :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
         :severity="audioOn != -1 ? 'primary' : 'secondary'"
         label=""
-        class="ml-2"
+        class="mr-2"
         @click="toggleMusic()"
       />
     </template>
@@ -563,19 +480,6 @@ watch(
 );
 
 //functions
-function runGravity() {
-  if (intervalId.value != -1) {
-    clearInterval(intervalId.value);
-    intervalId.value = -1;
-  } else {
-    intervalId.value = setInterval(
-      fallingSand,
-      30,
-      layerStore.grids[layerStore.layer]
-    );
-  }
-}
-
 function getLinePixels(start: Vector2, end: Vector2): Vector2[] {
   const pixels: Vector2[] = [];
 
@@ -803,90 +707,6 @@ function fill(
   }
 
   return vectors;
-}
-
-function randomizeGrid() {
-  for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
-    for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
-      let color = ((Math.random() * 0xffffff) << 0)
-        .toString(16)
-        .padStart(6, "0");
-      layerStore.grids[layerStore.layer].grid[i][j] = color;
-
-      canvas.value?.updateCell(layerStore.layer, i, j, color);
-
-      if (connected.value) {
-        let coords: Vector2[] = [];
-        coords.push(new Vector2(i, j));
-        sendPixels(layerStore.layer, color, coords);
-      }
-    }
-  }
-  layerStore.grids[layerStore.layer].encodedGrid =
-    layerStore.grids[layerStore.layer].getEncodedGrid();
-}
-
-function fallingSand() {
-  let pixelGrid: PixelGrid = layerStore.grids[layerStore.layer];
-
-  for (let x = 0; x < pixelGrid.width; x++) {
-    for (let y = pixelGrid.height - 1; y >= 0; y--) {
-      if (pixelGrid.grid[x][y] !== "empty") {
-        if (y + 1 < pixelGrid.height && pixelGrid.grid[x][y + 1] === "empty") {
-          const below = pixelGrid.grid[x][y + 1];
-          pixelGrid.grid[x][y + 1] = pixelGrid.grid[x][y];
-
-          canvas.value?.updateCell(
-            layerStore.layer,
-            x,
-            y + 1,
-            pixelGrid.grid[x][y]
-          );
-
-          pixelGrid.grid[x][y] = below;
-          canvas.value?.updateCell(layerStore.layer, x, y, below);
-        } else {
-          //generate a random number either -1 or 1
-          const random = Math.random() > 0.5 ? 1 : -1;
-
-          if (
-            y + 1 < pixelGrid.height &&
-            x + random < pixelGrid.width &&
-            x + random >= 0 &&
-            pixelGrid.grid[x + random][y + 1] === "empty"
-          ) {
-            const belowRight = pixelGrid.grid[x + random][y + 1];
-            pixelGrid.grid[x + random][y + 1] = pixelGrid.grid[x][y];
-
-            canvas.value?.updateCell(
-              layerStore.layer,
-              x + random,
-              y + 1,
-              pixelGrid.grid[x][y]
-            );
-            pixelGrid.grid[x][y] = belowRight;
-
-            canvas.value?.updateCell(layerStore.layer, x, y, belowRight);
-          }
-        }
-      }
-    }
-  }
-}
-
-function clear(): void {
-  let coords: Vector2[] = [];
-  for (let i = 0; i < layerStore.grids[layerStore.layer].width; i++) {
-    for (let j = 0; j < layerStore.grids[layerStore.layer].height; j++) {
-      layerStore.grids[layerStore.layer].grid[i][j] = "empty";
-      canvas.value?.updateCell(layerStore.layer, i, j, "empty");
-      coords.push(new Vector2(i, j));
-    }
-  }
-
-  if (connected.value) {
-    sendPixels(layerStore.layer, "empty", coords);
-  }
 }
 
 //returns array array of color strings
@@ -1297,25 +1117,9 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Brush";
       canvas?.value.updateCursor();
-    } else if (event.key === "e") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Eraser";
-      canvas?.value.updateCursor();
     } else if (event.key === "d") {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pipette";
-      canvas?.value.updateCursor();
-    } else if (event.key === "f") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Bucket";
-      canvas?.value.updateCursor();
-    } else if (event.key === "r") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Rectangle";
-      canvas?.value.updateCursor();
-    } else if (event.key === "l") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Ellipse";
       canvas?.value.updateCursor();
     } else if (!event.ctrlKey && event.key === "s") {
       event.preventDefault();

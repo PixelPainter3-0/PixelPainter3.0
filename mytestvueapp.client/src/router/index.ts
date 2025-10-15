@@ -39,6 +39,11 @@ const router = createRouter({
       component: () => import("../views/AccountView.vue")
     },
     {
+      path: "/thegrid",
+      name: "The Grid",
+      component: () => import("../views/TheGridView.vue")
+    },
+    {
       path: "/notifications",
       name: "Notifications",
       component: () => import("../views/NotificationView.vue")
