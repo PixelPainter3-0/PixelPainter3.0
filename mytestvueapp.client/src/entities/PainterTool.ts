@@ -13,13 +13,15 @@ export default class PainterTool {
 
   static getDefaults(): PainterTool[] {
     return [
-      new PainterTool("Pan", "pi pi-arrows-alt", "p", "grab"),
-      new PainterTool("Brush", "pi pi-pencil", "b", "crosshair"),
-      new PainterTool("Eraser", "pi pi-eraser", "e", "crosshair"),
-      new PainterTool("Pipette", "pi pi-eye dropper", "d", "crosshair"),
-      new PainterTool("Bucket", "pi pi-hammer", "f", "crosshair"),
-      new PainterTool("Rectangle", "pi pi-stop", "r", "crosshair"),
-      new PainterTool("Ellipse", "pi pi-circle", "l", "crosshair")
+      new PainterTool("Pan", "pi pi-arrows-alt", "P", "grab"),
+      new PainterTool("Brush", "pi pi-pencil", "B", "crosshair"),
+      new PainterTool("Eraser", "pi pi-eraser", "E", "crosshair"),
+      new PainterTool("Pipette", "pi pi-eye dropper", "D", "crosshair"),
+      new PainterTool("Bucket", "pi pi-hammer", "F", "crosshair"),
+      new PainterTool("Line", "pi pi-minus", "L", "crosshair"),
+      new PainterTool("Rectangle", "pi pi-stop", "R", "crosshair"),
+      new PainterTool("Ellipse", "pi pi-circle", "O", "crosshair"),
+      new PainterTool("Select", "pi pi-clone", "S", "crosshair")
     ];
   }
 }
