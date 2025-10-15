@@ -1,5 +1,5 @@
 <template>
-  <div class="w-11 mx-auto my-0">
+  <div class="w-10 mx-auto my-0">
     <header>
       <h1 class="flex align-items-center justify-center gap-3">
         Search for Art
@@ -60,7 +60,7 @@
         v-for="index in displayAmount"
         :key="index"
         :art="displayArt[index + offset]"
-        :size="8"
+        :size="10"
         :position="index"
       />
     </div>
@@ -173,9 +173,8 @@ function changePage(page: number): void {
 function sortGallery(): void {
   var sortCode = sortType.value;
   isModified.value = true;
-
-  isSortedByDate.value = false;
   if (sortCode == "L") {
+    isSortedByDate.value = false;
     // Sort By Likes
     if (checkAscending.value) {
       publicArt.value.sort((artA, artB) => artA.numLikes - artB.numLikes); // Sort to Descending
@@ -183,6 +182,7 @@ function sortGallery(): void {
       publicArt.value.sort((artA, artB) => artB.numLikes - artA.numLikes); // Sort to Ascending
     }
   } else if (sortCode == "C") {
+    isSortedByDate.value = false;
     // Sort By Comments
     if (checkAscending.value) {
       publicArt.value.sort((artA, artB) => artA.numComments - artB.numComments); // Sort to Descending
@@ -190,6 +190,7 @@ function sortGallery(): void {
       publicArt.value.sort((artA, artB) => artB.numComments - artA.numComments); // Sort to Ascending
     }
   } else if (sortCode == "D") {
+    isSortedByDate.value = true;
     if (checkAscending.value) {
       publicArt.value.sort(
         (artA, artB) =>
