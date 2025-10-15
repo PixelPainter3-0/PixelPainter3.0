@@ -87,33 +87,40 @@
         v-model:showLayers="showLayers"
         v-model:greyscale="greyscale"
       />
+      <HelpPopUp
+      
+      />
     </template>
     <template #end>
       <Button
         icon="pi pi-times"
         class="mr-2"
         severity="primary"
-        label="Clear"
+        label=""
+        title="Clear"
         @click="clear()"
       />
       <Button
         icon="pi pi-expand"
         class="mr-2"
         severity="primary"
-        label="Recenter"
+        label=""
+        title="Recenter"
         @click="canvas?.recenter()"
       />
       <Button
         :disabled="connected"
         :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
         class="mr-2 Rainbow"
-        label="Gravity"
+        label=""
+        title="Gravity"
         @click="runGravity()"
       />
       <Button
         icon="pi pi-lightbulb"
         class="Rainbow"
-        label="Color Blast!"
+        label=""
+        title="Color Blast!"
         @click="randomizeGrid()"
       />
       <Button
@@ -168,6 +175,7 @@ import ConnectButton from "@/components/PainterUi/ConnectButton.vue";
 import * as SignalR from "@microsoft/signalr";
 import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
+import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 
 //variables
 const route = useRoute();
@@ -497,10 +505,17 @@ watch(
         setEndVector();
         drawAtCoords(getEllipsePixels(startPix.value, endPix.value));
       }
+    } else if (cursor.value.selectedTool.label === "Line") {
+      if (mouseButtonHeldDown.value) {
+        setEndVector();
+        drawAtCoords(getLinePixels(startPix.value, endPix.value));
+      }
     } else if (cursor.value.selectedTool.label === "Select") {
       if (mouseButtonHeldDown.value) {
         setEndVector();
-          selection = ref<string[][]>(getSelectPixels(startPix.value, endPix.value));
+        selection = ref<string[][]>(
+          getSelectPixels(startPix.value, endPix.value)
+        );
       }
     } else {
       drawAtCoords(getLinePixels(start, end));
@@ -649,7 +664,8 @@ function drawAtCoords(coords: Vector2[]) {
 
   if (
     cursor.value.selectedTool.label === "Rectangle" ||
-    cursor.value.selectedTool.label === "Ellipse"
+    cursor.value.selectedTool.label === "Ellipse" ||
+    cursor.value.selectedTool.label === "Line"
   ) {
     if (tempGrid) {
       for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
@@ -739,7 +755,8 @@ function drawAtCoords(coords: Vector2[]) {
           }
         } else if (
           cursor.value.selectedTool.label === "Rectangle" ||
-          cursor.value.selectedTool.label === "Ellipse"
+          cursor.value.selectedTool.label === "Ellipse" ||
+          cursor.value.selectedTool.label === "Line"
         ) {
           layerStore.grids[layerStore.layer].grid[coord.x][coord.y] =
             cursor.value.color;
@@ -897,7 +914,8 @@ function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   for (let i = 0; i < height; i++) {
     outArray[i] = []; // initialize the row?
     for (let j = 0; j < width; j++) {
-        outArray[i][j] = layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
+      outArray[i][j] =
+        layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
     }
   }
   return outArray;
@@ -1112,22 +1130,6 @@ function resetArt() {
   router.push("/new");
 }
 
-//Save to file functions
-//   const props = defineProps<{
-//   fps: number;
-//   gifFromViewer?: string[];
-//   filtered?: boolean;
-//   filteredArt?: string;
-// }>();
-
-// function flattenArt(): string[][] {
-//   let width = layerStore.grids[0].width;
-//   let height = layerStore.grids[0].height;
-//   let arr: string[][] = Array.from({ length: height }, () =>
-//     Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
-//   );
-// }
-
 function onMouseUp() {
   if (cursor.value.selectedTool.label == "Rectangle") {
     sendPixels(
@@ -1140,6 +1142,12 @@ function onMouseUp() {
       layerStore.layer,
       cursor.value.color,
       getEllipsePixels(startPix.value, endPix.value)
+    );
+  } else if (cursor.value.selectedTool.label == "Line") {
+    sendPixels(
+      layerStore.layer,
+      cursor.value.color,
+      getLinePixels(startPix.value, endPix.value)
     );
   } else if (cursor.value.selectedTool.label == "Select") {
     selection.value = getSelectPixels(startPix.value, endPix.value);
