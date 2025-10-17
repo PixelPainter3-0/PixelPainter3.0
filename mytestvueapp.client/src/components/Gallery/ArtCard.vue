@@ -16,7 +16,6 @@
           />
         </div>
       </template>
-
       <template #title>
         <div class="text-base font-bold m-0 px-2 pt-1">
           {{ title }}
@@ -25,25 +24,27 @@
 
       <template #subtitle>
         <div class="text-sm m-0 px-2 max-w-11rem text-overflow-ellipsis">
-          <div
-            v-for="(artist, index) in art.artistName"
-            :key="index"
-            class="py-1 font-semibold"
-            onclick="//thing to route"
-          >
-            {{ artist }}
+          <div v-if="art.artistName.length > 1">
+            {{ art.artistName[0] }}, etc.
           </div>
+          <div v-else-if="art.artistName.length == 0"></div>
+          <!--Should never be used-->
+          <div v-else>{{ art.artistName[0] }}</div>
         </div>
       </template>
 
       <template #content>
         <!-- Tag pills -->
-        <ul v-if="art.tags && art.tags.length" class="tag-list px-2 pt-1 pb-0">
+        <ul
+          v-if="art.tags && art.tags.length"
+          class="tag-list px-2 pt-1 pb-0 tag-height"
+        >
           <li
             v-for="t in limitedTags"
             :key="t.id || t.name"
             class="tag-pill"
             :title="t.name"
+            @click.stop="router.push({ name: 'TagGallery', params: { tag: t.name } })"
           >
             {{ t.name }}
           </li>
@@ -55,8 +56,11 @@
             +{{ overflowCount }}
           </li>
         </ul>
+        <ul v-else class="tag-height"></ul>
 
-        <div class="flex gap-2 m-2 mt-2">
+        <div
+          class="flex gap-2 m-2 mt-2 gap-x-2 justify-content-center align-items-center"
+        >
           <LikeButton
             :artId="props.art.id"
             :likes="props.art.numLikes"
@@ -75,7 +79,7 @@
             rounded
             severity="secondary"
             icon="pi pi-comment"
-            :label="art.numComments?.toString() || ''"
+            :label="numComments.toString() || ''"
           />
         </div>
       </template>
@@ -97,16 +101,6 @@ import router from "@/router";
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
 
-// onMounted(() => {
-//   if (props.art.title.length > 20) {
-//     const tempTitle = props.art.title.substring(0, 20);
-//     const elipsis = "...";
-//     title.value = tempTitle + elipsis;
-//   } else {
-//     title.value = props.art.title;
-//   }
-// });
-
 const props = defineProps<{
   art: Art;
   size: number;
@@ -124,12 +118,26 @@ const overflowTitle = computed(() =>
     .join(", ")
 );
 const title = computed(() => {
-  if (props.art.title.length > 20) {
-    const tempTitle = props.art.title.substring(0, 20);
+  if (props.art.title.length > 32) {
+    const tempTitle = props.art.title.substring(0, 32);
     const elipsis = "...";
     return tempTitle + elipsis;
   } else {
     return props.art.title;
+  }
+});
+const numComments = computed(() => {
+  let commentLabel = "";
+  const tempComments = props.art.numComments;
+  if (tempComments > 999999) {
+    commentLabel = Math.floor(tempComments / 1000000) + "M";
+    return commentLabel;
+  } else if (tempComments > 999) {
+    commentLabel = Math.floor(tempComments / 1000) + "K";
+    return commentLabel;
+  } else {
+    commentLabel = tempComments + "";
+    return commentLabel;
   }
 });
 </script>
@@ -166,6 +174,7 @@ const title = computed(() => {
   white-space: nowrap;
   user-select: none;
   transition: 0.15s;
+  cursor: pointer; /* make it clear it's clickable */
 }
 .tag-pill.more {
   background: #444155;
@@ -183,5 +192,9 @@ const title = computed(() => {
 }
 .gallery-card .p-card-caption {
   gap: 0 !important;
+}
+.tag-height {
+  height: 24px !important;
+  margin: 0px !important;
 }
 </style>

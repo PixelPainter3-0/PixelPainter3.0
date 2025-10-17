@@ -245,6 +245,7 @@ insert into ContributingArtists(ArtistId,ArtId) values(2,8);
 insert into ContributingArtists(ArtistId,ArtId) values(2,1);
 insert into ContributingArtists(ArtistId,ArtId) values(2,2);
 insert into ContributingArtists(ArtistId,ArtId) values(11,9);
+insert into ContributingArtists(ArtistId,ArtId) values(11,12);
 END
 GO
 --Check if the Forecasts table is empty, else prefill with some data
