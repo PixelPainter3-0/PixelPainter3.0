@@ -1,13 +1,20 @@
 <template>
   <Button
     :title="isEditing ? 'Save Changes' : 'Upload'"
+    :label="isHover ? (isEditing ? 'Save' : 'Upload') : ''"
     :icon="isEditing ? 'pi pi-save' : 'pi pi-upload'"
     @click="toggleModal()"
+    @mouseover="isHover = true"
+    @mouseleave="isHover = false"
     :disabled="tagCreationLoading || loading"
   ></Button>
 
   <!---->
-  <Dialog v-model:visible="visible" modal :style="{ width: '40rem', maxWidth: '95vw' }">
+  <Dialog
+    v-model:visible="visible"
+    modal
+    :style="{ width: '40rem', maxWidth: '95vw' }"
+  >
     <template #header>
       <h1 class="mr-2">
         {{ isEditing ? "Save Your Changes?" : "Upload Your Art?" }}
@@ -61,7 +68,10 @@
           :disabled="!newTagName || tagCreationLoading"
         />
       </div>
-      <div class="text-xs text-color-secondary" v-if="selectedTagIds.length < 4">
+      <div
+        class="text-xs text-color-secondary"
+        v-if="selectedTagIds.length < 4"
+      >
         {{ 4 - selectedTagIds.length }} tag(s) remaining*
       </div>
       <div class="text-xs text-color-secondary" v-else>
@@ -125,6 +135,7 @@ const artistStore = useArtistStore();
 const toast = useToast();
 const visible = ref<boolean>(false);
 const loading = ref<boolean>(false);
+const isHover = ref<boolean>(false);
 
 const newName = ref<string>("");
 const newPrivacy = ref<boolean>(false);
@@ -141,21 +152,24 @@ let creatingTagsPromise: Promise<void> | null = null;
 
 const TAG_MAX_LENGTH = 15;
 function sanitizeTagInput(raw: string): string {
-  return raw.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, TAG_MAX_LENGTH);
+  return raw
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase()
+    .slice(0, TAG_MAX_LENGTH);
 }
 
 function extractTokens(raw: string): string[] {
   return raw
     .split(/[,\s]+/)
     .map(sanitizeTagInput)
-    .filter(t => t.length > 0);
+    .filter((t) => t.length > 0);
 }
 
 watch(newTagName, (val) => {
   if (!val) return;
   const rebuilt = val
     .split(/[,\s]+/)
-    .map(v => sanitizeTagInput(v))
+    .map((v) => sanitizeTagInput(v))
     .filter(Boolean)
     .join(" ");
   if (rebuilt !== val.trim()) newTagName.value = rebuilt;
@@ -171,16 +185,20 @@ async function createTag(): Promise<void> {
   }
 
   // Build list of tokens that are not already present
-  const toCreate = tokens.filter(token => {
-    const exists = allTags.value.some(t => t.name.toLowerCase() === token);
+  const toCreate = tokens.filter((token) => {
+    const exists = allTags.value.some((t) => t.name.toLowerCase() === token);
     return !exists;
   });
 
   if (!toCreate.length) {
     // If all already exist, auto-select any up to limit
-    tokens.forEach(tok => {
-      const tag = allTags.value.find(t => t.name.toLowerCase() === tok);
-      if (tag && selectedTagIds.value.length < 4 && !selectedTagIds.value.includes(Number(tag.id))) {
+    tokens.forEach((tok) => {
+      const tag = allTags.value.find((t) => t.name.toLowerCase() === tok);
+      if (
+        tag &&
+        selectedTagIds.value.length < 4 &&
+        !selectedTagIds.value.includes(Number(tag.id))
+      ) {
         selectedTagIds.value.push(Number(tag.id));
       }
     });
@@ -252,14 +270,14 @@ const displayedTags = computed(() => {
   }
 
   // Score matches but DO NOT remove non‑matches; just push them after matches
-  const scored = src.map(t => {
+  const scored = src.map((t) => {
     const name = t.name?.toLowerCase() || "";
     let score = 0;
     if (name === q) score = 5;
     else if (name.startsWith(q)) score = 4;
     else if (name.includes(q)) score = 3;
     else {
-      const overlap = [...new Set(q)].filter(ch => name.includes(ch)).length;
+      const overlap = [...new Set(q)].filter((ch) => name.includes(ch)).length;
       if (overlap) score = 1;
     }
     return { ref: t, score };
@@ -267,7 +285,7 @@ const displayedTags = computed(() => {
 
   return scored
     .sort((a, b) => b.score - a.score || a.ref.name.localeCompare(b.ref.name))
-    .map(x => x.ref);
+    .map((x) => x.ref);
 });
 
 function onTagFilter(e: any) {
@@ -298,11 +316,11 @@ async function toggleModal(): Promise<void> {
   if (visible.value) {
     try {
       allTags.value = await TagService.getAllTags();
-      allTags.value = allTags.value.map(t => ({ ...t, id: Number(t.id) }));
+      allTags.value = allTags.value.map((t) => ({ ...t, id: Number(t.id) }));
       if (isEditing.value && props.art.id) {
         try {
           const existing = await TagService.getTagsForArt(props.art.id);
-            selectedTagIds.value = existing
+          selectedTagIds.value = existing
             .map((t: any) => Number(t.id))
             .filter((v, i, arr) => arr.indexOf(v) === i)
             .slice(0, 4);
@@ -320,7 +338,6 @@ async function toggleModal(): Promise<void> {
     }
   }
 }
-
 
 function flattenArtEncode(): string {
   let width = layerStore.grids[0].width;
@@ -377,8 +394,8 @@ async function finalizeUpload(success: boolean, artId?: number): Promise<void> {
     // Removed re-fetch & filtering of newly created tag ids to avoid race
     let tagError = false;
     const ids = selectedTagIds.value
-      .map(id => Number(id))
-      .filter(id => Number.isFinite(id) && id > 0);
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id) && id > 0);
 
     if (ids.length) {
       try {
@@ -391,8 +408,14 @@ async function finalizeUpload(success: boolean, artId?: number): Promise<void> {
 
     toast.add({
       severity: tagError ? "warn" : "success",
-      summary: tagError ? "Partial Success" : (isEditing.value ? "Saved" : "Uploaded"),
-      detail: tagError ? "Art saved, but some tags failed. You can edit and re-apply." : "Art uploaded successfully",
+      summary: tagError
+        ? "Partial Success"
+        : isEditing.value
+        ? "Saved"
+        : "Uploaded",
+      detail: tagError
+        ? "Art saved, but some tags failed. You can edit and re-apply."
+        : "Art uploaded successfully",
       life: 3500
     });
 
@@ -403,7 +426,9 @@ async function finalizeUpload(success: boolean, artId?: number): Promise<void> {
       await router.push("/art/" + artId);
       // Fallback if route name differs or push silently ignored
       if (!router.currentRoute.value.path.endsWith("/" + artId)) {
-        console.warn("Primary router.push did not change route, retrying replace");
+        console.warn(
+          "Primary router.push did not change route, retrying replace"
+        );
         await router.replace("/art/" + artId);
       }
     } catch (navErr) {
