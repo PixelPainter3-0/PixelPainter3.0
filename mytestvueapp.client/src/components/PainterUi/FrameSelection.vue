@@ -102,7 +102,7 @@ function addFrame(): void {
   });
   frameStore.pushGrid(
     new PixelGrid(
-      frameStore.grids[0].height,
+      frameStore.grids[0].width,
       frameStore.grids[0].height,
       frameStore.grids[0].backgroundColor,
       frameStore.grids[0].isGif
