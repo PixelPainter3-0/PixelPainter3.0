@@ -5,6 +5,7 @@ export class PixelGrid {
   height: number;
   backgroundColor: string;
   grid: string[][];
+  lastGrid: string[][];
   encodedGrid?: string;
   isGif: boolean;
   blankGrid: string[][];
@@ -35,6 +36,7 @@ export class PixelGrid {
       ).grid;
     }
     this.blankGrid = this.createGrid(width, height);
+    this.lastGrid = this.createGrid(width, height);
     this.undoStack = [];
     this.redoStack = [];
     this.redoStackMaxSize = 0;
@@ -76,29 +78,38 @@ export class PixelGrid {
   }
 
   public updateGrid(): void {
-    this.undoStack.push(JSON.parse(JSON.stringify(this.grid)));
+    this.undoStack.push(JSON.parse(JSON.stringify(this.lastGrid)));
     this.redoStack = [];
     this.redoStackMaxSize = 0;
+    this.lastGrid = JSON.parse(JSON.stringify(this.grid));
   }
+
   public undo(): void {
     if(this.undoStack.length == 0) {
       if(this.redoStack.length != this.redoStackMaxSize){
         this.redoStack.push(JSON.parse(JSON.stringify(this.grid)));
       }
       this.grid = JSON.parse(JSON.stringify(this.blankGrid));
+      this.lastGrid = JSON.parse(JSON.stringify(this.blankGrid));
     } else if(this.undoStack.length >= 1){
       this.redoStack.push(JSON.parse(JSON.stringify(this.grid)));
       if(this.redoStackMaxSize == 0){
         this.redoStackMaxSize = this.undoStack.length;
-        this.undoStack.pop();
       }
       this.grid = JSON.parse(JSON.stringify(this.undoStack.pop()!));
+      this.lastGrid = JSON.parse(JSON.stringify(this.grid));
     }
   }
+
   public redo(): void {
-    if(this.redoStack.length > 0){
+    if(this.redoStack.length >= 2){
       this.undoStack.push(JSON.parse(JSON.stringify(this.grid)));
       this.grid = JSON.parse(JSON.stringify(this.redoStack.pop()!));
+      this.lastGrid = JSON.parse(JSON.stringify(this.grid));
+    } else if (this.redoStack.length == 1){
+      this.undoStack.push(JSON.parse(JSON.stringify(this.grid)));
+      this.grid = JSON.parse(JSON.stringify(this.redoStack.pop()!));
+      this.lastGrid = JSON.parse(JSON.stringify(this.grid));
     }
   }
 }

@@ -15,7 +15,8 @@ const baseFolder =
 const certificateName = "mytestvueapp.client";
 const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
-
+console.log(certFilePath)
+console.log(keyFilePath)
 if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
   if (
     0 !==
@@ -73,6 +74,14 @@ export default defineConfig({
         target,
         secure: false
       },
+      "^/commentlike": {
+        target,
+        secure: false
+      },
+      "^/commentdislike": {
+        target,
+        secure: false
+      },
       "^/notification/": {
         target,
         secure: false
@@ -82,6 +91,10 @@ export default defineConfig({
         secure: false,
       },
       "^/socket/": {
+        target,
+        secure: false,
+      },
+      "^/tag": {
         target,
         secure: false,
       }

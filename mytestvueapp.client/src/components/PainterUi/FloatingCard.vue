@@ -4,6 +4,7 @@
     :label="buttonLabel"
     :severity="openDialog ? 'primary' : 'secondary'"
     :icon="buttonIcon"
+    :title="buttonTitle"
     class="mr-2" />
   <Dialog
     :position="position"
@@ -36,6 +37,7 @@ const props = defineProps<{
   buttonLabel: string;
   defaultOpen: boolean;
   buttonIcon: string;
+  buttonTitle: string;
 }>();
 
 onMounted(() => {

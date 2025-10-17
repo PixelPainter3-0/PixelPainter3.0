@@ -4,6 +4,7 @@
     header="Layers [Right click to delete]"
     button-icon="pi pi-clone"
     button-label=""
+    button-title="Layer Selection"
     width=""
     :default-open="false"
   >

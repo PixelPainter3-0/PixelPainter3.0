@@ -51,11 +51,24 @@ namespace MyTestVueApp.Server.ServiceImplementations
 	                    Artist.[Name] as CommenterName,
                         Comment.CreationDate,
                         Comment.ReplyId,
+                        COUNT(DISTINCT CommentLikes.ArtistId) as CommentLikes,
+                        Count(DISTINCT CommentDislikes.ArtistId) as CommentDislikes,
                         Comment.Viewed
                     FROM Comment  
                     JOIN Artist ON Artist.id = Comment.ArtistId
-                    WHERE ArtID = @id
-                    Order By CreationDate DESC;";
+	                LEFT JOIN CommentLikes ON Comment.ID = CommentLikes.CommentID  
+	                LEFT JOIN CommentDislikes ON Comment.ID = CommentDislikes.CommentID  
+                    WHERE Comment.ArtID = @id
+                    GROUP BY 
+                        Comment.Id, 
+                        Comment.ArtistId, 
+                        Comment.ArtID, 
+                        Comment.[Message],
+                        Artist.[Name],
+                        Comment.CreationDate,
+                        Comment.ReplyId,
+                        Comment.Viewed
+                    ORDER BY Comment.CreationDate DESC";
 
                     using (var command = new SqlCommand(query, connection))
                     {
@@ -73,7 +86,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                     CommenterName = reader.GetString(4),
                                     CreationDate = reader.GetDateTime(5),
                                     ReplyId = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
-                                    Viewed = reader.GetInt32(7)==0 ? false : true
+                                    NumLikes = reader.GetInt32(7),
+                                    NumDislikes = reader.GetInt32(8),
+                                    Viewed = reader.GetInt32(9)==0 ? false : true
                                 };
                                 comments.Add(comment);
                             }
@@ -310,16 +325,21 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     connection.Open();
                     //var query = "SELECT Date, TemperatureC, Summary FROM WeatherForecasts";
                     var query = @$"
-                   SELECT 
+                  SELECT 
                         Comment.Id, 
                         Comment.ArtistId, 
                         Comment.ArtID, 
                         Comment.[Message],
 	                    Artist.[Name] as CommenterName,
                         Comment.CreationDate,
-                        Comment.ReplyId
+                        Comment.ReplyId,
+                        COUNT(DISTINCT CommentLikes.ArtistId) as CommentLikes,
+                        Count(DISTINCT CommentDislikes.ArtistId) as CommentDislikes,
+                        Comment.Viewed
                     FROM Comment  
                     JOIN Artist ON Artist.id = Comment.ArtistId
+	                LEFT JOIN CommentLikes ON Comment.ID = CommentLikes.CommentID  
+	                LEFT JOIN CommentDislikes ON Comment.ID = CommentDislikes.CommentID  
                     WHERE Comment.Id = @id;";
 
                     using (var command = new SqlCommand(query, connection))
@@ -369,16 +389,21 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     connection.Open();
                     //var query = "SELECT Date, TemperatureC, Summary FROM WeatherForecasts";
                     var query = @$"
-                   SELECT 
+                    SELECT 
                         Comment.Id, 
                         Comment.ArtistId, 
                         Comment.ArtID, 
                         Comment.[Message],
 	                    Artist.[Name] as CommenterName,
                         Comment.CreationDate,
-                        Comment.ReplyId
+                        Comment.ReplyId,
+                        COUNT(DISTINCT CommentLikes.ArtistId) as CommentLikes,
+                        Count(DISTINCT CommentDislikes.ArtistId) as CommentDislikes,
+                        Comment.Viewed
                     FROM Comment  
                     JOIN Artist ON Artist.id = Comment.ArtistId
+	                LEFT JOIN CommentLikes ON Comment.ID = CommentLikes.CommentID  
+	                LEFT JOIN CommentDislikes ON Comment.ID = CommentDislikes.CommentID  
                     WHERE Comment.ArtistId = @id;";
 
                     using (var command = new SqlCommand(query, connection))
@@ -436,9 +461,13 @@ namespace MyTestVueApp.Server.ServiceImplementations
 	                    Artist.[Name] as CommenterName,
                         Comment.CreationDate,
                         Comment.ReplyId,
+                        COUNT(DISTINCT CommentLikes.ArtistId) as CommentLikes,
+                        Count(DISTINCT CommentDislikes.ArtistId) as CommentDislikes,
                         Comment.Viewed
                     FROM Comment  
                     JOIN Artist ON Artist.id = Comment.ArtistId
+	                LEFT JOIN CommentLikes ON Comment.ID = CommentLikes.CommentID  
+	                LEFT JOIN CommentDislikes ON Comment.ID = CommentDislikes.CommentID  
                     WHERE Comment.ReplyId = @id;";
 
                     using (var command = new SqlCommand(query, connection))
