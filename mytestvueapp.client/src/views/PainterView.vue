@@ -22,7 +22,7 @@
     <template #start>
       <div class="flex gap-2">
         <Button
-          icon="pi pi-ban"
+          icon="pi pi-ban"  
           label="Quit"
           severity="secondary"
           @click="
@@ -124,11 +124,18 @@
         @click="randomizeGrid()"
       />
       <Button
-        :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
-        :severity="audioOn != -1 ? 'primary' : 'secondary'"
+        :icon="volume > 0 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+        :severity="volume > 0 ? 'primary' : 'secondary'"
         label=""
         class="ml-2"
-        @click="toggleMusic()"
+        @click="toggleMute()"
+      />
+      <Slider
+        v-model="volume"
+        :min="0"
+        :max="100"
+        class="m1-3 w-32"
+        @input="setVolume"
       />
     </template>
   </Toolbar>
@@ -137,6 +144,7 @@
 //vue prime
 import Toolbar from "primevue/toolbar";
 import Button from "primevue/button";
+import Slider from "primevue/slider";
 
 //custom components
 import DrawingCanvas from "@/components/PainterUi/DrawingCanvas.vue";
@@ -182,7 +190,6 @@ const route = useRoute();
 const canvas = ref<any>();
 const toast = useToast();
 const intervalId = ref<number>(-1);
-const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
 const layerStore = useLayerStore();
@@ -191,6 +198,7 @@ const updateLayers = ref<number>(0);
 const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
+const volume = ref<number>(50);
 let selection = ref<string[][]>([]);
 let copiedSelection = ref<string[][]>([]);
 
@@ -210,6 +218,40 @@ const audioFiles = [
   "/src/music/OrchestralSuiteNo3.mp3"
 ];
 const audioRef = ref(new Audio());
+
+const audioIndex = ref(0);
+const audioOn = ref<number>(-1);
+const previousVolume = ref<number>(50);
+
+function toggleMusic() {
+  if (audioOn.value === -1) {
+    audioOn.value = 1;
+    audioRef.value.src = audioFiles[audioIndex.value];
+    audioRef.value.loop = true;
+    audioRef.value.volume = volume.value / 100;
+    audioRef.value.play();
+  } else {
+    audioOn.value = -1;
+    audioRef.value.pause();
+  }
+}
+
+function toggleMute() {
+  if (audioRef.value.volume > 0) {
+    // remember old volume, then mute
+    previousVolume.value = volume.value;
+    volume.value = 0;
+    audioRef.value.volume = 0;
+  } else {
+    // restore previous volume
+    volume.value = previousVolume.value;
+    audioRef.value.volume = volume.value / 100;
+  }
+}
+
+function setVolume() {
+  audioRef.value.volume = volume.value / 100;
+}
 
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
@@ -472,6 +514,12 @@ onMounted(async () => {
       }
     })
     .catch((err) => console.log(err));
+
+    toggleMusic();
+});
+
+watch(volume, (newValue) => {
+  audioRef.value.volume = newValue / 100;
 });
 
 onUnmounted(() => {
@@ -491,6 +539,7 @@ function toggleKeybinds(disable: boolean) {
     document.addEventListener("keydown", handleKeyDown);
   }
 }
+
 
 watch(
   cursorPositionComputed,
@@ -1289,21 +1338,7 @@ async function saveGIFFromPainter(): Promise<void> {
   GIFCreationService.createGIF(urls, fps.value);
 }
 
-function toggleMusic(): void {
-  if (audioOn.value != -1) {
-    audioOn.value = -1;
-    audioRef.value.pause();
-  } else {
-    audioOn.value = 1;
-    audioRef.value.pause();
-    audioRef.value.currentTime = 0;
 
-    var randomIndex = Math.floor(Math.random() * audioFiles.length);
-    var chosenMusic = audioFiles[randomIndex];
-    audioRef.value.src = chosenMusic;
-    audioRef.value.play();
-  }
-}
 
 function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
