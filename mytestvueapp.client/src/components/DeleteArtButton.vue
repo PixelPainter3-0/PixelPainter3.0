@@ -1,10 +1,10 @@
 <template>
   <Button
+    v-bind="normalizedAttrs"
+    :icon="normalizedIcon"
     label="Delete Art"
-    icon=""
-    @click="visible = !visible"
     severity="danger"
-    class="block"
+    @click="onDelete"
   />
 
   <Dialog
@@ -12,7 +12,7 @@
     modal
     :closable="false"
     :style="{ width: '25rem' }"
-    :header="'Delete ' + art.title + '?'"
+    :header="`Delete ${art.title}?`"
   >
     <Message icon="pi pi-times-circle" severity="error">
       This action cannot be undone.
@@ -27,17 +27,12 @@
     />
 
     <template #footer>
-      <Button
-        label="Cancel"
-        text
-        severity="secondary"
-        @click="visible = false"
-      />
+      <Button label="Cancel" text severity="secondary" @click="visible = false" />
       <Button
         label="Confirm"
         severity="danger"
-        @click="confirmDelete()"
-        :disabled="confirmText != art.title"
+        :disabled="confirmText !== art.title"
+        @click="confirmDelete"
       />
     </template>
   </Dialog>
@@ -47,66 +42,67 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
-import { ref, watch } from "vue";
+import Message from "primevue/message";
+import { ref, watch, computed, useAttrs } from "vue";
 import ArtAccessService from "@/services/ArtAccessService";
 import { useToast } from "primevue/usetoast";
 import router from "@/router";
 import type Art from "@/entities/Art";
-import Message from "primevue/message";
 
-const toast = useToast();
 const props = defineProps<{
   art: Art;
   isAdmin: boolean;
 }>();
+
+const toast = useToast();
 const visible = ref<boolean>(false);
 const confirmText = ref<string>("");
 
-watch(visible, (newVal) => {
-  if (newVal) {
-    confirmText.value = "";
-  }
+const attrs = useAttrs();
+
+const normalizedAttrs = computed(() => {
+  const a: Record<string, unknown> = { ...attrs };
+  if ("icon" in a) delete a.icon; // handled separately
+  const t = a.title;
+  if (t != null && typeof t !== "string") a.title = String(t);
+  return a;
+});
+
+const normalizedIcon = computed(() => {
+  const icon = (attrs as Record<string, unknown>).icon;
+  return typeof icon === "string" && icon.length > 0 ? icon : "pi pi-trash";
+});
+
+function onDelete(): void {
+  visible.value = true;
+}
+
+watch(visible, (open) => {
+  if (open) confirmText.value = "";
 });
 
 async function confirmDelete(): Promise<void> {
-  if (props.isAdmin) {
-    ArtAccessService.deleteArt(props.art.id)
-    .then(() => {
-      router.go(-1);
-      toast.add({
-        severity: "success",
-        summary: "Art Deleted",
-        detail: "The art has been deleted successfully",
-        life: 3000
-      });
-    })
-    .catch(() => {
-      toast.add({
-        severity: "error",
-        summary: "Error",
-        detail: "An error occurred while deleting the art",
-        life: 3000
-      });
+  try {
+    if (props.isAdmin) {
+      await ArtAccessService.deleteArt(props.art.id);
+    } else {
+      await ArtAccessService.deleteContributingArtist(props.art.id);
+    }
+    visible.value = false;
+    toast.add({
+      severity: "success",
+      summary: "Art Deleted",
+      detail: "The art has been deleted successfully",
+      life: 3000
     });
-  } else {
-    ArtAccessService.deleteContributingArtist(props.art.id)
-      .then(() => {
-        router.go(-1);
-        toast.add({
-          severity: "success",
-          summary: "Art Deleted",
-          detail: "The art has been deleted successfully",
-          life: 3000
-        });
-      })
-      .catch(() => {
-        toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "An error occurred while deleting the art",
-          life: 3000
-        });
-      });
+    router.go(-1);
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "An error occurred while deleting the art",
+      life: 3000
+    });
   }
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <Button label="Start From This" icon="pi pi-pencil" @click="handleClick()" v-if="!art.isGif"></Button>
+  <Button label="" icon="pi pi-pencil" @click="handleClick()" v-if="!art.isGif"></Button>
 </template>
 <script setup lang="ts">
 import Art from "@/entities/Art";
