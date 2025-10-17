@@ -373,7 +373,9 @@ function sortGallery(): void {
     } else {
       publicArt.value.sort((artA, artB) => artB.numLikes - artA.numLikes);
     }
+  }
     // Sort By Comments
+  else if (sortCode == "C") {
     if (checkAscending.value) {
       publicArt.value.sort((artA, artB) => artA.numComments - artB.numComments);
     } else {
