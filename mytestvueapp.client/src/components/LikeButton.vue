@@ -3,7 +3,7 @@
     rounded
     :severity="liked ? 'primary' : 'secondary'"
     :icon="liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"
-    :label="(likes + localLike).toString()"
+    :label="(displayLikes).toString()"
     @click.stop="likedClicked()"
   />
 </template>
@@ -13,7 +13,7 @@ import LoginService from "@/services/LoginService";
 import LikeService from "@/services/LikeService";
 import { useToast } from "primevue/usetoast";
 
-import { ref, onMounted, watch, defineEmits } from "vue";
+import { ref, onMounted, watch, defineEmits, computed } from "vue";
 
 const props = defineProps<{
   likes: number;
@@ -39,6 +39,26 @@ async function isLiked(): Promise<void> {
   if (loggedIn.value)
     LikeService.isLiked(props.artId).then((value) => (liked.value = value));
 }
+
+const displayLikes = computed(() => {
+  let likesLabel = "";
+  const tempLikes = props.likes + localLike.value;
+  if(tempLikes > 999999)
+  {
+    likesLabel = Math.floor(tempLikes / 1000000) + "M";
+    return likesLabel;
+  }
+  else if (tempLikes > 999)
+  {
+      likesLabel = Math.floor(tempLikes / 1000) + "K";
+      return likesLabel;
+  }
+  else
+  {
+    likesLabel = (tempLikes) + "";
+    return likesLabel;
+  }
+});
 
 watch(
   () => props.artId,
