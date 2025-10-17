@@ -1,8 +1,8 @@
 <template>
-  <div class="w-9 mx-auto my-0">
+  <div class="w-10 mx-auto my-0">
     <header>
-      <h1 class="flex align-items-center gap-3">
-        <span>Search for Art</span>
+      <h1 class="flex align-items-center justify-center gap-3">
+        Search for Art
         <InputText
           class="mt-2"
           v-model.trim="search"
@@ -104,7 +104,7 @@
         v-for="index in displayAmount"
         :key="index"
         :art="displayArt[index + offset]"
-        :size="6"
+        :size="10"
         :position="index"
       />
     </div>
@@ -113,7 +113,7 @@
     <div v-if="!loading && displayArt.length === 0" class="no-results">
       <i class="pi pi-search" aria-hidden="true"></i>
       <p>No art found for the current filters.</p>
-      <small>Try switching to “Match Any” or clear selected tags.</small>
+      <small v-if="selectedTagIds.length > 0">Try switching to Match Any or clear selected tags.</small>
     </div>
 
     <ArtPaginator v-if="pages > 1" :pages="pages" @page-change="changePage" />
@@ -367,12 +367,13 @@ function sortGallery(): void {
 
   isSortedByDate.value = false;
   if (sortCode == "L") {
+    // Sort By Likes
     if (checkAscending.value) {
       publicArt.value.sort((artA, artB) => artA.numLikes - artB.numLikes);
     } else {
       publicArt.value.sort((artA, artB) => artB.numLikes - artA.numLikes);
     }
-  } else if (sortCode == "C") {
+    // Sort By Comments
     if (checkAscending.value) {
       publicArt.value.sort((artA, artB) => artA.numComments - artB.numComments);
     } else {
