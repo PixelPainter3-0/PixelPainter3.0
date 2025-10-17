@@ -19,16 +19,39 @@
     @contextmenu.prevent
   />
   <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
-
+    <template #start>
+      <UploadButton
+          v-if="artist.isAdmin"
+          :art="art"
+          :fps="fps"
+          :connection="connection"
+          :connected="connected"
+          :group-name="groupName"
+          @disconnect="disconnect"
+          @OpenModal="toggleKeybinds"
+        />
+        <SaveImageToFile
+          :art="art"
+          :fps="fps"
+          :filtered="false"
+          :filtered-art="''"
+          :gif-from-viewer="['']"
+        >
+        </SaveImageToFile>
+    </template>
     <template #center>
       <ColorSelection
         v-model:color="cursor.color"
         v-model:size="cursor.size"
         :isBackground="false"
+        :isGrid="true"
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
-      <BrushSelection v-model="cursor.selectedTool" />
+      <BrushSelection 
+        v-model="cursor.selectedTool" 
+        :isGrid = "true"
+      />
       <Button
         icon="pi pi-expand"
         class="mr-2"
@@ -37,7 +60,9 @@
         title="Recenter"
         @click="canvas?.recenter()"
       />
-      <HelpPopUp/>
+      <HelpPopUp :isGrid = "true" />
+    </template>
+    <template #end>
       <Button
         :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
         :severity="audioOn != -1 ? 'primary' : 'secondary'"
@@ -59,9 +84,6 @@ import BrushSelection from "@/components/PainterUi/BrushSelection.vue";
 import ColorSelection from "@/components/PainterUi/ColorSelection.vue";
 import UploadButton from "@/components/PainterUi/UploadButton.vue";
 import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
-import FrameSelection from "@/components/PainterUi/FrameSelection.vue";
-import LayerSelection from "@/components/PainterUi/LayerSelection.vue";
-import FPSSlider from "@/components/PainterUi/FPSSlider.vue";
 
 //entities
 import { PixelGrid } from "@/entities/PixelGrid";
@@ -84,7 +106,6 @@ import { useToast } from "primevue/usetoast";
 //scripts
 import ArtAccessService from "@/services/ArtAccessService";
 import Art from "@/entities/Art";
-import ConnectButton from "@/components/PainterUi/ConnectButton.vue";
 
 //Other
 import * as SignalR from "@microsoft/signalr";
@@ -96,7 +117,6 @@ import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 const route = useRoute();
 const canvas = ref<any>();
 const toast = useToast();
-const intervalId = ref<number>(-1);
 const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
@@ -1121,22 +1141,6 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pipette";
       canvas?.value.updateCursor();
-    } else if (!event.ctrlKey && event.key === "s") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Select";
-      canvas?.value.updateCursor();
-    } else if (event.ctrlKey && event.key === "c") {
-      event.preventDefault();
-      copiedSelection.value = selection.value;
-      canvas?.value.updateCursor();
-    } else if (event.key === "q" && cursor.value.size > 1) {
-      event.preventDefault();
-      cursor.value.size -= 1;
-      canvas?.value.updateCursor();
-    } else if (event.key === "w" && cursor.value.size < 32) {
-      event.preventDefault();
-      cursor.value.size += 1;
-      canvas?.value.updateCursor();
     } else if (event.key === "1") {
       event.preventDefault();
       updatePallet();
@@ -1206,57 +1210,7 @@ function handleKeyDown(event: KeyboardEvent) {
       } else {
         saveToFile();
       }
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
-      event.preventDefault();
-      undo();
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
-      event.preventDefault();
-      redo();
-    }
+    } 
   }
 }
 </script>
-<style scoped>
-.Rainbow,
-.Rainbow:hover {
-  color: white;
-  border-color: white;
-  background: -webkit-linear-gradient(
-      225deg,
-      rgb(251, 175, 21),
-      rgb(251, 21, 242),
-      rgb(21, 198, 251)
-    )
-    0% 0% / 300% 300%;
-  -webkit-animation: gradient_move 3s ease infinite;
-  animation: gradient_move 3s ease infinite;
-}
-
-@-webkit-keyframes gradient_move {
-  0% {
-    background-position: 0% 92%;
-  }
-
-  50% {
-    background-position: 100% 9%;
-  }
-
-  100% {
-    background-position: 0% 92%;
-  }
-}
-
-@keyframes gradient_move {
-  0% {
-    background-position: 0% 92%;
-  }
-
-  50% {
-    background-position: 100% 9%;
-  }
-
-  100% {
-    background-position: 0% 92%;
-  }
-}
-</style>

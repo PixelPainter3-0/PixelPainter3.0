@@ -63,14 +63,19 @@
         v-model:color="cursor.color"
         v-model:size="cursor.size"
         :isBackground="false"
+        :isGrid = "false"
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
-      <BrushSelection v-model="cursor.selectedTool" />
+      <BrushSelection 
+        v-model="cursor.selectedTool"
+        :isGrid = "false"
+      />
       <ColorSelection
         v-model:color="art.pixelGrid.backgroundColor"
         v-model:size="cursor.size"
         :isBackground="true"
+        :isGrid = "false"
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
@@ -87,7 +92,7 @@
         v-model:showLayers="showLayers"
         v-model:greyscale="greyscale"
       />
-      <HelpPopUp/>
+      <HelpPopUp :isGrid = "false"/>
     </template>
     <template #end>
       <Button
