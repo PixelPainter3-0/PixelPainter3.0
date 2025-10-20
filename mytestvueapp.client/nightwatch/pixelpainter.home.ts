@@ -7,7 +7,7 @@ interface CustomThis {
 
 // callback passed to `describe` should be a regular function (not an arrow function).
 describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
-  this.pixelpainterurl_base = 'http://localhost:5173/';
+  this.pixelpainterurl_base = 'http://0.0.0.0:5173/';
   this.pixelpainterurl_goto = this.pixelpainterurl_base
   
   // callback can be a regular function as well as an arrow function.
