@@ -2,9 +2,9 @@ import { fileURLToPath, URL } from "node:url";
 
 import { defineConfig } from "vite";
 import plugin from "@vitejs/plugin-vue";
-import fs from "fs";
-import path from "path";
-import child_process from "child_process";
+// import fs from "fs";
+// import path from "path";
+// import child_process from "child_process";
 import { env } from "process";
 
 // const baseFolder =

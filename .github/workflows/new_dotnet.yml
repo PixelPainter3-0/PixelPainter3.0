@@ -61,7 +61,7 @@ jobs:
         working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
 
       - name: Set APP_DIR
-        run: echo "APP_DIR=/var/www/app/v${{ env.VERSION }}" >> $GITHUB_ENV
+        run: echo "APP_DIR=/var/www/app/pixelpainter" >> $GITHUB_ENV
 
       - name: Template server dockercompose file
         uses: cuchi/jinja2-action@v1.3.0
