@@ -1,13 +1,22 @@
 <template>
-  <Button title="Download" icon="pi pi-save" @click="handleClick()"></Button>
+  <Button
+    title="Download"
+    :label="isHovered ? 'Download' : ''"
+    icon="pi pi-save"
+    @mouseover="isHovered = true"
+    @mouseleave="isHovered = false"
+    @click="handleClick()"
+  ></Button>
 </template>
 <script setup lang="ts">
 import Art from "@/entities/Art";
+import { ref } from "vue";
 import Button from "primevue/button";
 import GIFCreationService from "@/services/GIFCreationService";
 import { useLayerStore } from "@/store/LayerStore";
 
 const layerStore = useLayerStore();
+const isHovered = ref<Boolean>(false);
 const props = defineProps<{
   art: Art;
   fps: number;
@@ -17,12 +26,12 @@ const props = defineProps<{
 }>();
 
 function handleClick(): void {
-	if (props.art.pixelGrid.isGif) {
-		saveGIFFromPainter();
+  if (props.art.pixelGrid.isGif) {
+    saveGIFFromPainter();
   } else if (props.filtered) {
     saveFilteredImage();
   } else if (props.art.isGif) {
-		saveGifFromImage();
+    saveGifFromImage();
   } else {
     saveToFile();
   }
@@ -193,7 +202,9 @@ function createContextFilter(canvas: HTMLCanvasElement) {
   const expectedLength = numPixels * 6;
   if (props.filteredArt?.length !== expectedLength) {
     throw new Error(
-      `Expected hex string length ${expectedLength}, but got ${props.filteredArt!.length}`
+      `Expected hex string length ${expectedLength}, but got ${
+        props.filteredArt!.length
+      }`
     );
   }
   for (let i = 0; i < numPixels; i++) {
