@@ -100,13 +100,19 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           PROD_URL: "pixelpainter.app"
+
+      - name: Download sqlserver Image
+        run: docker image pull  mcr.microsoft.com/mssql/server:2019-latest
           
       - name: Build Docker Image
-        run: docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.VERSION }}       
+        run: docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.VERSION }} >> /dev/null
 
       - name: Start Docker Compose
         run: docker compose up -d
         working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/serverconfig
+
+      - name: See active ports
+        run: ss -ltn
 
       - name: Test container port
         run: curl "http://0.0.0.0:5173"
