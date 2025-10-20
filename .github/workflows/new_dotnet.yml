@@ -53,17 +53,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set VERSION
+      - name: Set VERSION variable
         run: |
           version=`npm pkg get version`
           version="${version//\"/}"
           echo "VERSION=$version" >> $GITHUB_ENV
         working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
 
-      - name: Set APP_DIR
+      - name: Set APP_DIR variable
         run: echo "APP_DIR=/var/www/app/pixelpainter" >> $GITHUB_ENV
 
-      - name: Template server dockercompose file
+      - name: Template server dockercompose.yml file
         uses: cuchi/jinja2-action@v1.3.0
         with:
           template: serverconfig/docker-compose.yml.j2
@@ -76,7 +76,7 @@ jobs:
           PIXEL_PORT: 5173
           APP_DIR: ${{ env.APP_DIR }}
 
-      - name: Template entrypoint script
+      - name: Template entrypoint.sh script
         uses: cuchi/jinja2-action@v1.3.0
         with:
           template: serverconfig/entrypoint.sh.j2
@@ -100,10 +100,6 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           PROD_URL: "pixelpainter.app"
 
-
-      - name: Use dynamic variable
-        run: echo "The dynamic variable is ${{ env.VERSION }}"
-
       - name: Set up SSH agent with Server
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -119,10 +115,10 @@ jobs:
             rm -R ${{ env.APP_DIR }}
             mkdir ${{ env.APP_DIR }}
           
-      - name: Transfer artifact to the remote server
+      - name: Deploy App Files to Server
         run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.APP_DIR }}
 
-      - name: Run deploy script
+      - name: Build pixelpainter Docker Image
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -132,7 +128,7 @@ jobs:
             cd ${{ env.APP_DIR }}
             docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.VERSION }}
 
-      - name: Run deploy script
+      - name: Refresh Docker Compose
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_HOST }}
