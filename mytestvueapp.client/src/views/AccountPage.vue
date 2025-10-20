@@ -1,7 +1,7 @@
 <template>
   <div class="m-4">
     <div class="flex gap-4 justify-content-center">
-      <Card class="h-fit">
+      <Card class="h-fit profile-card">
         <template #content>
           <Avatar icon="pi pi-user" class="mr-2" size="xlarge" shape="circle" />
           <div class="text-3xl p-font-bold">{{ 
@@ -97,7 +97,7 @@
           <h2>Current Page Status: {{ pageStatus }}</h2>
           <Button
             class="block m-2"
-            label="Click to change page status"
+            label=" Click to change page status"
             icon="pi pi-eye"
             @click="privateSwitchChange()"
           />
@@ -105,31 +105,32 @@
       </div>
       <div v-if="route.hash == '#created_art'">
         <h2>My Art</h2>
-        <div class="flex flex-wrap">
+        <div class="shrink-limit flex flex-wrap">
           <ArtCard
-            v-for="art in myArt"
+            v-for="(art, idx) in myArt"
             :key="art.id"
             :art="art"
-            :size="7"
-            :position="art.id"
+            :size="10"
+            :position="idx"
           />
         </div>
       </div>
       <div v-if="route.hash == '#liked_art'">
         <h2>Liked Art</h2>
-        <div class="flex flex-wrap">
+        <div class="shrink-limit flex flex-wrap">
           <ArtCard
-            v-for="art in likedArt"
+            v-for="(art, idx) in likedArt"
             :key="art.id"
             :art="art"
-            :size="7"
-            :position="art.id"
+            :size="10"
+            :position="idx"
           />
         </div>
       </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import LoginService from "@/services/LoginService";
@@ -199,10 +200,26 @@ onMounted(async () => {
       pageStatus.value = "Public";
     }
     ArtAccessService.getAllArtByUserID(curArtist.value.id).then((art) => {
-      myArt.value = art;
+      myArt.value = (art ?? []).map((a: any) => ({
+        ...a,
+        tags: a?.tags ?? [],
+        artistName: a?.artistName ?? [],
+        title: a?.title ?? '',
+        numComments: a?.numComments ?? 0,
+        numLikes: a?.numLikes ?? 0,
+        numDislikes: a?.numDislikes ?? 0
+      }));
     });
     ArtAccessService.getLikedArt(curArtist.value.id).then((art) => {
-      likedArt.value = art;
+      likedArt.value = (art ?? []).map((a: any) => ({
+        ...a,
+        tags: a?.tags ?? [],
+        artistName: a?.artistName ?? [],
+        title: a?.title ?? '',
+        numComments: a?.numComments ?? 0,
+        numLikes: a?.numLikes ?? 0,
+        numDislikes: a?.numDislikes ?? 0
+      }));
     });
   });
   canEdit.value = curUser.value.id == curArtist.value.id || isAdmin.value;
@@ -306,3 +323,17 @@ async function privateSwitchChange() {
   });
 }
 </script>
+
+<style scoped>
+/* Ensure the left profile card has a sensible minimum width */
+.profile-card {
+  min-width: 16rem; /* ~256px */
+}
+
+/* Stack and fill on small screens */
+@media (max-width: 640px) {
+  .profile-card {
+    width: 100%;
+  }
+}
+</style>
