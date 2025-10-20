@@ -46,8 +46,7 @@
           :filtered="false"
           :filtered-art="''"
           :gif-from-viewer="['']"
-        >
-        </SaveImageToFile>
+        />
         <ConnectButton
           @openModal="toggleKeybinds"
           @connect="connect"
@@ -99,31 +98,39 @@
         icon="pi pi-times"
         class="mr-2"
         severity="primary"
-        label=""
+        :label="clearHover ? 'Clear' : ''"
         title="Clear"
+        @mouseover="clearHover = true"
+        @mouseleave="clearHover = false"
         @click="clear()"
       />
       <Button
         icon="pi pi-expand"
         class="mr-2"
         severity="primary"
-        label=""
+        :label="centerHover ? 'Recenter' : ''"
         title="Recenter"
+        @mouseover="centerHover = true"
+        @mouseleave="centerHover = false"
         @click="canvas?.recenter()"
       />
       <Button
         :disabled="connected"
         :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
         class="mr-2 Rainbow"
-        label=""
+        :label="gravityHover ? (intervalId != -1 ? 'Stop' : 'Start') : ''"
         title="Gravity"
+        @mouseover="gravityHover = true"
+        @mouseleave="gravityHover = false"
         @click="runGravity()"
       />
       <Button
         icon="pi pi-lightbulb"
         class="Rainbow"
-        label=""
+        :label="colorHover ? 'Color Blast!' : ''"
         title="Color Blast!"
+        @mouseover="colorHover = true"
+        @mouseleave="colorHover = false"
         @click="randomizeGrid()"
       />
       <Button
@@ -194,8 +201,13 @@ const updateLayers = ref<number>(0);
 const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
-let selection = ref<string[][]>([]);
-let copiedSelection = ref<string[][]>([]);
+const selection = ref<string[][]>([]);
+const copiedSelection = ref<string[][]>([]);
+
+const clearHover = ref<boolean>(false);
+const centerHover = ref<boolean>(false);
+const gravityHover = ref<boolean>(false);
+const colorHover = ref<boolean>(false);
 
 // Connection Information
 const connected = ref<boolean>(false);
@@ -516,9 +528,7 @@ watch(
     } else if (cursor.value.selectedTool.label === "Select") {
       if (mouseButtonHeldDown.value) {
         setEndVector();
-        selection = ref<string[][]>(
-          getSelectPixels(startPix.value, endPix.value)
-        );
+        selection.value = getSelectPixels(startPix.value, endPix.value);
       }
     } else {
       drawAtCoords(getLinePixels(start, end));
