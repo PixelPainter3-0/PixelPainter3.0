@@ -400,5 +400,4 @@ FodyWeavers.xsd
 # Ignore the .env file containing docker passwordss
 /.env
 package-lock.json
-/MyTestVueApp.Server/Configuration/appsettings.json
 /MyTestVueApp.Server/appsettings.json
