@@ -114,8 +114,25 @@ jobs:
       - name: See active ports
         run: ss -ltn
 
-      - name: Test container port
-        run: curl "http://0.0.0.0:5173"
+      - name: Wait for web application to be up
+        timeout-minutes: 5 # Set a timeout for this step
+        run: |
+          APP_URL="http://0.0.0.0:5173"
+          MAX_RETRIES=30
+          RETRY_DELAY=10 # seconds
+
+          echo "Waiting for web application at ${APP_URL} to be up..."
+          for i in $(seq 1 $MAX_RETRIES); do
+            if curl -s -f ${APP_URL}; then
+              echo "Web application is up!"
+              exit 0
+            else
+              echo "Attempt ${i}/${MAX_RETRIES}: Web application not yet up. Retrying in ${RETRY_DELAY} seconds..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          echo "Web application did not become available within the timeout period."
+          exit 1
 
       
 
