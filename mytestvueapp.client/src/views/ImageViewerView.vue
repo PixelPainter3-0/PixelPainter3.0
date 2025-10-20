@@ -21,37 +21,46 @@
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
     <Card class="w-35rem ml-5">
       <template #content>
-        <div>
-          <div
-            :style="{
-              textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
-              cursor: hoverIndex === 'main' ? 'pointer' : 'default'
-            }"
-            class="py-1 font-semibold"
-            @click="router.push(`/accountpage/${art.artistName[0]}`)"
-            v-on:mouseover="hoverIndex = 'main'"
-            v-on:mouseleave="hoverIndex = null"
-          >
-            By {{ art.artistName[0] }}
+        <!-- 1) Artist -->
+        <div class="artist-block">
+          <div class="py-1 artist-line">
+            <span class="by-label">By:</span>
+            <span
+              class="font-semibold artist-name primary"
+              :style="{
+                textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
+                cursor: 'pointer'
+              }"
+              title="View artist profile"
+              @click="router.push(`/accountpage/${art.artistName[0]}`)"
+              @mouseover="hoverIndex = 'main'"
+              @mouseleave="hoverIndex = null"
+            >
+              {{ art.artistName[0] }}
+            </span>
           </div>
+
           <div
+            v-for="(artist, index) in art.artistName.slice(1)"
+            :key="index"
+            class="py-1 artist-name coartist"
             :style="{
               textDecoration: hoverIndex === index ? 'underline' : 'none',
               cursor: hoverIndex === index ? 'pointer' : 'default'
             }"
-            v-for="(artist, index) in art.artistName.slice(1)"
-            :key="index"
-            class="py-1 font-semibold"
+            title="View artist profile"
             @click="router.push(`/accountpage/${artist}`)"
-            v-on:mouseover="hoverIndex = index"
-            v-on:mouseleave="hoverIndex = null"
+            @mouseover="hoverIndex = index"
+            @mouseleave="hoverIndex = null"
           >
             {{ artist }}
           </div>
         </div>
-        <div>Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
-         <!-- Tags Section -->
+        <!-- 2) Upload date -->
+        <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+
+        <!-- Tags Section -->
         <div v-if="art.tags && art.tags.length" class="mt-3">
           <h4 class="text-sm font-semibold mb-2">Tags:</h4>
           <ul class="tag-list">
@@ -59,127 +68,126 @@
               v-for="tag in art.tags"
               :key="tag.id || tag.name"
               class="tag-pill"
-              title="Tag"
+              :title="`View '${tag.name}' Art`"
+              role="button"
+              tabindex="0"
+              @click.stop="router.push({ name: 'TagGallery', params: { tag: tag.name } })"
+              @keyup.enter.stop="router.push({ name: 'TagGallery', params: { tag: tag.name } })"
             >
               {{ tag.name }}
             </li>
           </ul>
         </div>
 
-        <div class="flex flex-column gap-2 mt-4">
-          <div class="flex gap-2">
-            <LikeButton
-              class=""
-              :art-id="id"
-              :likes="art.numLikes"
-              :is-disliked="isDisliked"
-              @liked="isLiked = true"
-              @unliked="isLiked = false"
-            ></LikeButton>
-            <DislikeButton
-              class=""
-              :art-id="id"
-              :dislikes="art.numDislikes"
-              :is-liked="isLiked"
-              @disliked="isDisliked = true"
-              @undisliked="isDisliked = false"
-            ></DislikeButton>
-            <SaveImageToFile
-              :art="art"
-              :fps="art.gifFps"
-              :gifFromViewer="urls"
-              :filtered="filtered"
-              :filteredArt="squareColor"
-            />
-            <StartArtFromImage
+        <!-- 3) Likes / Dislikes -->
+        <div class="viewer-actions row">
+          <LikeButton
+            title="Like this art"
+            :art-id="id"
+            :likes="art.numLikes"
+            :is-disliked="isDisliked"
+            @liked="isLiked = true"
+            @unliked="isLiked = false"
+          />
+          <DislikeButton
+            title="Dislike this art"
+            :art-id="id"
+            :dislikes="art.numDislikes"
+            :is-liked="isLiked"
+            @disliked="isDisliked = true"
+            @undisliked="isDisliked = false"
+          />
+        </div>
+
+        <!-- 4) Edit, Start From This, Download (icon-only) -->
+        <div class="viewer-actions row">
+          <Button
+            v-if="art.currentUserIsOwner"
+            label="Edit"
+            icon="pi pi-pencil"
+            title="Edit this art"
+            severity="secondary"
+            @click="editArt()"
+          />
+          <StartArtFromImage
+            icon="pi pi-copy"
+            title="Start a new painting from this"
             :art="art"
-              :fps="art.gifFps"
-              :gifFromViewer="urls"
-              :filtered="filtered"
-              :filteredArt="squareColor"
-            />
-            <Button
-              icon="pi pi-ellipsis-h"
-              rounded
-              text
-              severity="secondary"
-              @click="showFilters = !showFilters"
-            />
+            :fps="art.gifFps"
+            :gifFromViewer="urls"
+            :filtered="filtered"
+            :filteredArt="squareColor"
+          />
+          <!-- icon-only download; label hidden via CSS -->
+          <SaveImageToFile
+            class="download-only-icon"
+            title="Download image"
+            :art="art"
+            :fps="art.gifFps"
+            :gifFromViewer="urls"
+            :filtered="filtered"
+            :filteredArt="squareColor"
+          />
+        </div>
+
+        <!-- 5) Filters -->
+        <div class="viewer-actions row">
+          <Button
+            icon="pi pi-sliders-h"
+            label="Filters"
+            title="Show filters"
+            rounded
+            severity="secondary"
+            @click="showFilters = !showFilters"
+          />
+        </div>
+
+        <!-- 6) Delete Art -->
+        <div class="viewer-actions row end">
+          <!-- ensure trash can icon -->
+          <DeleteArtButton
+            v-if="art.currentUserIsOwner || isAdmin"
+            class="danger-action"
+            title="Delete this art"
+            icon="pi pi-trash"
+            :art="art"
+            :isAdmin="isAdmin"
+          />
+        </div>
+
+        <div v-if="showFilters" class="filters-panel">
+          <h3>Filters</h3>
+          <div>
+            <Button title="Apply grayscale" @click="greyScaleFilter" :severity="greyscale ? 'primary' : 'secondary'">GreyScale</Button>
+            <Button title="Toggle duotone controls" @click="showTones = !showTones" :severity="duotone ? 'primary' : 'secondary'">DuoTone</Button>
+            <Button title="Apply sepia" @click="sepiaFilter" :severity="sepia ? 'primary' : 'secondary'">Sepia</Button>
+            <Button title="Simulate protanopia" @click="protanopeFilter" :severity="prota ? 'primary' : 'secondary'">Protonope</Button>
+            <Button title="Simulate deuteranopia" @click="deuFilter" :severity="deu ? 'primary' : 'secondary'">Deuteranope</Button>
           </div>
-          <div class="flex gap-2">
-            <Button
-              v-if="art.currentUserIsOwner"
-              label="Edit"
-              icon="pi pi-pencil"
-              severity="secondary"
-              @click="editArt()"
-            ></Button>
-            <DeleteArtButton
-              v-if="art.currentUserIsOwner || isAdmin"
-              :art="art"
-              :isAdmin="isAdmin"
+          <div v-if="showTones" class="flex flex-column gap-2 mt-4">
+            <h4 class="m-auto">Color 1</h4>
+            <h4 class="m-auto">{{ toneOne }}</h4>
+            <input
+              type="color"
+              id="tone1"
+              v-model="toneOne"
+              class="flex gap-2 w-auto h-2rem"
             />
-          </div>
-          <div v-if="showFilters == true" class="">
-            <h3>Filters</h3>
-            <div>
-              <Button
-                @click="greyScaleFilter"
-                :severity="greyscale ? 'primary' : 'secondary'"
-                >GreyScale</Button
-              >
-              <Button
-                @click="showTones = !showTones"
-                :severity="duotone ? 'primary' : 'secondary'"
-                >DuoTone</Button
-              >
-              <Button
-                @click="sepiaFilter"
-                :severity="sepia ? 'primary' : 'secondary'"
-                >Sepia</Button
-              >
-              <Button
-                @click="protanopeFilter"
-                :severity="prota ? 'primary' : 'secondary'"
-                >Protonope</Button
-              >
-              <Button
-                @click="deuFilter"
-                :severity="deu ? 'primary' : 'secondary'"
-                >Deuteranope</Button
-              >
-            </div>
-            <div v-if="showTones" class="flex flex-column gap-2 mt-4">
-              <h4 class="m-auto">Color 1</h4>
-              <h4 class="m-auto">{{ toneOne }}</h4>
-              <input
-                type="color"
-                id="tone1"
-                v-model="toneOne"
-                class="flex gap-2 w-auto h-2rem"
-              />
-              <h4 class="m-auto">Color 2</h4>
-              <h4 class="m-auto">{{ toneTwo }}</h4>
-              <input
-                type="color"
-                id="tone2"
-                v-model="toneTwo"
-                class="flex gap-2 w-auto h-2rem"
-              />
-              <Button
-                :severity="duotone ? 'primary' : 'secondary'"
-                @click="duoToneFilter(toneOne, toneTwo)"
-                >Generate</Button
-              >
-            </div>
+            <h4 class="m-auto">Color 2</h4>
+            <h4 class="m-auto">{{ toneTwo }}</h4>
+            <input
+              type="color"
+              id="tone2"
+              v-model="toneTwo"
+              class="flex gap-2 w-auto h-2rem"
+            />
             <Button
-              class="w-full flex gap-2"
-              :disabled="filtered == false"
-              severity="danger"
-              @click="resetFilters"
-              >Reset</Button
+              :severity="duotone ? 'primary' : 'secondary'"
+              @click="duoToneFilter(toneOne, toneTwo)"
+              >Generate</Button
             >
           </div>
+          <Button class="w-full flex gap-2" title="Reset filters" :disabled="filtered == false" severity="danger" @click="resetFilters">Reset</Button>
         </div>
       </template>
     </Card>
@@ -203,6 +211,7 @@
 
   </div>
 </template>
+
 <script setup lang="ts">
 import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
 import DeleteArtButton from "@/components/DeleteArtButton.vue";
@@ -219,7 +228,6 @@ import Card from "primevue/card";
 import LikeButton from "@/components/LikeButton.vue";
 import DislikeButton from "@/components/DislikeButton.vue";
 import Button from "primevue/button";
-import Tag from "primevue/tag"; // Add this import
 import router from "@/router";
 import { useToast } from "primevue/usetoast";
 import LoginService from "../services/LoginService";
@@ -924,38 +932,49 @@ async function gifDisplay(): Promise<void> {
   );
 }
 </script>
+
 <style scoped>
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .4rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+/* Artist line: only the name underlines on hover */
+.artist-line { display: inline-flex; align-items: center; gap: .35rem; }
+.by-label { color: inherit; text-decoration: none !important; }
 
+.artist-block { display:flex; gap:.5rem .75rem; flex-wrap:wrap; align-items:center; }
+.artist-name { font-size: 1rem; }
+.artist-name.primary { font-size: 1.15rem; }
+.artist-name.coartist { opacity:.9; }
+
+/* Muted date */
+.uploaded-on { color:#9ca3af; margin-top:.15rem; }
+
+/* Tag pills: larger */
+.tag-list { display:flex; flex-wrap:wrap; gap:.5rem; list-style:none; margin:0; padding:0; }
 .tag-pill {
-  background: #2a313a;              /* Dark gray */
-  color: #ffffff;                   /* White text */
-  padding: .40rem .75rem;
-  font-size: .7rem;
-  font-weight: 600;
-  line-height: 1;
-  border-radius: 9999px;
-  border: 1px solid #4b5563;        /* Slightly lighter border */
-  letter-spacing: .3px;
-  cursor: default;
-  user-select: none;
-  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
+  background:#2a313a; color:#ffffff;
+  padding:.5rem .9rem; font-size:.8rem; font-weight:600; line-height:1;
+  border-radius:9999px; border:1px solid #4b5563; letter-spacing:.3px;
+  cursor:pointer; user-select:none; transition:background .15s, border-color .15s;
 }
+.tag-pill:hover { background:#4b5563; border-color:#6b7280; }
+.tag-pill:focus-visible { outline:2px solid #545862; outline-offset:2px; }
 
-.tag-pill:hover {
-  background: #4b5563;              /* Lighter on hover */
-  border-color: #6b7280;
+/* Button rows: even spacing above and below */
+.viewer-actions.row {
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:.5rem .75rem; margin:1rem 0;
 }
+.viewer-actions.row.end { justify-content:flex-end; }
 
-.tag-pill:focus-visible {
-  outline: 2px solid #545862;
-  outline-offset: 2px;
+/* Make SaveImageToFile icon-only */
+.download-only-icon :deep(.p-button-label) { display:none; }
+
+/* Delete button styling */
+.danger-action :deep(.p-button) { background:#ef4444; border-color:#dc2626; color:#fff; }
+.danger-action :deep(.p-button:hover) { background:#dc2626; }
+
+/* Filters block */
+.filters-panel { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #32363d; }
+
+@media (max-width: 768px) {
+  .viewer-actions.row.end { justify-content:flex-start; }
 }
 </style>

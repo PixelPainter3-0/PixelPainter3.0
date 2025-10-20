@@ -44,6 +44,7 @@
             :key="t.id || t.name"
             class="tag-pill"
             :title="t.name"
+            @click.stop="router.push({ name: 'TagGallery', params: { tag: t.name } })"
           >
             {{ t.name }}
           </li>
@@ -173,6 +174,7 @@ const numComments = computed(() => {
   white-space: nowrap;
   user-select: none;
   transition: 0.15s;
+  cursor: pointer; /* make it clear it's clickable */
 }
 .tag-pill.more {
   background: #444155;
