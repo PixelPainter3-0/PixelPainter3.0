@@ -102,7 +102,7 @@
         severity="primary"
         label="Recenter"
         @click="canvas?.recenter()"
-      />
+      />    
       <Button
         :disabled="connected"
         :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"

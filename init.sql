@@ -153,6 +153,33 @@ BEGIN
 END
 GO
 
+-- Point table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Points')
+BEGIN
+    CREATE TABLE Points (
+        PointId INT NOT NULL,
+        Latitude DECIMAL(9, 6),
+        Longitude DECIMAL(9, 6),
+        ArtspaceId INT NOT NULL,
+        Title NVARCHAR(255),
+        PRIMARY KEY (PointId),
+        CONSTRAINT FK_Points_ArtSpace FOREIGN KEY (ArtspaceId) REFERENCES Artpace(IdArtspaceId) ON DELETE CASCADE,
+    );
+END
+GO
+
+-- Artspace table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Artspace')
+BEGIN
+    CREATE TABLE Artspace (
+        ArtspaceId INT NOT NULL,
+        Title NVARCHAR(255),
+        Shape GEOMETRY,
+        PRIMARY KEY (ArtspaceId)
+    );
+END
+GO
+
 --------------------------------------------------------------------------------------------------------------
 CREATE TRIGGER CommentDeleteTrigger ON dbo.Comment
 	for delete
@@ -205,7 +232,7 @@ BEGIN
     insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38367604156163723632, 'Gerrie Wadham', 1, '6/22/2024');
     insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (95379320039119637636, 'Joanne Goodbourn', 0, '12/30/2023');
     insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38223858058531183631, '500Cigarettes', 0, '9/19/2025');
-
+    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38223858058531183631, '499Cigarettes', 0, '10/13/2025');
 END
 GO
 --Check if the Forecasts table is empty, else prefill with some data
@@ -309,6 +336,19 @@ BEGIN
     insert into Comment (ArtistId, ArtId, ReplyId, Message, CreationDate) values (4, 14, null, 'Aliquam sit amet diam in magna bibendum imperdiet.', '12/31/2023');
     insert into Comment (ArtistId, ArtId, ReplyId, Message, CreationDate) values (1, 13, null, 'In eleifend quam a odio. In hac habitasse platea dictumst. Maecenas ut massa quis augue luctus tincidunt. Nulla mollis molestie lorem. Quisque ut erat. Curabitur gravida nisi at nibh. In hac habitasse platea dictumst.', '6/7/2024');
 END
+
+GO
+IF NOT EXISTS (SELECT * FROM Points)
+BEGIN
+    insert into Points (PointId, Latitude, Longitude, Title) values (1, 44.868129, -91.929324, 'Williams Stadium');
+END
+
+GO
+IF NOT EXISTS (SELECT * FROM Artspace)
+BEGIN
+    insert into Artspace (ArtspaceId, Title, Shape) values (1, 'Central Menomonie', geometry::STGeomFromText('POLYGON((44.883187 -91.928058, 44.882214 -91.935396, 44.872513 -91.938529, 44.866461 -91.929731, 44.864575 -91.919603, 44.878535 -91.919432, 44.876953 -91.924839, 44.879265 -91.928744, 44.883187 -91.928058))', 0));
+END
+
 GO
 SET IDENTITY_INSERT GIF ON
 IF NOT EXISTS (SELECT * FROM GIF)
