@@ -3,7 +3,7 @@
     rounded
     :severity="disliked ? 'primary' : 'secondary'"
     :icon="disliked ? 'pi pi-thumbs-down-fill' : 'pi pi-thumbs-down'"
-    :label="(dislikes + localDislike).toString()"
+    :label="(displayDislikes).toString()"
     @click.stop="dislikedClicked()"
   />
 </template>
@@ -13,7 +13,7 @@ import LoginService from "@/services/LoginService";
 import DislikeService from "@/services/DislikeService";
 import { useToast } from "primevue/usetoast";
 
-import { ref, onMounted, watch, defineEmits } from "vue";
+import { ref, onMounted, watch, defineEmits, computed } from "vue";
 
 const props = defineProps<{
   artId: number;
@@ -40,6 +40,26 @@ async function isDisliked(): Promise<void> {
       (value) => (disliked.value = value)
     );
 }
+
+const displayDislikes = computed(() => {
+  let dislikesLabel = "";
+  const tempDislikes = props.dislikes + localDislike.value;
+  if(tempDislikes > 999999)
+  {
+    dislikesLabel = Math.floor(tempDislikes / 1000000) + "M";
+    return dislikesLabel;
+  }
+  else if (tempDislikes > 999)
+  {
+      dislikesLabel = Math.floor(tempDislikes / 1000) + "K";
+      return dislikesLabel;
+  }
+  else
+  {
+    dislikesLabel = (tempDislikes) + "";
+    return dislikesLabel;
+  }
+});
 
 watch(
   () => props.artId,

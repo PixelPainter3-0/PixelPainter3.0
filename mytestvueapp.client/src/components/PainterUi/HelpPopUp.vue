@@ -8,23 +8,31 @@
     width=""
     :default-open="false"
   >
-    <div>
-      <p>CTRL + S ) Upload canvas</p>
-      <p>CTRL + D ) Download canvas</p>
-      <p>CTRL + Z ) Undo last stroke</p>
-      <p>CTRL + Y ) Redo last undo</p>
-      <p>1-9 ) Color selection for the brush</p>
-      <p>Q ) Decrease brush size by 1</p>
-      <p>W ) Increase brush size by 1</p>
-    </div>
+  
+  <div v-if = "!props.isGrid">
+    <p> CTRL + S ) Upload canvas </p>
+    <p> CTRL + D ) Download canvas</p>
+    <p> CTRL + Z ) Undo last stroke</p>
+    <p> CTRL + Y ) Redo last undo</p>
+    <p> 1-9 ) Color selection for the brush</p>
+    <p> Q ) Decrease brush size by 1</p>
+    <p> W ) Increase brush size by 1</p>
+  </div>
+
+  <div v-if = "props.isGrid">
+    <p> CTRL + D ) Download canvas</p>
+    <p> 1-9 ) Color selection for the brush</p>
+  </div>
+
   </FloatingCard>
 </template>
 
 <script setup lang="ts">
 import FloatingCard from "./FloatingCard.vue";
-import { ref } from "vue";
+const props = defineProps<{
+  isGrid: boolean;
+}>();
 
-const isHovered = ref<boolean>(false);
 </script>
 <style>
 .p-dialog.p-component {
