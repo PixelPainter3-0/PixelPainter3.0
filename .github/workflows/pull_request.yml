@@ -133,11 +133,15 @@ jobs:
           done
           echo "Web application did not become available within the timeout period."
           exit 1
+
+      - name: Install npm dependencies
+        working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
+        run: npm install --legacy-peer-deps
         
       - name: Run Nightwatch
         working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
         run: |
-            npx nightwatch
+          npx nightwatch
 
       
 
