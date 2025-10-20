@@ -53,9 +53,9 @@
             </div>
             <ColorPicker class="m-1" v-model="selectedColor" />
           </div>
-          <div class="mt-1" v-if="!props.isBackground">Size: {{ size }}</div>
+          <div class="mt-1" v-if="!props.isBackground && !props.isGrid">Size: {{ size }}</div>
 
-          <div class="px-2" v-if="!props.isBackground">
+          <div class="px-2" v-if="!props.isBackground && !props.isGrid">
             <Slider
               class="mt-2"
               v-model="size"
@@ -166,9 +166,9 @@
             </div>
             <ColorPicker class="m-1" v-model="selectedColor"></ColorPicker>
           </div>
-          <div class="mt-1">Size: {{ size }}</div>
+          <div class="mt-1" v-if="!props.isGrid">Size: {{ size }}</div>
 
-          <div class="px-2">
+          <div class="px-2" v-if="!props.isGrid">
             <Slider
               class="mt-2"
               v-model="size"
@@ -196,6 +196,7 @@ import TabPanel from "primevue/tabpanel";
 
 const props = defineProps<{
   isBackground: boolean;
+  isGrid: boolean;
 }>();
 
 const selectedColor = defineModel<string>("color", { default: "000000" });

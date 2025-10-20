@@ -20,18 +20,8 @@
   />
   <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
     <template #start>
-      <div class="flex gap-2">
-        <Button
-          icon="pi pi-ban"
-          label="Quit"
-          severity="secondary"
-          @click="
-            resetArt();
-            disconnect();
-          "
-        >
-        </Button>
-        <UploadButton
+      <UploadButton
+          v-if="artist.isAdmin"
           :art="art"
           :fps="fps"
           :connection="connection"
@@ -48,89 +38,36 @@
           :gif-from-viewer="['']"
         >
         </SaveImageToFile>
-        <ConnectButton
-          @openModal="toggleKeybinds"
-          @connect="connect"
-          @disconnect="disconnect"
-          :connected="connected"
-          :isGif="art.pixelGrid.isGif"
-        />
-      </div>
     </template>
-
     <template #center>
       <ColorSelection
         v-model:color="cursor.color"
         v-model:size="cursor.size"
         :isBackground="false"
-        :isGrid = "false"
+        :isGrid="true"
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
       <BrushSelection 
-        v-model="cursor.selectedTool"
-        :isGrid = "false"
-      />
-      <ColorSelection
-        v-model:color="art.pixelGrid.backgroundColor"
-        v-model:size="cursor.size"
-        :isBackground="true"
-        :isGrid = "false"
-        @enable-key-binds="keyBindActive = true"
-        @disable-key-binds="keyBindActive = false"
-      />
-      <FrameSelection
-        v-if="art.pixelGrid.isGif"
-        v-model:selFrame="selectedFrame"
-        v-model:showLayers="showLayers"
-      />
-      <FPSSlider v-if="art.pixelGrid.isGif" v-model:fps="fps" />
-      <LayerSelection
-        v-if="!art.pixelGrid.isGif"
-        :updateLayers="updateLayers"
-        :connected="connected"
-        v-model:showLayers="showLayers"
-        v-model:greyscale="greyscale"
-      />
-      <HelpPopUp :isGrid = "false"/>
-    </template>
-    <template #end>
-      <Button
-        icon="pi pi-times"
-        class="mr-2"
-        severity="primary"
-        label=""
-        title="Clear"
-        @click="clear()"
+        v-model="cursor.selectedTool" 
+        :isGrid = "true"
       />
       <Button
         icon="pi pi-expand"
         class="mr-2"
-        severity="primary"
+        severity="secondary"
         label=""
         title="Recenter"
         @click="canvas?.recenter()"
       />
-      <Button
-        :disabled="connected"
-        :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
-        class="mr-2 Rainbow"
-        label=""
-        title="Gravity"
-        @click="runGravity()"
-      />
-      <Button
-        icon="pi pi-lightbulb"
-        class="Rainbow"
-        label=""
-        title="Color Blast!"
-        @click="randomizeGrid()"
-      />
+      <HelpPopUp :isGrid = "true" />
+    </template>
+    <template #end>
       <Button
         :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
         :severity="audioOn != -1 ? 'primary' : 'secondary'"
         label=""
-        class="ml-2"
+        class="mr-2"
         @click="toggleMusic()"
       />
     </template>
@@ -147,9 +84,6 @@ import BrushSelection from "@/components/PainterUi/BrushSelection.vue";
 import ColorSelection from "@/components/PainterUi/ColorSelection.vue";
 import UploadButton from "@/components/PainterUi/UploadButton.vue";
 import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
-import FrameSelection from "@/components/PainterUi/FrameSelection.vue";
-import LayerSelection from "@/components/PainterUi/LayerSelection.vue";
-import FPSSlider from "@/components/PainterUi/FPSSlider.vue";
 
 //entities
 import { PixelGrid } from "@/entities/PixelGrid";
@@ -172,7 +106,6 @@ import { useToast } from "primevue/usetoast";
 //scripts
 import ArtAccessService from "@/services/ArtAccessService";
 import Art from "@/entities/Art";
-import ConnectButton from "@/components/PainterUi/ConnectButton.vue";
 
 //Other
 import * as SignalR from "@microsoft/signalr";
@@ -184,7 +117,6 @@ import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 const route = useRoute();
 const canvas = ref<any>();
 const toast = useToast();
-const intervalId = ref<number>(-1);
 const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
@@ -201,7 +133,7 @@ let copiedSelection = ref<string[][]>([]);
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
 let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("http://localhost:7154/signalhub", {
+  .withUrl("https://localhost:7154/signalhub", {
     skipNegotiation: true,
     transport: SignalR.HttpTransportType.WebSockets
   })
@@ -508,17 +440,10 @@ watch(
         setEndVector();
         drawAtCoords(getEllipsePixels(startPix.value, endPix.value));
       }
-    } else if (cursor.value.selectedTool.label === "Line") {
-      if (mouseButtonHeldDown.value) {
-        setEndVector();
-        drawAtCoords(getLinePixels(startPix.value, endPix.value));
-      }
     } else if (cursor.value.selectedTool.label === "Select") {
       if (mouseButtonHeldDown.value) {
         setEndVector();
-        selection = ref<string[][]>(
-          getSelectPixels(startPix.value, endPix.value)
-        );
+          selection = ref<string[][]>(getSelectPixels(startPix.value, endPix.value));
       }
     } else {
       drawAtCoords(getLinePixels(start, end));
@@ -575,19 +500,6 @@ watch(
 );
 
 //functions
-function runGravity() {
-  if (intervalId.value != -1) {
-    clearInterval(intervalId.value);
-    intervalId.value = -1;
-  } else {
-    intervalId.value = setInterval(
-      fallingSand,
-      30,
-      layerStore.grids[layerStore.layer]
-    );
-  }
-}
-
 function getLinePixels(start: Vector2, end: Vector2): Vector2[] {
   const pixels: Vector2[] = [];
 
@@ -667,8 +579,7 @@ function drawAtCoords(coords: Vector2[]) {
 
   if (
     cursor.value.selectedTool.label === "Rectangle" ||
-    cursor.value.selectedTool.label === "Ellipse" ||
-    cursor.value.selectedTool.label === "Line"
+    cursor.value.selectedTool.label === "Ellipse"
   ) {
     if (tempGrid) {
       for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
@@ -758,8 +669,7 @@ function drawAtCoords(coords: Vector2[]) {
           }
         } else if (
           cursor.value.selectedTool.label === "Rectangle" ||
-          cursor.value.selectedTool.label === "Ellipse" ||
-          cursor.value.selectedTool.label === "Line"
+          cursor.value.selectedTool.label === "Ellipse"
         ) {
           layerStore.grids[layerStore.layer].grid[coord.x][coord.y] =
             cursor.value.color;
@@ -819,90 +729,6 @@ function fill(
   return vectors;
 }
 
-function randomizeGrid() {
-  for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
-    for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
-      let color = ((Math.random() * 0xffffff) << 0)
-        .toString(16)
-        .padStart(6, "0");
-      layerStore.grids[layerStore.layer].grid[i][j] = color;
-
-      canvas.value?.updateCell(layerStore.layer, i, j, color);
-
-      if (connected.value) {
-        let coords: Vector2[] = [];
-        coords.push(new Vector2(i, j));
-        sendPixels(layerStore.layer, color, coords);
-      }
-    }
-  }
-  layerStore.grids[layerStore.layer].encodedGrid =
-    layerStore.grids[layerStore.layer].getEncodedGrid();
-}
-
-function fallingSand() {
-  let pixelGrid: PixelGrid = layerStore.grids[layerStore.layer];
-
-  for (let x = 0; x < pixelGrid.width; x++) {
-    for (let y = pixelGrid.height - 1; y >= 0; y--) {
-      if (pixelGrid.grid[x][y] !== "empty") {
-        if (y + 1 < pixelGrid.height && pixelGrid.grid[x][y + 1] === "empty") {
-          const below = pixelGrid.grid[x][y + 1];
-          pixelGrid.grid[x][y + 1] = pixelGrid.grid[x][y];
-
-          canvas.value?.updateCell(
-            layerStore.layer,
-            x,
-            y + 1,
-            pixelGrid.grid[x][y]
-          );
-
-          pixelGrid.grid[x][y] = below;
-          canvas.value?.updateCell(layerStore.layer, x, y, below);
-        } else {
-          //generate a random number either -1 or 1
-          const random = Math.random() > 0.5 ? 1 : -1;
-
-          if (
-            y + 1 < pixelGrid.height &&
-            x + random < pixelGrid.width &&
-            x + random >= 0 &&
-            pixelGrid.grid[x + random][y + 1] === "empty"
-          ) {
-            const belowRight = pixelGrid.grid[x + random][y + 1];
-            pixelGrid.grid[x + random][y + 1] = pixelGrid.grid[x][y];
-
-            canvas.value?.updateCell(
-              layerStore.layer,
-              x + random,
-              y + 1,
-              pixelGrid.grid[x][y]
-            );
-            pixelGrid.grid[x][y] = belowRight;
-
-            canvas.value?.updateCell(layerStore.layer, x, y, belowRight);
-          }
-        }
-      }
-    }
-  }
-}
-
-function clear(): void {
-  let coords: Vector2[] = [];
-  for (let i = 0; i < layerStore.grids[layerStore.layer].width; i++) {
-    for (let j = 0; j < layerStore.grids[layerStore.layer].height; j++) {
-      layerStore.grids[layerStore.layer].grid[i][j] = "empty";
-      canvas.value?.updateCell(layerStore.layer, i, j, "empty");
-      coords.push(new Vector2(i, j));
-    }
-  }
-
-  if (connected.value) {
-    sendPixels(layerStore.layer, "empty", coords);
-  }
-}
-
 //returns array array of color strings
 function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   let outArray: string[][] = [];
@@ -917,8 +743,7 @@ function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   for (let i = 0; i < height; i++) {
     outArray[i] = []; // initialize the row?
     for (let j = 0; j < width; j++) {
-      outArray[i][j] =
-        layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
+        outArray[i][j] = layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
     }
   }
   return outArray;
@@ -1146,12 +971,6 @@ function onMouseUp() {
       cursor.value.color,
       getEllipsePixels(startPix.value, endPix.value)
     );
-  } else if (cursor.value.selectedTool.label == "Line") {
-    sendPixels(
-      layerStore.layer,
-      cursor.value.color,
-      getLinePixels(startPix.value, endPix.value)
-    );
   } else if (cursor.value.selectedTool.label == "Select") {
     selection.value = getSelectPixels(startPix.value, endPix.value);
   }
@@ -1318,41 +1137,9 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Brush";
       canvas?.value.updateCursor();
-    } else if (event.key === "e") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Eraser";
-      canvas?.value.updateCursor();
     } else if (event.key === "d") {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pipette";
-      canvas?.value.updateCursor();
-    } else if (event.key === "f") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Bucket";
-      canvas?.value.updateCursor();
-    } else if (event.key === "r") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Rectangle";
-      canvas?.value.updateCursor();
-    } else if (event.key === "l") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Ellipse";
-      canvas?.value.updateCursor();
-    } else if (!event.ctrlKey && event.key === "s") {
-      event.preventDefault();
-      cursor.value.selectedTool.label = "Select";
-      canvas?.value.updateCursor();
-    } else if (event.ctrlKey && event.key === "c") {
-      event.preventDefault();
-      copiedSelection.value = selection.value;
-      canvas?.value.updateCursor();
-    } else if (event.key === "q" && cursor.value.size > 1) {
-      event.preventDefault();
-      cursor.value.size -= 1;
-      canvas?.value.updateCursor();
-    } else if (event.key === "w" && cursor.value.size < 32) {
-      event.preventDefault();
-      cursor.value.size += 1;
       canvas?.value.updateCursor();
     } else if (event.key === "1") {
       event.preventDefault();
@@ -1423,57 +1210,7 @@ function handleKeyDown(event: KeyboardEvent) {
       } else {
         saveToFile();
       }
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
-      event.preventDefault();
-      undo();
-    } else if ((event.ctrlKey || event.metaKey) && event.key === "y") {
-      event.preventDefault();
-      redo();
-    }
+    } 
   }
 }
 </script>
-<style scoped>
-.Rainbow,
-.Rainbow:hover {
-  color: white;
-  border-color: white;
-  background: -webkit-linear-gradient(
-      225deg,
-      rgb(251, 175, 21),
-      rgb(251, 21, 242),
-      rgb(21, 198, 251)
-    )
-    0% 0% / 300% 300%;
-  -webkit-animation: gradient_move 3s ease infinite;
-  animation: gradient_move 3s ease infinite;
-}
-
-@-webkit-keyframes gradient_move {
-  0% {
-    background-position: 0% 92%;
-  }
-
-  50% {
-    background-position: 100% 9%;
-  }
-
-  100% {
-    background-position: 0% 92%;
-  }
-}
-
-@keyframes gradient_move {
-  0% {
-    background-position: 0% 92%;
-  }
-
-  50% {
-    background-position: 100% 9%;
-  }
-
-  100% {
-    background-position: 0% 92%;
-  }
-}
-</style>
