@@ -2,47 +2,47 @@ import { fileURLToPath, URL } from "node:url";
 
 import { defineConfig } from "vite";
 import plugin from "@vitejs/plugin-vue";
-import fs from "fs";
-import path from "path";
-import child_process from "child_process";
+// import fs from "fs";
+// import path from "path";
+// import child_process from "child_process";
 import { env } from "process";
 
-const baseFolder =
-  env.APPDATA !== undefined && env.APPDATA !== ""
-    ? `${env.APPDATA}/ASP.NET/https`
-    : `${env.HOME}/.aspnet/https`;
+// const baseFolder =
+//   env.APPDATA !== undefined && env.APPDATA !== ""
+//     ? `${env.APPDATA}/ASP.NET/https`
+//     : `${env.HOME}/.aspnet/https`;
 
-const certificateName = "mytestvueapp.client";
-const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
-const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
-console.log(certFilePath)
-console.log(keyFilePath)
-if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-  if (
-    0 !==
-    child_process.spawnSync(
-      "dotnet",
-      [
-        "dev-certs",
-        "https",
-        "--export-path",
-        certFilePath,
-        "--format",
-        "Pem",
-        "--no-password"
-      ],
-      { stdio: "inherit" }
-    ).status
-  ) {
-    throw new Error("Could not create certificate.");
-  }
-}
+// const certificateName = "mytestvueapp.client";
+// const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
+// const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
+// console.log(certFilePath)
+// console.log(keyFilePath)
+// if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+//   if (
+//     0 !==
+//     child_process.spawnSync(
+//       "dotnet",
+//       [
+//         "dev-certs",
+//         "https",
+//         "--export-path",
+//         certFilePath,
+//         "--format",
+//         "Pem",
+//         "--no-password"
+//       ],
+//       { stdio: "inherit" }
+//     ).status
+//   ) {
+//     throw new Error("Could not create certificate.");
+//   }
+// }
 
 const target = env.ASPNETCORE_HTTPS_PORT
-  ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
+  ? `http://localhost:${env.ASPNETCORE_HTTPS_PORT}`
   : env.ASPNETCORE_URLS
   ? env.ASPNETCORE_URLS.split(";")[0]
-  : "https://localhost:7154";
+  : "http://localhost:7154";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -99,10 +99,12 @@ export default defineConfig({
         secure: false,
       }
     },
+    host: '0.0.0.0',
     port: 5173,
-    https: {
-      key: fs.readFileSync(keyFilePath),
-      cert: fs.readFileSync(certFilePath)
-    }
+    // https: {
+    //   key: fs.readFileSync(keyFilePath),
+    //   cert: fs.readFileSync(certFilePath)
+    // },
+    allowedHosts: ['pixelpainter.app'],
   }
 });
