@@ -39,6 +39,11 @@ const router = createRouter({
       component: () => import("../views/AccountView.vue")
     },
     {
+      path: "/thegrid",
+      name: "The Grid",
+      component: () => import("../views/TheGridView.vue")
+    },
+    {
       path: "/notifications",
       name: "Notifications",
       component: () => import("../views/NotificationView.vue")
@@ -47,6 +52,12 @@ const router = createRouter({
       path: "/accountpage/:artist",
       name: "AccountPage",
       component: () => import("../views/AccountPage.vue")
+    },
+    {
+      path: "/tag/:tag",
+      name: "TagGallery",
+      component: () => import('@/views/GalleryView.vue'),
+      props: true
     }
     ,
     {
