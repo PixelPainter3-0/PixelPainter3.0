@@ -18,7 +18,7 @@
     "
     @contextmenu.prevent
   />
-  <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
+  <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="loggedIn">
     <template #start>
       <UploadButton
           v-if="artist.isAdmin"
@@ -70,6 +70,11 @@
         class="mr-2"
         @click="toggleMusic()"
       />
+    </template>
+  </Toolbar>
+  <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="!loggedIn">
+    <template #center>
+      <p class="font-bold text-xl">Login to collaborate on the canvas</p>
     </template>
   </Toolbar>
 </template>
@@ -127,7 +132,6 @@ const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
 let selection = ref<string[][]>([]);
-let copiedSelection = ref<string[][]>([]);
 
 // Connection Information
 const connected = ref<boolean>(false);
@@ -346,67 +350,67 @@ onMounted(async () => {
   window.addEventListener("beforeunload", handleBeforeUnload);
 
   //Get the current user
-  LoginService.isLoggedIn()
-    .then((isLoggedIn: boolean) => {
-      loggedIn.value = isLoggedIn;
-      if (isLoggedIn) {
-        LoginService.getCurrentUser().then((user: Artist) => {
-          artist.value = user;
-        });
-      } else {
-        artist.value.id = 0;
-        artist.value.name = "Guest";
-      }
+  loggedIn.value = await LoginService.isLoggedIn();
 
-      if (route.params.id) {
-        const id: number = parseInt(route.params.id as string);
-        ArtAccessService.getArtById(id)
-          .then((data) => {
-            if (!data.artistId.includes(artist.value.id)) {
-              console.log(artist.value);
-              router.go(-1);
-              toast.add({
-                severity: "error",
-                summary: "Forbid",
-                detail: "Don't do that.",
-                life: 3000
-              });
-            }
-            art.value.id = data.id;
-            art.value.title = data.title;
-            art.value.isPublic = data.isPublic;
-            art.value.pixelGrid.isGif = data.isGif;
-            art.value.isGif = data.isGif;
+  if (loggedIn.value) {
+    LoginService.getCurrentUser().then((user: Artist) => {
+      artist.value = user;
+    });
+    // connect("GridGroupName", false);
+  } else {
+    artist.value.id = 0;
+    artist.value.name = "Guest";
+    cursor.value.selectedTool = PainterTool.getDefaults()[0];
+  }
+  console.log("Is logged in?", loggedIn.value);
 
-            canvas.value?.recenter();
-            art.value.pixelGrid.backgroundColor =
-              layerStore.grids[0].backgroundColor;
-          })
-          .catch(() => {
-            toast.add({
-              severity: "error",
-              summary: "Error",
-              detail: "You cannot edit this art",
-              life: 3000
-            });
-            router.push("/new");
+  if (route.params.id) {
+    const id: number = parseInt(route.params.id as string);
+    ArtAccessService.getArtById(id)
+      .then((data) => {
+        if (!data.artistId.includes(artist.value.id)) {
+          console.log(artist.value);
+          router.go(-1);
+          toast.add({
+            severity: "error",
+            summary: "Forbid",
+            detail: "Don't do that.",
+            life: 3000
           });
-      } else if (layerStore.grids.length === 0) {
-        router.push("/new");
-      } else {
+        }
+        art.value.id = data.id;
+        art.value.title = data.title;
+        art.value.isPublic = data.isPublic;
+        art.value.pixelGrid.isGif = data.isGif;
+        art.value.isGif = data.isGif;
+
         canvas.value?.recenter();
-        art.value.isGif = layerStore.grids[0].isGif;
-        art.value.pixelGrid.isGif = layerStore.grids[0].isGif;
         art.value.pixelGrid.backgroundColor =
           layerStore.grids[0].backgroundColor;
-        art.value.pixelGrid.width = layerStore.grids[0].width;
-        art.value.pixelGrid.height = layerStore.grids[0].height;
-        tempGrid = JSON.parse(JSON.stringify(layerStore.grids[0].grid));
-        art.value.artistId = artistStore.artists.map((artist) => artist.id);
-        art.value.artistName = artistStore.artists.map((artist) => artist.name);
-      }
-    })
-    .catch((err) => console.log(err));
+      })
+      .catch(() => {
+        toast.add({
+          severity: "error",
+          summary: "Error",
+          detail: "You cannot edit this art",
+          life: 3000
+        });
+        router.push("/new");
+      });
+  } else if (layerStore.grids.length === 0) {
+    router.push("/new");
+  } else {
+    canvas.value?.recenter();
+    art.value.isGif = layerStore.grids[0].isGif;
+    art.value.pixelGrid.isGif = layerStore.grids[0].isGif;
+    art.value.pixelGrid.backgroundColor =
+      layerStore.grids[0].backgroundColor;
+    art.value.pixelGrid.width = layerStore.grids[0].width;
+    art.value.pixelGrid.height = layerStore.grids[0].height;
+    tempGrid = JSON.parse(JSON.stringify(layerStore.grids[0].grid));
+    art.value.artistId = artistStore.artists.map((artist) => artist.id);
+    art.value.artistName = artistStore.artists.map((artist) => artist.name);
+  }
 });
 
 onUnmounted(() => {
@@ -1133,11 +1137,11 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pan";
       canvas?.value.updateCursor();
-    } else if (event.key === "b") {
+    } else if (event.key === "b" && loggedIn.value) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Brush";
       canvas?.value.updateCursor();
-    } else if (event.key === "d") {
+    } else if (event.key === "d" && loggedIn.value) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pipette";
       canvas?.value.updateCursor();

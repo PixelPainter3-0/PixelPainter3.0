@@ -47,6 +47,8 @@ import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
 import { PixelGrid } from "@/entities/PixelGrid";
 
+const emit = defineEmits(["openModal", "connect", "disconnect"]);
+
 const layerStore = useLayerStore();
 const artistStore = useArtistStore();
 
@@ -78,6 +80,7 @@ onMounted(async () => {
     isLoggedIn.value = result;
   });
 });
+
 </script>
 
 <style scoped>
