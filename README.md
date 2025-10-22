@@ -72,3 +72,4 @@ If there is an HTTPS certificate error when running 'npm run dev', manually crea
 	
 	dotnet dev-certs https --export-path 'your directory here'/mytestvueapp.client.pem 
 	
+# ln /var/www/app/v3.0.0/serverconfig/nginx.conf /etc/nginx/sites-available/default
