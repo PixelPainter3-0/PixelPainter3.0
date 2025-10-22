@@ -126,19 +126,8 @@
         title="Color Blast!"
         @click="randomizeGrid()"
       />
-      <Button
-        :icon="volume > 0 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
-        :severity="volume > 0 ? 'primary' : 'secondary'"
-        label=""
-        class="ml-2"
-        @click="toggleMute()"
-      />
-      <Slider
-        v-model="volume"
-        :min="0"
-        :max="100"
-        class="m1-3 w-32"
-        @input="setVolume"
+      <AudioSelect 
+      v-model:volume="volume" 
       />
     </template>
   </Toolbar>
@@ -147,7 +136,6 @@
 //vue prime
 import Toolbar from "primevue/toolbar";
 import Button from "primevue/button";
-import Slider from "primevue/slider";
 
 //custom components
 import DrawingCanvas from "@/components/PainterUi/DrawingCanvas.vue";
@@ -158,6 +146,7 @@ import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
 import FrameSelection from "@/components/PainterUi/FrameSelection.vue";
 import LayerSelection from "@/components/PainterUi/LayerSelection.vue";
 import FPSSlider from "@/components/PainterUi/FPSSlider.vue";
+import AudioSelect from "@/components/PainterUi/AudioSelect.vue";
 
 //entities
 import { PixelGrid } from "@/entities/PixelGrid";
@@ -225,6 +214,7 @@ const audioRef = ref(new Audio());
 const audioIndex = ref(0);
 const audioOn = ref<number>(-1);
 const previousVolume = ref<number>(50);
+const showVolumeBox = ref(false);
 
 function toggleMusic() {
   if (audioOn.value === -1) {
@@ -1510,5 +1500,15 @@ function handleKeyDown(event: KeyboardEvent) {
   100% {
     background-position: 0% 92%;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
 }
 </style>
