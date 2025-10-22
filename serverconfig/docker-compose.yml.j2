@@ -4,14 +4,16 @@ services:
   pixelpainter:
     image: pixelpainter:v{{env['PIXEL_VERSION']}}
     container_name: pixelpainter
+    restart: always
     ports:
       - "{{env['PIXEL_PORT']}}:{{env['PIXEL_PORT']}}"
-    # Add volumes for branch and https certs
     networks:
       - pixel_network
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: sqlserver
+    restart: always
     environment:
       - SA_PASSWORD={{env['DB_PASSWORD']}} # Retrieves password from .env file
       - ACCEPT_EULA=Y
@@ -27,7 +29,3 @@ services:
 
 networks:
   pixel_network:
-
-# volumes: 
-#   sqlserverdata:
-    
