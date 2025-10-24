@@ -24,12 +24,17 @@
 
       <template #subtitle>
         <div class="text-sm m-0 px-2 max-w-11rem text-overflow-ellipsis">
-          <div v-if="art.artistName && art.artistName.length > 1">
-            {{ art.artistName[0] }}, etc.
+          <div v-if="artistNames.length > 1">
+            <button class="artist-link" @click.stop="goToArtist(artistNames[0])">
+              {{ artistNames[0] }}
+            </button>, etc.
           </div>
-          <div v-else-if="!art.artistName || art.artistName.length === 0"></div>
-          <!--Should never be used-->
-          <div v-else>{{ art.artistName[0] }}</div>
+          <div v-else-if="artistNames.length === 1">
+            <button class="artist-link" @click.stop="goToArtist(artistNames[0])">
+              {{ artistNames[0] }}
+            </button>
+          </div>
+          <div v-else></div>
         </div>
       </template>
 
@@ -139,6 +144,11 @@ const numComments = computed(() => {
   }
   return commentLabel;
 });
+const artistNames = computed<string[]>(() => props.art.artistName ?? []);
+
+function goToArtist(name: string) {
+  router.push(`/accountpage/${encodeURIComponent(name)}`);
+}
 </script>
 
 <style scoped>
@@ -181,6 +191,23 @@ const numComments = computed(() => {
 .tag-pill:hover {
   background: #4b5563;
   border-color: #6b7280;
+}
+
+/* Username link styles */
+.artist-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none; /* no underline by default */
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.artist-link:hover {
+  color: #d1d5db;        /* light gray on hover */
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 </style>
 

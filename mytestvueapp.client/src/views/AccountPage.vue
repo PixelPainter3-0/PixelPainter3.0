@@ -5,8 +5,8 @@
         <template #content>
           <Avatar icon="pi pi-user" class="mr-2" size="xlarge" shape="circle" />
           <div class="text-3xl p-font-bold">{{ 
-          //@ts-ignore
-           curUsername.name 
+          // @ts-ignore
+           curArtist.name
            }}</div>
           <div class="flex mt-4 p-2 gap-2 flex-column">
             <Button
@@ -159,16 +159,12 @@ const curUser = ref<Artist>(new Artist());
 const pageStatus = ref<string>("");
 const canEdit = ref<boolean>(false);
 
-var curUsername = ref<string>("");
-
 var myArt = ref<Art[]>([]);
 var likedArt = ref<Art[]>([]);
 
 onMounted(async () => {
   await LoginService.getCurrentUser().then((user: Artist) => {
     curUser.value = user;
-    // @ts-ignore
-    curUsername.value = curUser.value;
     if (user.id == 0) {
       router.go(-1);
       toast.add({
@@ -264,8 +260,7 @@ async function updateUsername(): Promise<void> {
           detail: "Username successfully changed",
           life: 3000
         });
-        // @ts-ignore
-        curUsername.value.name = newUsername.value;
+        curArtist.value.name = newUsername.value;
         artist.value.name = newUsername.value;
         isEditing.value = false;
       } else {
