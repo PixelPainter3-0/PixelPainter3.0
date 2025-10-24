@@ -126,15 +126,23 @@
       />
       <Button
         icon="pi pi-lightbulb"
-        class="Rainbow"
+        class="Rainbow mr-2"
         :label="colorHover ? 'Color Blast!' : ''"
         title="Color Blast!"
         @mouseover="colorHover = true"
         @mouseleave="colorHover = false"
         @click="randomizeGrid()"
       />
+      <Button
+        class="mr-2"
+        :label="started ? 'Stop Music' : 'Start Music'"
+        :icon="started ? 'pi pi-stop' : 'pi pi-play'"
+        :severity="started ? 'danger' : 'success'"
+        @click="toggleAudio"
+      />
       <AudioSelect 
-      v-model:volume="volume" 
+        v-model:volume="volume"
+        @toggle-mute="toggleMute"
       />
     </template>
   </Toolbar>
@@ -220,42 +228,51 @@ const audioFiles = [
   "/src/music/flight-of-the-bumblebee.mp3",
   "/src/music/OrchestralSuiteNo3.mp3"
 ];
-const audioRef = ref(new Audio());
-
+const started = ref(false);
+const volume = ref(50);
 const audioIndex = ref(0);
-const audioOn = ref<number>(-1);
-const previousVolume = ref<number>(50);
-const showVolumeBox = ref(false);
 
-function toggleMusic() {
-  if (audioOn.value === -1) {
-    audioOn.value = 1;
-    audioRef.value.src = audioFiles[audioIndex.value];
-    audioRef.value.loop = true;
-    audioRef.value.volume = volume.value / 100;
-    audioRef.value.play();
+const audio = ref<HTMLAudioElement | null>(null);
+
+const toggleAudio = () => {
+  if (!started.value) {
+    // Start the audio
+    started.value = true;
+    audio.value = new Audio(audioFiles[audioIndex.value]);
+    audio.value.loop = true;
+    audio.value.volume = volume.value / 100;
+
+    audio.value.play().catch((err) => {
+      console.warn("Playback blocked:", err);
+    });
   } else {
-    audioOn.value = -1;
-    audioRef.value.pause();
+    // Stop the audio
+    started.value = false;
+    if (audio.value) {
+      audio.value.pause();
+      audio.value.currentTime = 0; // reset to beginning
+      audio.value = null;
+    }
   }
-}
+};
+const previousVolume = ref(50);
+const toggleMute = () => {
+  if (!audio.value) return;
 
-function toggleMute() {
-  if (audioRef.value.volume > 0) {
-    // remember old volume, then mute
+  if (volume.value > 0) {
     previousVolume.value = volume.value;
     volume.value = 0;
-    audioRef.value.volume = 0;
   } else {
-    // restore previous volume
     volume.value = previousVolume.value;
-    audioRef.value.volume = volume.value / 100;
   }
-}
+};
 
-function setVolume() {
-  audioRef.value.volume = volume.value / 100;
-}
+watch(volume, (newVal) => {
+  if (audio.value && started.value) {
+    audio.value.volume = newVal / 100;
+  }
+});
+
 
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
@@ -519,17 +536,16 @@ onMounted(async () => {
     })
     .catch((err) => console.log(err));
 
-    toggleMusic();
+
 });
 
-watch(volume, (newValue) => {
-  audioRef.value.volume = newValue / 100;
-});
 
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("beforeunload", handleBeforeUnload);
 });
+
+
 
 function handleBeforeUnload(event: BeforeUnloadEvent) {
   layerStore.save();
