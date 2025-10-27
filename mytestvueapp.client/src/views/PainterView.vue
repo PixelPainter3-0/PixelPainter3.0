@@ -213,7 +213,7 @@ const colorHover = ref<boolean>(false);
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
 let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("https://localhost:7154/signalhub", {
+  .withUrl("http://localhost:7154/signalhub", {
     skipNegotiation: true,
     transport: SignalR.HttpTransportType.WebSockets
   })
