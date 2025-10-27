@@ -1341,9 +1341,13 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Rectangle";
       canvas?.value.updateCursor();
-    } else if (event.key === "l") {
+    } else if (event.key === "o") {
       event.preventDefault();
       cursor.value.selectedTool.label = "Ellipse";
+      canvas?.value.updateCursor();
+    } else if (event.key === "l") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Line";
       canvas?.value.updateCursor();
     } else if (!event.ctrlKey && event.key === "s") {
       event.preventDefault();
