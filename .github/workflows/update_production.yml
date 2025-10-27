@@ -76,6 +76,7 @@ jobs:
           DB_NAME: PixelPainter
           DB_PORT: 1433
           PIXEL_PORT: 5173
+          SERVER_PORT: 7154
           APP_DIR: ${{ env.APP_DIR }}
 
       - name: Template entrypoint.sh script
@@ -97,6 +98,7 @@ jobs:
           DB_NAME: PixelPainter
           DB_PORT: 1433
           PIXEL_PORT: 5173
+          SERVER_PORT: 7154
           APP_DIR: ${{ env.APP_DIR }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
