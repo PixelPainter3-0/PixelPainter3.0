@@ -198,14 +198,15 @@ function goToArtist(name: string) {
   background: transparent;
   border: none;
   padding: 0;
-  color: #ffffff;
+  color: #9ca3af; /* gray by default */
   font-weight: 700;
-  text-decoration: none; /* no underline by default */
+  text-decoration: none;
   cursor: pointer;
   transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
-.artist-link:hover {
-  color: #d1d5db;        /* light gray on hover */
+.artist-link:hover,
+.artist-link:focus-visible {
+  color: #ffffff;       /* white on hover/focus */
   text-decoration: underline;
   text-underline-offset: 2px;
 }

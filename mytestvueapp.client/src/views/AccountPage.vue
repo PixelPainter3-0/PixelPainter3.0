@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
 import router from "@/router";
@@ -146,10 +146,10 @@ import Message from "primevue/message";
 import { useRoute } from "vue-router";
 import type Art from "@/entities/Art";
 import ArtCard from "@/components/Gallery/ArtCard.vue";
+
 const toast = useToast();
 const route = useRoute();
 
-const name = String(route.params.artist);
 const artist = ref<Artist>(new Artist());
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
@@ -157,69 +157,99 @@ const isAdmin = ref<boolean>(false);
 const curArtist = ref<Artist>(new Artist());
 const curUser = ref<Artist>(new Artist());
 const pageStatus = ref<string>("");
-const canEdit = ref<boolean>(false);
 
 var myArt = ref<Art[]>([]);
 var likedArt = ref<Art[]>([]);
 
-onMounted(async () => {
-  await LoginService.getCurrentUser().then((user: Artist) => {
-    curUser.value = user;
-    if (user.id == 0) {
-      router.go(-1);
-      toast.add({
-        severity: "error",
-        summary: "Warning",
-        detail: "User must be logged in to view account page",
-        life: 3000
-      });
-    }
+const canEdit = computed<boolean>(() => {
+  return curUser.value.id === curArtist.value.id || isAdmin.value;
+});
 
-    isAdmin.value = user.isAdmin;
-  });
+async function loadArtistData(artistName: string): Promise<void> {
+  if (!artistName) return;
 
-  await LoginService.GetArtistByName(name).then((promise: Artist) => {
-    curArtist.value = promise;
-    newUsername.value = promise.name;
-    if (curArtist.value.privateProfile) {
-      if (curUser.value.id != curArtist.value.id && !isAdmin.value) {
-        router.go(-1);
+  myArt.value = [];
+  likedArt.value = [];
+
+  try {
+    const artistInfo = await LoginService.GetArtistByName(artistName);
+    curArtist.value = artistInfo;
+    newUsername.value = artistInfo.name;
+
+    if (artistInfo.privateProfile) {
+      if (curUser.value.id !== artistInfo.id && !isAdmin.value) {
         toast.add({
           severity: "error",
           summary: "Access Denied",
           detail: "Account page is declared as private",
           life: 3000
         });
+        router.go(-1);
+        return;
       }
       pageStatus.value = "Private";
     } else {
       pageStatus.value = "Public";
     }
-    ArtAccessService.getAllArtByUserID(curArtist.value.id).then((art) => {
-      myArt.value = (art ?? []).map((a: any) => ({
-        ...a,
-        tags: a?.tags ?? [],
-        artistName: a?.artistName ?? [],
-        title: a?.title ?? '',
-        numComments: a?.numComments ?? 0,
-        numLikes: a?.numLikes ?? 0,
-        numDislikes: a?.numDislikes ?? 0
-      }));
+
+    const [created, liked] = await Promise.all([
+      ArtAccessService.getAllArtByUserID(artistInfo.id),
+      ArtAccessService.getLikedArt(artistInfo.id)
+    ]);
+
+    myArt.value = (created ?? []).map((a: any) => ({
+      ...a,
+      tags: a?.tags ?? [],
+      artistName: a?.artistName ?? [],
+      title: a?.title ?? "",
+      numComments: a?.numComments ?? 0,
+      numLikes: a?.numLikes ?? 0,
+      numDislikes: a?.numDislikes ?? 0
+    }));
+
+    likedArt.value = (liked ?? []).map((a: any) => ({
+      ...a,
+      tags: a?.tags ?? [],
+      artistName: a?.artistName ?? [],
+      title: a?.title ?? "",
+      numComments: a?.numComments ?? 0,
+      numLikes: a?.numLikes ?? 0,
+      numDislikes: a?.numDislikes ?? 0
+    }));
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Failed to load artist data",
+      life: 3000
     });
-    ArtAccessService.getLikedArt(curArtist.value.id).then((art) => {
-      likedArt.value = (art ?? []).map((a: any) => ({
-        ...a,
-        tags: a?.tags ?? [],
-        artistName: a?.artistName ?? [],
-        title: a?.title ?? '',
-        numComments: a?.numComments ?? 0,
-        numLikes: a?.numLikes ?? 0,
-        numDislikes: a?.numDislikes ?? 0
-      }));
+  }
+}
+
+onMounted(async () => {
+  const user = await LoginService.getCurrentUser();
+  curUser.value = user;
+  if (user.id == 0) {
+    router.go(-1);
+    toast.add({
+      severity: "error",
+      summary: "Warning",
+      detail: "User must be logged in to view account page",
+      life: 3000
     });
-  });
-  canEdit.value = curUser.value.id == curArtist.value.id || isAdmin.value;
+    return;
+  }
+  isAdmin.value = user.isAdmin;
+
+  await loadArtistData(String(route.params.artist ?? ""));
 });
+
+watch(
+  () => route.params.artist,
+  async (newArtist) => {
+    await loadArtistData(String(newArtist ?? ""));
+  }
+);
 
 async function logout(): Promise<void> {
   LoginService.logout().then(() => {
@@ -242,11 +272,9 @@ const errorMessage = computed<string>(() => {
   if (newUsername.value.length > 16) {
     return "Username is too long. Max of 16 characters.";
   }
-
   if (newUsername.value.length < 4) {
     return "Username is too short. Min of 4 characters.";
   }
-
   return "";
 });
 
@@ -307,8 +335,9 @@ async function confirmDelete(): Promise<void> {
 function changeHash(hash: string): void {
   window.location.hash = hash;
 }
+
 async function privateSwitchChange() {
-  await LoginService.privateSwitchChange(curArtist.value.id).then((promise) => {
+  await LoginService.privateSwitchChange(curArtist.value.id).then(() => {
     if (pageStatus.value === "Private") {
       pageStatus.value = "Public";
     } else {
