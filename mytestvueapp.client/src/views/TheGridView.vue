@@ -133,7 +133,7 @@ let copiedSelection = ref<string[][]>([]);
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
 let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("https://localhost:7154/signalhub", {
+  .withUrl("http://pixelpainter.app:8080/signalhub", {
     skipNegotiation: true,
     transport: SignalR.HttpTransportType.WebSockets
   })

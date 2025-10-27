@@ -38,11 +38,7 @@ import { env } from "process";
 //   }
 // }
 
-const target = env.ASPNETCORE_HTTPS_PORT
-  ? `http://localhost:${env.ASPNETCORE_HTTPS_PORT}`
-  : env.ASPNETCORE_URLS
-  ? env.ASPNETCORE_URLS.split(";")[0]
-  : "http://localhost:7154";
+const target = "http://pixelpainter.app:8080";
 
 // https://vitejs.dev/config/
 export default defineConfig({
