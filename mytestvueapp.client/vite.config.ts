@@ -99,8 +99,8 @@ export default defineConfig({
         secure: false,
       }
     },
-    host: '0.0.0.0',
-    port: 5173,
+    host: 'pixelpainter.app',
+    port: 443,
     // https: {
     //   key: fs.readFileSync(keyFilePath),
     //   cert: fs.readFileSync(certFilePath)
@@ -108,3 +108,17 @@ export default defineConfig({
     allowedHosts: ['pixelpainter.app'],
   }
 });
+
+
+  // // vite.config.js
+  // import { defineConfig, loadEnv } from 'vite';
+
+  // export default defineConfig(({ mode }) => {
+  //   const env = loadEnv(mode, process.cwd(), ''); // Load all env variables
+
+  //   return {
+  //     server: {
+  //       host: env.VITE_SERVER_HOST || 'localhost', // Use env variable or default
+  //     },
+  //   };
+  // });
