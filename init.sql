@@ -35,6 +35,7 @@ BEGIN
         IsGIF BIT DEFAULT 0,
         gifId INT DEFAULT 0,
         gifFrameNum INT DEFAULT 0,
+        pointId INT DEFAULT 0,
         Width INT,
         Height INT,
         Encode VARCHAR(MAX),
@@ -153,21 +154,6 @@ BEGIN
 END
 GO
 
--- Point table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Points')
-BEGIN
-    CREATE TABLE Points (
-        PointId INT NOT NULL,
-        Latitude DECIMAL(9, 6),
-        Longitude DECIMAL(9, 6),
-        ArtspaceId INT NOT NULL,
-        Title NVARCHAR(255),
-        PRIMARY KEY (PointId),
-        CONSTRAINT FK_Points_ArtSpace FOREIGN KEY (ArtspaceId) REFERENCES Artpace(IdArtspaceId) ON DELETE CASCADE,
-    );
-END
-GO
-
 -- Artspace table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Artspace')
 BEGIN
@@ -176,6 +162,21 @@ BEGIN
         Title NVARCHAR(255),
         Shape GEOMETRY,
         PRIMARY KEY (ArtspaceId)
+    );
+END
+GO
+
+-- Point table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Points')
+BEGIN
+    CREATE TABLE Points (
+        PointId INT NOT NULL,
+        Latitude DECIMAL(9, 6),
+        Longitude DECIMAL(9, 6),
+        ArtspaceId INT,
+        Title NVARCHAR(255),
+        PRIMARY KEY (PointId),
+        CONSTRAINT FK_Points_ArtSpace FOREIGN KEY (ArtspaceId) REFERENCES Artspace(ArtspaceId) ON DELETE CASCADE,
     );
 END
 GO
@@ -339,15 +340,20 @@ BEGIN
 END
 
 GO
-IF NOT EXISTS (SELECT * FROM Points)
-BEGIN
-    insert into Points (PointId, Latitude, Longitude, Title) values (1, 44.868129, -91.929324, 'Williams Stadium');
-END
-
-GO
 IF NOT EXISTS (SELECT * FROM Artspace)
 BEGIN
     insert into Artspace (ArtspaceId, Title, Shape) values (1, 'Central Menomonie', geometry::STGeomFromText('POLYGON((44.883187 -91.928058, 44.882214 -91.935396, 44.872513 -91.938529, 44.866461 -91.929731, 44.864575 -91.919603, 44.878535 -91.919432, 44.876953 -91.924839, 44.879265 -91.928744, 44.883187 -91.928058))', 0));
+END
+
+GO
+IF NOT EXISTS (SELECT * FROM Points)
+BEGIN
+    insert into Points (PointId, Latitude, Longitude, ArtspaceId, Title) values (1, 44.868129, -91.929324, 1, 'Williams Stadium');
+    insert into Points (PointId, Latitude, Longitude, ArtspaceId, Title) values (2, 44.873211, -91.925333, 1, 'Jarvis Hall');
+    insert into Points (PointId, Latitude, Longitude, ArtspaceId, Title) values (3, 44.878441, -91.923959, 1, 'Lake Menomin');
+    insert into Points (PointId, Latitude, Longitude, ArtspaceId, Title) values (4, 44.868356, -91.933690, 1, 'Galloway Creek Park');
+    insert into Points (PointId, Latitude, Longitude, ArtspaceId, Title) values (5, 44.875815, -91.928664, 1, 'UW-Stout Clock Tower');
+    insert into Points (PointId, Latitude, Longitude, ArtspaceId, Title) values (6, 44.873101, -91.926609, 1, 'MSC');
 END
 
 GO

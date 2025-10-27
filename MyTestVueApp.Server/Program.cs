@@ -35,6 +35,7 @@ builder.Services.AddTransient<ICommentAccessService, CommentAccessService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
 builder.Services.AddTransient<ITagService, TagService>();
+builder.Services.AddTransient<IMapAccessService, MapAccessService>();
 
 var app = builder.Build();
 
