@@ -167,7 +167,7 @@ function updateCell(layer: number, x: number, y: number, color: string): void {
     }
 
     //no way around this, viewport stores sprites in a 1d array
-    idx += x * layerStore.grids[0].width + y;
+    idx += x * layerStore.grids[0].height + y;
     const cell = viewport.children[idx] as Sprite;
     if (color === "empty") {
       cell.alpha = 0;
@@ -220,7 +220,7 @@ function updateCursor(): void {
   } else {
     cursor.value.position.x = Math.floor(pos.value.x / PIXEL_SIZE);
     cursor.value.position.y = Math.floor(pos.value.y / PIXEL_SIZE);
-  }
+    }
 
   // Remove the old cursor
   viewport.children.forEach((child) => {
@@ -261,7 +261,7 @@ function updateCursor(): void {
 //centers the canvas
 function recenter(): void {
   viewport.fit();
-  viewport.setZoom(40 / layerStore.grids[0].width);
+  viewport.setZoom(Math.min((40 / layerStore.grids[0].width) , (40 / layerStore.grids[0].height)));
   viewport.moveCenter(
     (layerStore.grids[0].width * PIXEL_SIZE) / 2,
     (layerStore.grids[0].height * PIXEL_SIZE) / 2 +

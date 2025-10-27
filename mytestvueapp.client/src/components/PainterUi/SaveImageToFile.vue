@@ -31,13 +31,13 @@ function handleClick(): void {
 function flattenArt(): string[][] {
   let width = layerStore.grids[0].width;
   let height = layerStore.grids[0].height;
-  let arr: string[][] = Array.from({ length: height }, () =>
-    Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
+  let arr: string[][] = Array.from({ length: width }, () =>
+    Array(height).fill(layerStore.grids[0].backgroundColor.toLowerCase())
   );
 
   for (let length = 0; length < layerStore.grids.length; length++) {
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
+    for (let i = 0; i < width; i++) {
+      for (let j = 0; j < height; j++) {
         //only set empty cells to background color if its the first layer
         //layers above the first will just replace cells if they have a value
         if (layerStore.grids[length].grid[i][j] !== "empty") {
@@ -57,16 +57,18 @@ async function saveToFile(): Promise<void> {
   if (!context) {
     throw new Error("Could not get context");
   }
-  const image = context.createImageData(grid.length, grid.length);
+  const image = context.createImageData(canvas.width, canvas.height);
 
-  canvas.width = grid.length;
-  canvas.height = grid.length;
+  canvas.width = layerStore.grids[0].width;
+  canvas.height = layerStore.grids[0].height;
 
-  for (let x = 0; x < grid.length; x++) {
-    for (let y = 0; y < grid.length; y++) {
+  for (let x = 0; x < canvas.width; x++) {
+    for (let y = 0; y < canvas.height; y++) {
       let pixelHex = grid[x][y];
+      //console.log(x + ' ' + y + ' ' + grid[x][y] + ' ' + pixelHex + ' ' + canvas.width + ' ' + canvas.height);
       pixelHex = pixelHex.replace("#", "").toUpperCase();
-      const index = (x + y * grid.length) * 4;
+        const index = (x + y * grid.length) * 4; //check on this later
+        console.log(index);
       image?.data.set(
         [
           parseInt(pixelHex.substring(0, 2), 16),
@@ -81,15 +83,23 @@ async function saveToFile(): Promise<void> {
   context?.putImageData(image, 0, 0);
 
   //upscale the image to 1080
-  var upsizedCanvas = document.createElement("canvas");
-  upsizedCanvas.width = 1080;
-  upsizedCanvas.height = 1080;
+    var upsizedCanvas = document.createElement("canvas");
+
+    if (layerStore.grids[0].width > layerStore.grids[0].height) {
+        upsizedCanvas.width = 1080;
+        upsizedCanvas.height = 1080 * (layerStore.grids[0].height / layerStore.grids[0].width);
+    }
+    else {
+        upsizedCanvas.width = 1080 * (layerStore.grids[0].width / layerStore.grids[0].height);
+        upsizedCanvas.height = 1080;
+    }
+
   var upsizedContext = upsizedCanvas.getContext("2d");
   if (!upsizedContext) {
     throw new Error("Could not get context");
   }
   upsizedContext.imageSmoothingEnabled = false; // Disable image smoothing
-  upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
+  upsizedContext.drawImage(canvas, 0, 0, upsizedCanvas.width, upsizedCanvas.height);
 
   const link = document.createElement("a");
   link.download = "image.png";

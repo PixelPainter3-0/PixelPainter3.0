@@ -691,7 +691,6 @@ function drawAtCoords(coords: Vector2[]) {
               layerStore.grids[layerStore.layer].grid[coord.x + i][
                 coord.y + j
               ] = cursor.value.color;
-
               if (!layerStore.grids[0].isGif) {
                 canvas.value?.updateCell(
                   layerStore.layer,
@@ -817,8 +816,8 @@ function fill(
 }
 
 function randomizeGrid() {
-  for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
-    for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
+  for (let i = 0; i < layerStore.grids[layerStore.layer].width; i++) {
+    for (let j = 0; j < layerStore.grids[layerStore.layer].height; j++) {
       let color = ((Math.random() * 0xffffff) << 0)
         .toString(16)
         .padStart(6, "0");
@@ -1173,8 +1172,8 @@ function flattenArt(): string[][] {
   );
 
   for (let length = 0; length < layerStore.grids.length; length++) {
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
+    for (let i = 0; i < width; i++) {
+      for (let j = 0; j < height; j++) {
         //only set empty cells to background color if its the first layer
         //layers above the first will just replace cells if they have a value
         if (layerStore.grids[length].grid[i][j] !== "empty") {
@@ -1196,11 +1195,11 @@ async function saveToFile(): Promise<void> {
   }
   const image = context.createImageData(grid.length, grid.length);
 
-  canvas.width = grid.length;
-  canvas.height = grid.length;
+  //canvas.width = grid.length;
+  //canvas.height = grid.length;
 
-  for (let x = 0; x < grid.length; x++) {
-    for (let y = 0; y < grid.length; y++) {
+  for (let x = 0; x < canvas.width; x++) {
+    for (let y = 0; y < canvas.height; y++) {
       let pixelHex = grid[x][y];
       pixelHex = pixelHex.replace("#", "").toUpperCase();
       const index = (x + y * grid.length) * 4;
