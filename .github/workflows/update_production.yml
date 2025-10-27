@@ -5,7 +5,7 @@ name: Publish Web Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "ndobo-fix-prod-oauth" ]
 
 jobs:
   build_app:
@@ -46,6 +46,8 @@ jobs:
       with:
         name: published-app
         path: ./publish
+
+
 
   deploy:
     runs-on: ubuntu-latest
