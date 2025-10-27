@@ -11,6 +11,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
         Dictionary<string, Artist> ArtistLookup = new();
         //artistId, MembershipRecord
         Dictionary<int, MembershipRecord> Records = new();
+        GridGroup Grid;
 
         public void AddGroup(string groupName, List<Artist> contributors, string[][][] canvas, int canvasSize, string backgroundColor)
         {
@@ -160,6 +161,31 @@ namespace MyTestVueApp.Server.ServiceImplementations
         public bool HasConnection(string connectionId)
         {
             return ArtistLookup.ContainsKey(connectionId);
+        }
+
+        public void AddGrid(int size)
+        {
+            Grid = new GridGroup(size);
+        }
+        public bool GridExists()
+        {
+            if(Grid != null)
+            {
+                return true;
+            }
+            return false;
+        }
+        public void AddGridMember(Artist artist)
+        {
+            Grid.AddMember(artist);
+        }
+        public GridGroup GetGrid()
+        {
+            return Grid;
+        }
+        public void GridPaint(int memberId, string color, Coordinate coord)
+        {
+            Grid.PaintPixels(memberId, color, coord);
         }
     }
 }
