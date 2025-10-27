@@ -169,14 +169,14 @@ function goToArtist(name: string) {
 }
 
 .tag-pill {
-  background: #2a313a;
-  color: #fff;
+  background: var(--tag-bg);
+  color: var(--tag-text);
   font-size: 0.55rem;
   font-weight: 600;
   padding: 0.3rem 0.55rem;
   line-height: 1;
   border-radius: 9999px;
-  border: 1px solid #434b55;
+  border: 1px solid var(--tag-border);
   max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -186,11 +186,11 @@ function goToArtist(name: string) {
   cursor: pointer; /* make it clear it's clickable */
 }
 .tag-pill.more {
-  background: #444155;
+  background: var(--tag-more-bg);
 }
 .tag-pill:hover {
-  background: #4b5563;
-  border-color: #6b7280;
+  background: var(--tag-hover-bg);
+  border-color: var(--tag-hover-border);
 }
 
 /* Username link styles */
@@ -206,7 +206,6 @@ function goToArtist(name: string) {
 }
 .artist-link:hover,
 .artist-link:focus-visible {
-  color: #ffffff;       /* white on hover/focus */
   text-decoration: underline;
   text-underline-offset: 2px;
 }
