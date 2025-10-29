@@ -19,7 +19,7 @@
     "
     @contextmenu.prevent
   />
-  <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
+  <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="loggedIn">
     <template #start>
       <UploadButton
           v-if="artist.isAdmin"
@@ -71,6 +71,11 @@
         class="mr-2"
         @click="toggleMusic()"
       />
+    </template>
+  </Toolbar>
+  <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="!loggedIn">
+    <template #center>
+      <p class="font-bold text-xl">Login to collaborate on the canvas</p>
     </template>
   </Toolbar>
 </template>
@@ -347,11 +352,9 @@ const cursorPositionComputed = computed(
 onMounted(async () => {
   document.addEventListener("keydown", handleKeyDown);
   window.addEventListener("beforeunload", handleBeforeUnload);
-  console.log("On mounted...");
+
   //Get the current user
   loggedIn.value = await LoginService.isLoggedIn();
-
-  console.log("Got logged in value...", loggedIn.value);
 
   if (loggedIn.value) {
     LoginService.getCurrentUser().then((user: Artist) => {
@@ -363,6 +366,7 @@ onMounted(async () => {
     artist.value.name = "Guest";
     cursor.value.selectedTool = PainterTool.getDefaults()[0];
   }
+  console.log("Is logged in?", loggedIn.value);
 
   if (route.params.id) {
     const id: number = parseInt(route.params.id as string);
@@ -998,11 +1002,11 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pan";
       canvas?.value.updateCursor();
-    } else if (event.key === "b") {
+    } else if (event.key === "b" && loggedIn.value) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Brush";
       canvas?.value.updateCursor();
-    } else if (event.key === "d") {
+    } else if (event.key === "d" && loggedIn.value) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pipette";
       canvas?.value.updateCursor();
