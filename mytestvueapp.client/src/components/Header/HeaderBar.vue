@@ -15,6 +15,9 @@
         <RouterLink class="p-2" to="/new">
           <Button rounded label="Painter" icon="pi pi-pencil" />
         </RouterLink>
+        <RouterLink class="p-2" to="/thegrid">
+          <Button rounded label="The Grid" icon="pi pi-globe" @click="updateLocalStorage()"/>
+        </RouterLink>
         <RouterLink class="p-2" to="/gallery">
           <Button rounded label="Gallery" icon="pi pi-image" />
         </RouterLink>
@@ -33,6 +36,7 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
 import { ref, onMounted } from "vue";
+import router from "@/router";
 import Button from "primevue/button";
 import DarkModeSwitcher from "./DarkModeToggle.vue";
 import GoogleLogin from "../GoogleLogin.vue";
@@ -41,11 +45,30 @@ import Notification from "./NotificationRedirect.vue";
 import LoginService from "@/services/LoginService";
 import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
+import { PixelGrid } from "@/entities/PixelGrid";
 
 const layerStore = useLayerStore();
 const artistStore = useArtistStore();
 
 const isLoggedIn = ref<boolean>(false);
+
+const resolution = ref<number>(200);
+const backgroundColor = ref<string>("ffffff");
+const isImage = ref<boolean>(true);
+
+function updateLocalStorage(): void {
+  layerStore.empty(); //just in case
+  
+  let pixelGrid = new PixelGrid(
+    resolution.value,
+    resolution.value,
+    backgroundColor.value.toUpperCase(),
+    !isImage.value // Constructor wants isGif so pass in !isImage
+  );
+
+  layerStore.pushGrid(pixelGrid);
+  router.push("/paint");
+}
 
 onMounted(async () => {
   layerStore.init();

@@ -24,10 +24,10 @@
 
       <template #subtitle>
         <div class="text-sm m-0 px-2 max-w-11rem text-overflow-ellipsis">
-          <div v-if="art.artistName.length > 1">
+          <div v-if="art.artistName && art.artistName.length > 1">
             {{ art.artistName[0] }}, etc.
           </div>
-          <div v-else-if="art.artistName.length == 0"></div>
+          <div v-else-if="!art.artistName || art.artistName.length === 0"></div>
           <!--Should never be used-->
           <div v-else>{{ art.artistName[0] }}</div>
         </div>
@@ -44,6 +44,7 @@
             :key="t.id || t.name"
             class="tag-pill"
             :title="t.name"
+            @click.stop="router.push({ name: 'TagGallery', params: { tag: t.name } })"
           >
             {{ t.name }}
           </li>
@@ -62,14 +63,14 @@
         >
           <LikeButton
             :artId="props.art.id"
-            :likes="props.art.numLikes"
+            :likes="props.art.numLikes ?? 0"
             :is-disliked="isDisliked"
             @liked="isLiked = true"
             @unliked="isLiked = false"
           />
           <DislikeButton
             :artId="props.art.id"
-            :dislikes="props.art.numDislikes"
+            :dislikes="props.art.numDislikes ?? 0"
             :is-liked="isLiked"
             @disliked="isDisliked = true"
             @undisliked="isDisliked = false"
@@ -117,27 +118,26 @@ const overflowTitle = computed(() =>
     .join(", ")
 );
 const title = computed(() => {
-  if (props.art.title.length > 32) {
-    const tempTitle = props.art.title.substring(0, 32);
-    const elipsis = "...";
-    return tempTitle + elipsis;
+  const t = props.art.title ?? "";
+  if (t.length > 32) {
+    const tempTitle = t.substring(0, 32);
+    const ellipsis = "...";
+    return tempTitle + ellipsis;
   } else {
-    return props.art.title;
+    return t;
   }
 });
 const numComments = computed(() => {
   let commentLabel = "";
-  const tempComments = props.art.numComments;
+  const tempComments = props.art.numComments ?? 0;
   if (tempComments > 999999) {
     commentLabel = Math.floor(tempComments / 1000000) + "M";
-    return commentLabel;
   } else if (tempComments > 999) {
     commentLabel = Math.floor(tempComments / 1000) + "K";
-    return commentLabel;
   } else {
     commentLabel = tempComments + "";
-    return commentLabel;
   }
+  return commentLabel;
 });
 </script>
 
@@ -173,6 +173,7 @@ const numComments = computed(() => {
   white-space: nowrap;
   user-select: none;
   transition: 0.15s;
+  cursor: pointer; /* make it clear it's clickable */
 }
 .tag-pill.more {
   background: #444155;
