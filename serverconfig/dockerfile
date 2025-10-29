@@ -1,0 +1,22 @@
+FROM ubuntu
+
+RUN apt-get update -y
+RUN apt-get install -y npm dotnet-sdk-8.0
+
+RUN mkdir /app
+
+WORKDIR /app
+COPY . .
+# Build in root directory
+
+WORKDIR /app/mytestvueapp.client
+RUN npm install --legacy-peer-deps
+
+# Moves config file in serverconfig to the proper configuration location
+RUN mv /app/serverconfig/appsettings.json /app/MyTestVueApp.Server
+
+# RUN mkdir -p /root/.aspnet/https # Used for https cert inside of docker container which is not used anymore
+# RUN dotnet dev-certs https --export-path /root/.aspnet/https/mytestvueapp.client.pem 
+
+WORKDIR /app/MyTestVueApp.Server
+ENTRYPOINT ["dotnet", "run"]

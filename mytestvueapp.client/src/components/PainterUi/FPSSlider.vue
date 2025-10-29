@@ -4,6 +4,7 @@
     header="GIF Speed"
     button-icon="pi pi-forward"
     button-label=""
+    button-title="FPS Slider"
     width=""
     :default-open="false"
   >

@@ -35,7 +35,7 @@ namespace MyTestVueApp.Server.Controllers
         [Route("Login")]
         public IActionResult Login()
         {
-            var returnUrl = AppConfig.Value.HomeUrl + "login/LoginRedirect";
+            var returnUrl = AppConfig.Value.RedirectUrl + "login/LoginRedirect";
             var url = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={AppConfig.Value.ClientId}&redirect_uri={returnUrl}&scope=email profile&response_type=code&prompt=consent";
 
             return Redirect(url);

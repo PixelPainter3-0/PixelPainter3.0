@@ -1,7 +1,10 @@
 <template>
   <Button
-    :label="connected ? 'Disconnect' : 'Connect'"
+    :title="connected ? 'Disconnect' : 'Connect'"
     :severity="connected ? 'danger' : 'primary'"
+    :label="isHover ? (connected ? 'Disconnect' : 'Connect') : ''"
+    @mouseover="isHover = true"
+    @mouseleave="isHover = false"
     :disabled="isGif"
     icon="pi pi-wifi"
     @click="toggleModal()"
@@ -121,6 +124,7 @@ const visible = ref<boolean>(false);
 const groupname = ref<string>("");
 const groups = ref<GroupAdvert[]>([]);
 const tab = ref<number>(0);
+const isHover = ref<boolean>(false);
 
 function toggleModal(): void {
   if (!props.connected) {

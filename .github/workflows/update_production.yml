@@ -1,0 +1,140 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Publish Web Application
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build_app:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup Node.js for npm install
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x' # Use the Node.js version compatible with your project
+
+    - name: Install npm dependencies
+      working-directory: ./mytestvueapp.client
+      run: npm install --legacy-peer-deps
+
+    - name: Create directory for HTTPS certificate
+      run: mkdir -p ~/.aspnet/https
+
+    # Build and publish dotnet
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+      
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+      
+    - name: Archive published files
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-app
+        path: ./publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set VERSION variable
+        run: |
+          version=`npm pkg get version`
+          version="${version//\"/}"
+          echo "VERSION=$version" >> $GITHUB_ENV
+        working-directory: /home/runner/work/PixelPainter3.0/PixelPainter3.0/mytestvueapp.client
+
+      - name: Set APP_DIR variable
+        run: echo "APP_DIR=/var/www/app/pixelpainter" >> $GITHUB_ENV
+
+      - name: Template server dockercompose.yml file
+        uses: cuchi/jinja2-action@v1.3.0
+        with:
+          template: serverconfig/docker-compose.yml.j2
+          output_file: serverconfig/docker-compose.yml
+        env:
+          PIXEL_VERSION: ${{ env.VERSION }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: PixelPainter
+          DB_PORT: 1433
+          PIXEL_PORT: 5173
+          APP_DIR: ${{ env.APP_DIR }}
+
+      - name: Template entrypoint.sh script
+        uses: cuchi/jinja2-action@v1.3.0
+        with:
+          template: serverconfig/entrypoint.sh.j2
+          output_file: serverconfig/entrypoint.sh
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Template appsettings
+        uses: cuchi/jinja2-action@v1.3.0
+        with:
+          template: serverconfig/appsettings.json.j2
+          output_file: serverconfig/appsettings.json
+        env:
+          PIXEL_VERSION: ${{ env.VERSION }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: PixelPainter
+          DB_PORT: 1433
+          PIXEL_PORT: 5173
+          APP_DIR: ${{ env.APP_DIR }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          PROD_URL: "pixelpainter.app"
+
+      - name: Set up SSH agent with Server
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Make Deploy Directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -R ${{ env.APP_DIR }}
+            mkdir ${{ env.APP_DIR }}
+          
+      - name: Deploy App Files to Server
+        run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.APP_DIR }}
+
+      - name: Build pixelpainter Docker Image
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ env.APP_DIR }}
+            docker buildx build -f serverconfig/dockerfile . -t pixelpainter:v${{ env.VERSION }}
+
+      - name: Refresh Docker Compose
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ env.APP_DIR }}/serverconfig
+            docker compose stop
+            docker compose up -d
