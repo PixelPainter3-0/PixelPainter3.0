@@ -16,6 +16,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
         private readonly IOptions<ApplicationConfiguration> AppConfig;
         private readonly ILogger<MapAccessService> Logger;
         private readonly ITagService TagService;
+        private readonly IArtAccessService ArtService;
         private readonly ILoginService LoginService;
         public MapAccessService(IOptions<ApplicationConfiguration> appConfig, ILogger<MapAccessService> logger, ILoginService loginService, ITagService tagService)
         {
@@ -231,6 +232,99 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 }
             }
             return artspace;
+        }
+
+        /// <summary>
+        /// Gets art by point
+        /// </summary>
+        /// <returns>Art</returns>
+        public async Task<IEnumerable<Art>> GetArtByPoint(int id)
+        {
+            var art = new List<Art>();
+            var connectionString = AppConfig.Value.ConnectionString;
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query1 =
+                    $@"
+                    Select	
+                        Art.ID,
+                        Art.Title, 
+                        Art.Width, 
+                        Art.Height, 
+                        Art.Encode, 
+                        Art.CreationDate,
+                        Art.isPublic,
+                        Art.pointId
+                    FROM ART  
+                    WHERE Art.pointId = @pointId 
+                    ";
+                using (var command = new SqlCommand(query1, connection))
+                {
+                    command.Parameters.AddWithValue("@pointId", id);
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            var pixelGrid = new PixelGrid()
+                            {
+                                Width = reader.GetInt32(2),
+                                Height = reader.GetInt32(3),
+                                EncodedGrid = reader.GetString(4)
+                            };
+                            var painting = new Art
+                            { //Art Table + NumLikes and NumComments
+                                Id = reader.GetInt32(0),
+                                Title = reader.GetString(1),
+                                CreationDate = reader.GetDateTime(5),
+                                IsPublic = reader.GetBoolean(6),
+                                PointId = reader.GetInt32(7),
+                                PixelGrid = pixelGrid,
+                            };
+                            art.Add(painting);
+                        }
+                    }
+                }
+            }
+            return art;
+        }
+
+        /// <summary>
+        /// Adds a point to database
+        /// </summary>
+        /// <param name="latitude">lat</param>
+        /// <param name="longitude">long</param>
+        ///  <param name="title">title</param>
+        ///  <param name="artspace">artspace</param>
+        public async Task<bool> CreatePoint(float latitude, float longitude, string title, int artspace)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(AppConfig.Value.ConnectionString))
+                {
+                    connection.Open();
+
+                    var query = @"
+                    INSERT INTO Points(latitude,longitude, title, artspaceId) values (@Latitude,@Longitude, @Title, @Artspace);
+                ";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Latitude", latitude);
+                        command.Parameters.AddWithValue("@Longitude", longitude);
+                        command.Parameters.AddWithValue("@Title", title);
+                        command.Parameters.AddWithValue("@Artspace", artspace);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error in Creating Point");
+                throw;
+                return false;
+            }
         }
     }
 }

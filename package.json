@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "gifencoder": "^2.0.1",
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "pixi-viewport": "^5.0.2"
   },
   "devDependencies": {
     "@types/omggif": "^1.0.5"

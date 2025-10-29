@@ -35,20 +35,62 @@
   //var point = ref<Point>;
 
 
-  function setupPoints() {
-    MapAccessService.getAllPoints(1).then((points) => {
+    async function setupPoints() {
+        const points = await MapAccessService.getAllPoints();
+
         if (points && points.length > 0) {
-            points.forEach((point) => {
-                L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(point.title);
-            });
+            for (const point of points) {
+                try {
+                    const pointArt = await MapAccessService.getArtByPoint(point.id);
+
+                    if (!pointArt || pointArt.length === 0) {
+                        console.log(`No art found for point ${point.id}`);
+                    } else {
+                        console.log(`Art found for point ${point.id}:`, pointArt);
+
+                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='http://localhost:5173/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
+
+                    }
+                } catch (error) {
+                    console.error(`Error loading art for point ${point.id}:`, error);
+                }
+            }
         }
-        else {
-            console.warn("No points with that id");
-        }
-    }).catch((error) => {
-        console.error("Error fetching point:", error);
-    });
-  }
+    }
+
+    //async function setupPoints() {
+    //    const points = MapAccessService.getAllPoints()
+    //        if (points && points.length > 0) {
+    //            points.forEach((point) => {
+    //                try {
+    //                    console.log(point)
+    //                    var pointArt = await MapAccessService.getArtByPoint(point.id);
+    //                    console.log(pointArt)
+    //                    var id;
+    //                    if (!pointArt || pointArt.length === 0) {
+    //                        console.log("no art found")
+    //                        id = 0;
+    //                    }
+    //                    else {
+    //                        id = pointArt[0].id;
+    //                    }
+    //                }
+    //                catch {
+    //                    (error) {
+    //                        console.error("Error fetching art:", error);
+    //                    }
+    //                }
+    //                console.log(id)
+                    
+    //            });
+    //        }
+    //        else {
+    //            console.warn("No points with that id");
+    //        }
+    //    }).catch((error) => {
+    //        console.error("Error fetching point:", error);
+    //    });
+    //}
 
    function setupArtspace() {
        console.warn("*");
@@ -119,14 +161,14 @@
   }
   outOfRange
       .setLatLng(e.latlng)
-      .setContent("Out of range at " + e.latlng.toString())
+      .setContent("<b>Out of bounds at " + e.latlng.lat.toFixed(4).toString() + ", " + e.latlng.lng.toFixed(4).toString() + "</b>")
       .openOn(map);
   }
 
   function inMapClick(e: L.LeafletMouseEvent) {
   inRange
       .setLatLng(e.latlng)
-      .setContent("In range at " + e.latlng.toString())
+      .setContent("<b>No art at " + e.latlng.lat.toFixed(4).toString() + ", " + e.latlng.lng.toFixed(4).toString() + "</b>")
       .openOn(map);
   }
 

@@ -1,5 +1,6 @@
 import Point from "../entities/Point";
 import Artspace from "../entities/Artspace";
+import Art from "../entities/Art";
 
 
 export default class MapAccessService {
@@ -130,6 +131,47 @@ export default class MapAccessService {
             throw error;
             //Unneeded?
             //return [];
+        }
+    }
+
+    public static async getArtByPoint(pointId: number): Promise<Art[]> {
+        try {
+            const response = await fetch(
+                `/mapaccess/GetArtByPoint?id=${pointId}`
+            );
+            if (!response.ok) {
+                console.log("Bad response");
+                throw new Error("Error grabbing points");
+            }
+            console.log("Good response");
+            const json = await response.json();
+            const pointArt: Art[] = [];
+
+            for (const jsonPoint of json) {
+                pointArt.push(jsonPoint as Art);
+            }
+
+            return pointArt;
+        } catch (error) {
+            console.error;
+            throw error;
+            //Unneeded?
+            //return [];
+        }
+    }
+
+    public static async createPoint(latitude: number, longitude: number, title: string, artspace: number): Promise<boolean> {
+        try {
+            const response = await fetch(`/mapaccess/CreatePoint?latitude=${latitude}&longitude=${longitude}&title=${title}&artspace=${artspace}`, {
+                method: "PUT"
+            });
+            if (!response.ok) {
+                throw new Error("Response was false.");
+            }
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
         }
     }
 }

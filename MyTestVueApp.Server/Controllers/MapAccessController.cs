@@ -138,5 +138,84 @@ namespace MyTestVueApp.Server.Controllers
                 return Problem(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Gets All Artspaces
+        /// </summary>
+        [HttpGet]
+        [Route("GetArtByPoint")]
+        [ProducesResponseType(typeof(List<Art>), 200)]
+        public async Task<IActionResult> GetArtByPoint([FromQuery] int id)
+        {
+            try
+            {
+                var art = await MapAccessService.GetArtByPoint(id);
+
+                if (art == null)
+                {
+                    throw new ArgumentException("Art with point id: " + id + " can not be found");
+                }
+
+                return Ok(art);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Creates a poiint
+        /// </summary>
+        /// <param name="latitude">lat</param>
+        /// <param name="longitude">long</param>
+        /// <param name="title">title</param>
+        /// <param name="artspace">artspace</param>
+        [HttpPut]
+        [Route("CreatePoint")]
+        public async Task<IActionResult> CreatePoint([FromQuery] float latitude, [FromQuery] float longitude, [FromQuery] string title, [FromQuery] int artspace)
+        {
+            try
+            {
+                // If the user is logged in
+                if (Request.Cookies.TryGetValue("GoogleOAuth", out var userId))
+                {
+                    var artist = await LoginService.GetUserBySubId(userId);
+                    if (artist != null)
+                    {
+                        // You can add additional checks here if needed
+                        var updated = await MapAccessService.CreatePoint(latitude, longitude, title, artspace);
+                        if (updated) // If the like has sucessfully been inserted
+                        {
+                            return Ok();
+                        }
+                        else
+                        {
+                            throw new ArgumentException("Failed to create point.");
+                        }
+                    }
+                    else
+                    {
+                        throw new AuthenticationException("User does not have an account.");
+                    }
+                }
+                else
+                {
+                    throw new AuthenticationException("User is not logged in!");
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
     }
 }
