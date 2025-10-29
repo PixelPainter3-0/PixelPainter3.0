@@ -27,7 +27,9 @@ export default class ArtAccessService {
 
   public static async getAllArtByUserID(id: number): Promise<Art[]> {
     try {
-      const response = await fetch(`/artaccess/GetAllArtByUserID?id=${id}`);
+      const response = await fetch(
+        `/artaccess/GetAllArtByUserID?id=${encodeURIComponent(id)}`
+      );
       const json = await response.json();
 
       const allArt: Art[] = [];
@@ -46,7 +48,7 @@ export default class ArtAccessService {
   public static async getLikedArt(artistId: number): Promise<Art[]> {
     try {
       const response = await fetch(
-        `/artaccess/GetLikedArt?artistId=${artistId}`
+        `/artaccess/GetLikedArt?artistId=${encodeURIComponent(artistId)}`
       );
       const json = await response.json();
       const allArt: Art[] = [];

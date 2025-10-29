@@ -7,6 +7,7 @@ using MyTestVueApp.Server.Entities;
 using MyTestVueApp.Server.Interfaces;
 using MyTestVueApp.Server.ServiceImplementations;
 using System.Security.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MyTestVueApp.Server.Controllers
 {
@@ -52,6 +53,7 @@ namespace MyTestVueApp.Server.Controllers
         /// <returns>A list of art objects</returns>
         [HttpGet]
         [Route("GetLikedArt")]
+        [AllowAnonymous] // allow anonymous reads
         [ProducesResponseType(typeof(List<Art>), 200)]
         public async Task<IActionResult> GetLikedArt([FromQuery] int artistId)
         {
@@ -73,28 +75,33 @@ namespace MyTestVueApp.Server.Controllers
         /// <returns>A list of art objects</returns>
         [HttpGet]
         [Route("GetAllArtByUserID")]
+        [AllowAnonymous] // allow anonymous reads
         [ProducesResponseType(typeof(List<Art>), 200)]
         public async Task<IActionResult> GetAllArtByUserID([FromQuery] int id)
         {
             try
             {
+                var artistArt = await ArtAccessService.GetArtByArtist(id);
+
+                // If viewer is logged in, check if owner/admin to show private art too
                 if (Request.Cookies.TryGetValue("GoogleOAuth", out var userSubId))
                 {
-                    var artist = await LoginService.GetUserBySubId(userSubId);
-                    var artistArt = await ArtAccessService.GetArtByArtist(id);
-
-                    if (artist.Id != id && !artist.IsAdmin)
+                    var viewer = await LoginService.GetUserBySubId(userSubId);
+                    if (viewer != null && (viewer.Id == id || viewer.IsAdmin))
                     {
-                        var artistArtList = artistArt.Where(art => art.IsPublic).OrderByDescending(art => art.CreationDate);
-                        return Ok(artistArtList);
-                    } else
-                    {
-                        var artistArtList = artistArt.OrderByDescending(art => art.CreationDate);
-                        return Ok(artistArtList);
+                        return Ok(artistArt.OrderByDescending(a => a.CreationDate));
                     }
-
                 }
-                else { throw new AuthenticationException("User is not logged in."); }
+
+                // Anonymous or non-owner non-admin -> only public art
+                var publicOnly = artistArt
+                    .Where(a => a.IsPublic)
+                    .OrderByDescending(a => a.CreationDate);
+                return Ok(publicOnly);
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {

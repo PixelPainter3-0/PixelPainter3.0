@@ -227,27 +227,53 @@ async function loadArtistData(artistName: string): Promise<void> {
 }
 
 onMounted(async () => {
-  const user = await LoginService.getCurrentUser();
-  curUser.value = user;
-  if (user.id == 0) {
-    router.go(-1);
-    toast.add({
-      severity: "error",
-      summary: "Warning",
-      detail: "User must be logged in to view account page",
-      life: 3000
-    });
-    return;
+  // Try to get current user, but do not block anonymous visitors
+  try {
+    const user = await LoginService.getCurrentUser();
+    if (user && user.id !== 0) {
+      curUser.value = user;
+      isAdmin.value = !!user.isAdmin;
+    } else {
+      curUser.value = new Artist(); // anonymous
+      curUser.value.id = 0 as any;
+      isAdmin.value = false;
+    }
+  } catch {
+    // treat as anonymous
+    curUser.value = new Artist();
+    curUser.value.id = 0 as any;
+    isAdmin.value = false;
   }
-  isAdmin.value = user.isAdmin;
+
+  // Default to created art if no/invalid hash
+  if (!['#settings', '#created_art', '#liked_art'].includes(route.hash)) {
+    changeHash('#created_art');
+  }
 
   await loadArtistData(String(route.params.artist ?? ""));
 });
 
+// Refetch on artist change
 watch(
   () => route.params.artist,
   async (newArtist) => {
     await loadArtistData(String(newArtist ?? ""));
+  }
+);
+
+// Prevent navigating to settings if viewer cannot edit
+watch(
+  () => route.hash,
+  (h) => {
+    if (h === '#settings' && !canEdit.value) {
+      toast.add({
+        severity: "info",
+        summary: "Read-only",
+        detail: "Login to manage this account.",
+        life: 2500
+      });
+      changeHash('#created_art');
+    }
   }
 );
 
@@ -333,6 +359,15 @@ async function confirmDelete(): Promise<void> {
 }
 
 function changeHash(hash: string): void {
+  if (hash === '#settings' && !canEdit.value) {
+    toast.add({
+      severity: "info",
+      summary: "Read-only",
+      detail: "Login to manage this account.",
+      life: 2500
+    });
+    return;
+  }
   window.location.hash = hash;
 }
 
