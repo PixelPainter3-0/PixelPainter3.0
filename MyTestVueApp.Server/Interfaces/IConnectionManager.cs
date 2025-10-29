@@ -23,5 +23,6 @@ namespace MyTestVueApp.Server.Interfaces
         public void AddGridMember(Artist artist);
         public GridGroup GetGrid();
         public void GridPaint(int memberId, string color, Coordinate coord);
+        public void RemoveUserFromGrid(string connectionId, Artist artist);
     }
 }

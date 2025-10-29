@@ -100,6 +100,7 @@ namespace MyTestVueApp.Server.Hubs
                 try
                 {
                     Manager.RemoveUserFromAllGroups(Context.ConnectionId);
+                    
                 }
                 catch (ArgumentException ex)
                 {
@@ -124,8 +125,7 @@ namespace MyTestVueApp.Server.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, GridName);
 
             var Grid = Manager.GetGrid();
-            await Clients.Client(Context.ConnectionId).SendAsync("GroupConfig", Grid.CanvasSize, Grid.BackgroundColor, Manager.GetGroup(GridName).GetPixelsAsList());
-            await Clients.Client(Context.ConnectionId).SendAsync("Members", Manager.GetGroup(GridName).MemberRecord);
+            await Clients.Client(Context.ConnectionId).SendAsync("GroupConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList());
 
             await Clients.Group(GridName).SendAsync("NewMember", artist);
         }
@@ -133,6 +133,18 @@ namespace MyTestVueApp.Server.Hubs
         {
             Manager.GridPaint(artistId, color, coord);
             await Clients.Group(GridName).SendAsync("ReceivePixel", 0, color, coord);
+        }
+        public async Task LeaveGrid(Artist artist)
+        {
+            try
+            {
+                Manager.RemoveUserFromGrid(Context.ConnectionId, artist);
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogError(ex.Message);
+            }
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GridName);
         }
     }
 }

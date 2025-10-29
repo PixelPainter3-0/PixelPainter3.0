@@ -21,23 +21,23 @@
   <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="loggedIn">
     <template #start>
       <UploadButton
-          v-if="artist.isAdmin"
-          :art="art"
-          :fps="fps"
-          :connection="connection"
-          :connected="connected"
-          :group-name="groupName"
-          @disconnect="disconnect"
-          @OpenModal="toggleKeybinds"
-        />
-        <SaveImageToFile
-          :art="art"
-          :fps="fps"
-          :filtered="false"
-          :filtered-art="''"
-          :gif-from-viewer="['']"
-        >
-        </SaveImageToFile>
+        v-if="artist.isAdmin"
+        :art="art"
+        :fps="fps"
+        :connection="connection"
+        :connected="connected"
+        :group-name="groupName"
+        @disconnect="disconnect"
+        @OpenModal="toggleKeybinds"
+      />
+      <SaveImageToFile
+        :art="art"
+        :fps="fps"
+        :filtered="false"
+        :filtered-art="''"
+        :gif-from-viewer="['']"
+      >
+      </SaveImageToFile>
     </template>
     <template #center>
       <ColorSelection
@@ -48,10 +48,7 @@
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
-      <BrushSelection 
-        v-model="cursor.selectedTool" 
-        :isGrid = "true"
-      />
+      <BrushSelection v-model="cursor.selectedTool" :isGrid="true" />
       <Button
         icon="pi pi-expand"
         class="mr-2"
@@ -60,7 +57,7 @@
         title="Recenter"
         @click="canvas?.recenter()"
       />
-      <HelpPopUp :isGrid = "true" />
+      <HelpPopUp :isGrid="true" />
     </template>
     <template #end>
       <Button
@@ -132,17 +129,6 @@ const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
 let selection = ref<string[][]>([]);
-
-// Connection Information
-const connected = ref<boolean>(false);
-const groupName = ref<string>("");
-let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("https://localhost:7154/signalhub", {
-    skipNegotiation: true,
-    transport: SignalR.HttpTransportType.WebSockets
-  })
-  .build();
-
 const audioFiles = [
   "/src/music/In-the-hall-of-the-mountain-king.mp3",
   "/src/music/flight-of-the-bumblebee.mp3",
@@ -150,30 +136,22 @@ const audioFiles = [
 ];
 const audioRef = ref(new Audio());
 
+// Connection Information
+const connected = ref<boolean>(false);
+const groupName = ref<string>("");
+let connection = new SignalR.HubConnectionBuilder()
+  .withUrl("http://localhost:7154/signalhub", {
+    skipNegotiation: true,
+    transport: SignalR.HttpTransportType.WebSockets
+  })
+  .build();
+
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
 });
 
 connection.on("NewMember", (newartist: Artist) => {
-  if (!art.value.artistId.includes(newartist.id)) {
-    art.value.artistId.push(newartist.id);
-    art.value.artistName.push(newartist.name);
-    artistStore.addArtist(newartist);
-  }
-});
-
-connection.on("Members", (artists: Artist[]) => {
-  art.value.artistId = [];
-  art.value.artistName = [];
-  artistStore.clearStorage();
-  artistStore.empty();
-  artists.forEach((artist) => {
-    if (!art.value.artistId.includes(artist.id)) {
-      art.value.artistId.push(artist.id);
-      art.value.artistName.push(artist.name);
-      artistStore.addArtist(artist);
-    }
-  });
+  console.log("Joined Grid");
 });
 
 connection.onclose((error) => {
@@ -219,20 +197,12 @@ connection.on("BackgroundColor", (backgroundColor: string) => {
   art.value.pixelGrid.backgroundColor = backgroundColor;
 });
 
-const createGroup = (groupName: string) => {
-  let grids = layerStore.getGridArray();
+const joinGrid = () => {
   connection
-    .invoke(
-      "CreateGroup",
-      groupName,
-      artist.value,
-      artistStore.artists,
-      grids,
-      layerStore.grids[0].width,
-      layerStore.grids[0].backgroundColor
-    )
+    .invoke("JoinGrid", artist.value)
     .then(() => {
       connected.value = !connected.value;
+      console.log("Connected");
     })
     .catch((err) => {
       toast.add({
@@ -245,24 +215,8 @@ const createGroup = (groupName: string) => {
     });
 };
 
-const joinGroup = (groupName: string) => {
-  connection
-    .invoke("JoinGroup", groupName, artist.value)
-    .then(() => {
-      connected.value = !connected.value;
-    })
-    .catch((err) => {
-      toast.add({
-        severity: "error",
-        summary: "Error",
-        detail: err.toString().slice(err.toString().indexOf("HubException:")),
-        life: 4000
-      });
-      connection.stop();
-    });
-};
-
-const connect = (groupname: string, newGroup: boolean) => {
+const connect = () => {
+  console.log("Connecting to Hub...");
   if (!loggedIn.value) {
     toast.add({
       severity: "error",
@@ -273,21 +227,11 @@ const connect = (groupname: string, newGroup: boolean) => {
     return;
   }
 
-  groupName.value = groupname;
-  if (art.value.artistId[0] == 0 || art.value.artistId.length == 0) {
-    art.value.artistId = [artist.value.id];
-    art.value.artistName = [artist.value.name];
-    artistStore.addArtist(artist.value);
-  }
-
   connection
     .start()
     .then(() => {
-      if (newGroup) {
-        createGroup(groupname);
-      } else {
-        joinGroup(groupname);
-      }
+      joinGrid();
+      console.log("Connected to Hub");
     })
     .catch((err) => console.error("Error connecting to Hub:", err));
 };
@@ -403,17 +347,18 @@ onMounted(async () => {
     canvas.value?.recenter();
     art.value.isGif = layerStore.grids[0].isGif;
     art.value.pixelGrid.isGif = layerStore.grids[0].isGif;
-    art.value.pixelGrid.backgroundColor =
-      layerStore.grids[0].backgroundColor;
+    art.value.pixelGrid.backgroundColor = layerStore.grids[0].backgroundColor;
     art.value.pixelGrid.width = layerStore.grids[0].width;
     art.value.pixelGrid.height = layerStore.grids[0].height;
     tempGrid = JSON.parse(JSON.stringify(layerStore.grids[0].grid));
     art.value.artistId = artistStore.artists.map((artist) => artist.id);
     art.value.artistName = artistStore.artists.map((artist) => artist.name);
   }
+  connect();
 });
 
 onUnmounted(() => {
+  disconnect();
   document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("beforeunload", handleBeforeUnload);
 });
@@ -447,7 +392,9 @@ watch(
     } else if (cursor.value.selectedTool.label === "Select") {
       if (mouseButtonHeldDown.value) {
         setEndVector();
-          selection = ref<string[][]>(getSelectPixels(startPix.value, endPix.value));
+        selection = ref<string[][]>(
+          getSelectPixels(startPix.value, endPix.value)
+        );
       }
     } else {
       drawAtCoords(getLinePixels(start, end));
@@ -747,7 +694,8 @@ function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   for (let i = 0; i < height; i++) {
     outArray[i] = []; // initialize the row?
     for (let j = 0; j < width; j++) {
-        outArray[i][j] = layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
+      outArray[i][j] =
+        layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
     }
   }
   return outArray;
@@ -1214,7 +1162,7 @@ function handleKeyDown(event: KeyboardEvent) {
       } else {
         saveToFile();
       }
-    } 
+    }
   }
 }
 </script>

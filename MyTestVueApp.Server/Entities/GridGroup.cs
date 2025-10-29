@@ -80,5 +80,12 @@
             }
             return pixelVec;
         }
+        public void RemoveArtist(Artist artist)
+        {
+            if (!Artists.ContainsKey(artist.Id))
+            {
+                Artists.Remove(artist.Id);
+            }
+        }
     }
 }
