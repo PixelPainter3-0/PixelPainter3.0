@@ -75,13 +75,14 @@ namespace MyTestVueApp.Server.Controllers
         /// <returns>A list of art objects</returns>
         [HttpGet]
         [Route("GetAllArtByUserID")]
-        [AllowAnonymous] // allow anonymous reads
+        [AllowAnonymous]
         [ProducesResponseType(typeof(List<Art>), 200)]
         public async Task<IActionResult> GetAllArtByUserID([FromQuery] int id)
         {
             try
             {
-                var artistArt = await ArtAccessService.GetArtByArtist(id);
+                // Ensure tags are eagerly loaded
+                var artistArt = await ArtAccessService.GetArtByArtistWithTags(id);
 
                 // If viewer is logged in, check if owner/admin to show private art too
                 if (Request.Cookies.TryGetValue("GoogleOAuth", out var userSubId))

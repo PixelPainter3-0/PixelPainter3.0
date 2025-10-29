@@ -869,6 +869,16 @@ namespace MyTestVueApp.Server.ServiceImplementations
             }
         }
 
+        public async Task<List<Art>> GetArtByArtistWithTags(int artistId)
+        {
+            var arts = (await GetArtByArtist(artistId)).ToList();
+            foreach (var art in arts)
+            {
+                art.Tags = (await TagService.GetTagsForArt(art.Id)).ToList();
+            }
+            return arts;
+        }
+
     }
 }
 
