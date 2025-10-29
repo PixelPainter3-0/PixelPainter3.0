@@ -22,7 +22,7 @@
     <template #start>
       <div class="flex gap-2">
         <Button
-          icon="pi pi-ban"
+          icon="pi pi-ban"  
           label="Quit"
           severity="secondary"
           @click="
@@ -126,7 +126,7 @@
       />
       <Button
         icon="pi pi-lightbulb"
-        class="Rainbow"
+        class="Rainbow mr-2"
         :label="colorHover ? 'Color Blast!' : ''"
         title="Color Blast!"
         @mouseover="colorHover = true"
@@ -134,11 +134,15 @@
         @click="randomizeGrid()"
       />
       <Button
-        :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
-        :severity="audioOn != -1 ? 'primary' : 'secondary'"
-        label=""
-        class="ml-2"
-        @click="toggleMusic()"
+        class="mr-2"
+        :label="started ? 'Stop Music' : 'Start Music'"
+        :icon="started ? 'pi pi-stop' : 'pi pi-play'"
+        :severity="started ? 'danger' : 'success'"
+        @click="toggleAudio"
+      />
+      <AudioSelect 
+        v-model:volume="volume"
+        @toggle-mute="toggleMute"
       />
     </template>
   </Toolbar>
@@ -157,6 +161,7 @@ import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
 import FrameSelection from "@/components/PainterUi/FrameSelection.vue";
 import LayerSelection from "@/components/PainterUi/LayerSelection.vue";
 import FPSSlider from "@/components/PainterUi/FPSSlider.vue";
+import AudioSelect from "@/components/PainterUi/AudioSelect.vue";
 
 //entities
 import { PixelGrid } from "@/entities/PixelGrid";
@@ -192,7 +197,6 @@ const route = useRoute();
 const canvas = ref<any>();
 const toast = useToast();
 const intervalId = ref<number>(-1);
-const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
 const layerStore = useLayerStore();
@@ -224,7 +228,51 @@ const audioFiles = [
   "/src/music/flight-of-the-bumblebee.mp3",
   "/src/music/OrchestralSuiteNo3.mp3"
 ];
-const audioRef = ref(new Audio());
+const started = ref(false);
+const volume = ref(50);
+const audioIndex = ref(0);
+
+const audio = ref<HTMLAudioElement | null>(null);
+
+const toggleAudio = () => {
+  if (!started.value) {
+    // Start the audio
+    started.value = true;
+    audio.value = new Audio(audioFiles[audioIndex.value]);
+    audio.value.loop = true;
+    audio.value.volume = volume.value / 100;
+
+    audio.value.play().catch((err) => {
+      console.warn("Playback blocked:", err);
+    });
+  } else {
+    // Stop the audio
+    started.value = false;
+    if (audio.value) {
+      audio.value.pause();
+      audio.value.currentTime = 0; // reset to beginning
+      audio.value = null;
+    }
+  }
+};
+const previousVolume = ref(50);
+const toggleMute = () => {
+  if (!audio.value) return;
+
+  if (volume.value > 0) {
+    previousVolume.value = volume.value;
+    volume.value = 0;
+  } else {
+    volume.value = previousVolume.value;
+  }
+};
+
+watch(volume, (newVal) => {
+  if (audio.value && started.value) {
+    audio.value.volume = newVal / 100;
+  }
+});
+
 
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
@@ -487,12 +535,17 @@ onMounted(async () => {
       }
     })
     .catch((err) => console.log(err));
+
+
 });
+
 
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("beforeunload", handleBeforeUnload);
 });
+
+
 
 function handleBeforeUnload(event: BeforeUnloadEvent) {
   layerStore.save();
@@ -506,6 +559,7 @@ function toggleKeybinds(disable: boolean) {
     document.addEventListener("keydown", handleKeyDown);
   }
 }
+
 
 watch(
   cursorPositionComputed,
@@ -1302,21 +1356,7 @@ async function saveGIFFromPainter(): Promise<void> {
   GIFCreationService.createGIF(urls, fps.value);
 }
 
-function toggleMusic(): void {
-  if (audioOn.value != -1) {
-    audioOn.value = -1;
-    audioRef.value.pause();
-  } else {
-    audioOn.value = 1;
-    audioRef.value.pause();
-    audioRef.value.currentTime = 0;
 
-    var randomIndex = Math.floor(Math.random() * audioFiles.length);
-    var chosenMusic = audioFiles[randomIndex];
-    audioRef.value.src = chosenMusic;
-    audioRef.value.play();
-  }
-}
 
 function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
@@ -1485,5 +1525,15 @@ function handleKeyDown(event: KeyboardEvent) {
   100% {
     background-position: 0% 92%;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
 }
 </style>
