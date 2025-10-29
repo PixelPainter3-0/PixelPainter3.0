@@ -89,7 +89,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     ClientSecret = AppConfig.Value.ClientSecret,
                     Code = code,
                     GrantType = "authorization_code",
-                    RedirectUri = AppConfig.Value.HomeUrl + "login/LoginRedirect"
+                    RedirectUri = AppConfig.Value.RedirectUrl + "login/LoginRedirect"
                 };
 
                 var result = await tokenResponse.ExecuteAsync(new HttpClient(), GoogleAuthConsts.TokenUrl, CancellationToken.None, SystemClock.Default);

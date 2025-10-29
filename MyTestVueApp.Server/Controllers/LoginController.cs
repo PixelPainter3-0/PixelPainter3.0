@@ -57,7 +57,7 @@ namespace MyTestVueApp.Server.Controllers
 
             await LoginService.SignupActions(userInfo.Id, userInfo.Email);
 
-            return Redirect(AppConfig.Value.HomeUrl);
+            return Redirect(AppConfig.Value.RedirectUrl);
         }
 
         [HttpGet]
