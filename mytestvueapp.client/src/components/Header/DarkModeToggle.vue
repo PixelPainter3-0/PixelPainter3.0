@@ -20,8 +20,8 @@ const DARK_PRIMARY = {
   200: "#fbcfe8",
   300: "#f9a8d4",
   400: "#f472b6",
-  500: "#ec4899",
-  600: "#db2777",
+  500: "#ec4899", //hover color
+  600: "#db2777", //primary color
   700: "#be185d",
   800: "#9d174d",
   900: "#831843",
@@ -33,8 +33,8 @@ const LIGHT_PRIMARY_DARKER = {
   200: "#f39bc2",
   300: "#ea6aa1",
   400: "#e0478b",
-  500: "#2C73D9", // darker in light mode
-  600: "#1da1f2",
+  500: "#2C73D9", //hover color
+  600: "#1da1f2", //primary color
   700: "#9d174d",
   800: "#831843",
   900: "#6b0f37",
