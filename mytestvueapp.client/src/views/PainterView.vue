@@ -2,9 +2,10 @@
   <DrawingCanvas
     ref="canvas"
     :style="{ cursor: cursor.selectedTool.cursor }"
-    :grid="art.pixelGrid"
+    :grid="layerStore.grids[0]"
     :showLayers="showLayers"
     :greyscale="greyscale"
+    :isGrid="false"
     v-model="cursor"
     @mousedown="
       mouseButtonHeldDown = true;
