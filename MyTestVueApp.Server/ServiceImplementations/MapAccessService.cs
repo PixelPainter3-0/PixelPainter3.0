@@ -297,7 +297,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
         /// <param name="longitude">long</param>
         ///  <param name="title">title</param>
         ///  <param name="artspace">artspace</param>
-        public async Task<bool> CreatePoint(float latitude, float longitude, string title, int artspace)
+        public async Task<int> CreatePoint(float latitude, float longitude, string title, int artspace)
         {
             try
             {
@@ -306,7 +306,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     connection.Open();
 
                     var query = @"
-                    INSERT INTO Points(latitude,longitude, title, artspaceId) values (@Latitude,@Longitude, @Title, @Artspace);
+                    INSERT INTO Points(latitude,longitude, title, artspaceId) OUTPUT INSERTED.PointId VALUES (@Latitude,@Longitude, @Title, @Artspace);
                 ";
                     using (var command = new SqlCommand(query, connection))
                     {
@@ -314,6 +314,42 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         command.Parameters.AddWithValue("@Longitude", longitude);
                         command.Parameters.AddWithValue("@Title", title);
                         command.Parameters.AddWithValue("@Artspace", artspace);
+                        
+                        var newPointId = (int)await command.ExecuteScalarAsync();
+                        //Console.Write(newPointId);
+                        return newPointId;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error in Creating Point");
+                throw;
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Tag existing art with location
+        /// </summary>
+        /// <param name="artId">artId</param>
+        /// <param name="pointId">pointId</param>
+        public async Task<bool> UpdateArtLocation(int artId, int pointId)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(AppConfig.Value.ConnectionString))
+                {
+                    connection.Open();
+
+                    var query = @"
+                    UPDATE Art SET pointId = @PointId WHERE Id = @ArtId;
+                ";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@ArtId", artId);
+                        command.Parameters.AddWithValue("@PointId", pointId);
                         await command.ExecuteNonQueryAsync();
                     }
                 }
@@ -321,7 +357,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error in Creating Point");
+                Logger.LogError(ex, "Error in Tagging Art with Location");
                 throw;
                 return false;
             }

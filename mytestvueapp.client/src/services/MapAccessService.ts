@@ -160,9 +160,26 @@ export default class MapAccessService {
         }
     }
 
-    public static async createPoint(latitude: number, longitude: number, title: string, artspace: number): Promise<boolean> {
+    public static async createPoint(latitude: number, longitude: number, title: string, artspace: number): Promise<number | null > {
         try {
             const response = await fetch(`/mapaccess/CreatePoint?latitude=${latitude}&longitude=${longitude}&title=${title}&artspace=${artspace}`, {
+                method: "PUT"
+            });
+            if (!response.ok) {
+                throw new Error("Response was false.");
+            }
+            const data = await response.json();
+            console.log("Raw response:", data);
+            return data.pointId;
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    public static async updateArtLocation(artId: number, pointId: number): Promise<boolean> {
+        try {
+            const response = await fetch(`/mapaccess/UpdateArtLocation?artId=${artId}&pointId=${pointId}`, {
                 method: "PUT"
             });
             if (!response.ok) {

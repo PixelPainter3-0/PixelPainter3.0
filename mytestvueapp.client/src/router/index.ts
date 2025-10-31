@@ -65,7 +65,7 @@ const router = createRouter({
       component: () => import("../views/MapViewer.vue")
     },
     {
-      path: "/mapadd",
+      path: "/mapadd/:id",
       name: "MapPlacer",
       component: () => import("../views/MapPlacer.vue")
     }

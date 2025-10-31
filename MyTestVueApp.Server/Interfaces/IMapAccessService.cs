@@ -18,7 +18,7 @@ namespace MyTestVueApp.Server.Interfaces
         public Task<IEnumerable<Artspace>> GetAllArtspaces();
         public Task<Artspace> GetArtspaceById(int id);
         public Task<IEnumerable<Art>> GetArtByPoint(int id);
-        public Task<Boolean> CreatePoint(float latitude, float longitude, string title, int artspace);
-        //public Task<Boolean> TagArtLocation(int artId, int pointId);
+        public Task<int> CreatePoint(float latitude, float longitude, string title, int artspace);
+        public Task<Boolean> UpdateArtLocation(int artId, int pointId);
     }
 }

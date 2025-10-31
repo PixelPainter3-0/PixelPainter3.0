@@ -14,6 +14,9 @@
 
     import MapAccessService from "../services/MapAccessService";
 
+    import { useRoute } from "vue-router";
+
+
     const defaultIcon = L.icon({
         iconUrl: markerIconUrl,
         shadowUrl: markerShadowUrl,
@@ -22,6 +25,10 @@
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
     })
+
+    const route = useRoute();
+    const artId = Number(route.params.id);
+    //var artId = 2;
 
     L.Marker.prototype.options.icon = defaultIcon
 
@@ -32,8 +39,6 @@
     let artspacePolygon: L.polygon
 
     var points = ref<Point[]>([]);
-    var artId = 7;
-
 
     async function setupPoints() {
         const points = await MapAccessService.getAllPoints();
@@ -59,7 +64,7 @@
     }
 
     function setupArtspace() {
-        console.warn("*");
+        console.warn("passed artId: " + artId);
         MapAccessService.getArtspaceById(1).then((artspace) => {
             if (artspace) {
                 outOfRange = L.popup();
@@ -122,10 +127,12 @@
     }
 
     
-    function handleTagArt(lat: number, lng: number) {
+    async function handleTagArt(lat: number, lng: number) {
         console.log("Function ran before redirect " + lat + ", " + lng);
-        MapAccessService.createPoint(lat, lng, "untitled", 1);
-        //window.location.href = "http://localhost:5173/art/" + artId;
+        const pointId = await MapAccessService.createPoint(lat, lng, "untitled", 1);
+        console.log(pointId);
+        await MapAccessService.updateArtLocation(artId, pointId);
+        window.location.href = "http://localhost:5173/art/" + artId;
     }
     
     // Make globally accessible

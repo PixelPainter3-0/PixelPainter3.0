@@ -18,6 +18,9 @@
         <RouterLink class="p-2" to="/thegrid">
           <Button rounded label="The Grid" icon="pi pi-globe" @click="updateLocalStorage()"/>
         </RouterLink>
+        <RouterLink class="p-2" to="/map">
+          <Button rounded label="Map" icon="pi pi-map"/>
+        </RouterLink>
         <RouterLink class="p-2" to="/gallery">
           <Button rounded label="Gallery" icon="pi pi-image" />
         </RouterLink>
