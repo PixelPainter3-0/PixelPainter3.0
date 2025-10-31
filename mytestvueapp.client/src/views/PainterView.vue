@@ -113,7 +113,7 @@
         @mouseover="centerHover = true"
         @mouseleave="centerHover = false"
         @click="canvas?.recenter()"
-      />
+      />    
       <Button
         :disabled="connected"
         :icon="intervalId != -1 ? 'pi pi-stop' : 'pi pi-play'"
@@ -222,7 +222,6 @@ let connection = new SignalR.HubConnectionBuilder()
     transport: SignalR.HttpTransportType.WebSockets
   })
   .build();
-
 const audioFiles = [
   "/src/music/In-the-hall-of-the-mountain-king.mp3",
   "/src/music/flight-of-the-bumblebee.mp3",
