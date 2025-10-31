@@ -36,7 +36,7 @@
     let circle: L.Circle
     let outOfRange: L.Popup
     let inRange: L.Popup
-    let artspacePolygon: L.polygon
+    let artspacePolygon: L.Polygon
 
     var points = ref<Point[]>([]);
 

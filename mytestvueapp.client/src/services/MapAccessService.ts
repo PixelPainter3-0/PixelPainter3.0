@@ -160,7 +160,7 @@ export default class MapAccessService {
         }
     }
 
-    public static async createPoint(latitude: number, longitude: number, title: string, artspace: number): Promise<number | null > {
+    public static async createPoint(latitude: number, longitude: number, title: string, artspace: number): Promise<number> {
         try {
             const response = await fetch(`/mapaccess/CreatePoint?latitude=${latitude}&longitude=${longitude}&title=${title}&artspace=${artspace}`, {
                 method: "PUT"
@@ -173,7 +173,7 @@ export default class MapAccessService {
             return data.pointId;
         } catch (error) {
             console.error(error);
-            return null;
+            return 0;
         }
     }
 
