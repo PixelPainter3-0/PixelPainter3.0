@@ -15,7 +15,12 @@ namespace MyTestVueApp.Server.ServiceImplementations
         private readonly ILogger<ArtAccessService> Logger;
         private readonly ITagService TagService;
         private readonly ILoginService LoginService;
-        public ArtAccessService(IOptions<ApplicationConfiguration> appConfig, ILogger<ArtAccessService> logger, ILoginService loginService, ITagService tagService)
+        public ArtAccessService(
+            IOptions<ApplicationConfiguration> appConfig,
+            ILogger<ArtAccessService> logger,
+            ILoginService loginService,
+            ITagService tagService
+        )
         {
             AppConfig = appConfig;
             Logger = logger;
@@ -867,6 +872,17 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     }
                 }
             }
+        }
+
+        public async Task<List<Art>> GetArtByArtistWithTags(int artistId)
+        {
+            // Reuse existing ADO.NET method and hydrate tags via TagService
+            var list = (await GetArtByArtist(artistId)).ToList();
+            foreach (var art in list)
+            {
+                art.Tags = (await TagService.GetTagsForArt(art.Id)).ToList();
+            }
+            return list;
         }
 
     }
