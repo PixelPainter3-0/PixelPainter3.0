@@ -16,7 +16,7 @@
           <Button rounded label="Painter" icon="pi pi-pencil" />
         </RouterLink>
         <RouterLink class="p-2" to="/thegrid">
-          <Button rounded label="The Grid" icon="pi pi-globe" @click="updateLocalStorage()"/>
+          <Button rounded label="The Grid" icon="pi pi-globe"/>
         </RouterLink>
         <RouterLink class="p-2" to="/gallery">
           <Button rounded label="Gallery" icon="pi pi-image" />
@@ -68,8 +68,7 @@ function updateLocalStorage(): void {
     !isImage.value // Constructor wants isGif so pass in !isImage
   );
 
-  layerStore.pushGrid(pixelGrid);
-  router.push("/paint");
+  router.push("/thegrid");
 }
 
 onMounted(async () => {

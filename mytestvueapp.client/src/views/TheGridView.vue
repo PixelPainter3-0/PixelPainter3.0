@@ -2,9 +2,10 @@
   <DrawingCanvas
     ref="canvas"
     :style="{ cursor: cursor.selectedTool.cursor }"
-    :grid="art.pixelGrid"
+    :grid="gridCanvas"
     :showLayers="showLayers"
     :greyscale="greyscale"
+    :isGrid="true"
     v-model="cursor"
     @mousedown="
       mouseButtonHeldDown = true;
@@ -97,7 +98,6 @@ import Artist from "@/entities/Artist";
 
 //services
 import LoginService from "@/services/LoginService";
-import GIFCreationService from "@/services/GIFCreationService";
 
 //vue
 import { ref, watch, computed, onMounted, onUnmounted } from "vue";
@@ -111,7 +111,6 @@ import Art from "@/entities/Art";
 
 //Other
 import * as SignalR from "@microsoft/signalr";
-import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
 import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 
@@ -122,13 +121,21 @@ const toast = useToast();
 const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
-const layerStore = useLayerStore();
+const resolution = ref<number>(200);
+const backgroundColor = ref<string>("ffffff");
+const isImage = ref<boolean>(true);
+const gridCanvas = ref(
+  new PixelGrid(
+    resolution.value,
+    resolution.value,
+    backgroundColor.value.toUpperCase(),
+    !isImage.value // Constructor wants isGif so pass in !isImage
+  )
+);
 const artistStore = useArtistStore();
-const updateLayers = ref<number>(0);
 const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
-let selection = ref<string[][]>([]);
 const audioFiles = [
   "/src/music/In-the-hall-of-the-mountain-king.mp3",
   "/src/music/flight-of-the-bumblebee.mp3",
@@ -150,9 +157,9 @@ connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
 });
 
-connection.on("NewMember", (newartist: Artist) => {
-  console.log("Joined Grid");
-});
+// connection.on("NewMember", (newartist: Artist) => {
+//   console.log("Joined Grid");
+// });
 
 connection.onclose((error) => {
   if (error) {
@@ -169,15 +176,15 @@ connection.onclose((error) => {
 connection.on(
   "ReceivePixels",
   (layer: number, color: string, coords: Vector2[]) => {
+    console.log("Receiving Pixels:", layer, color, coords);
     drawPixels(layer, color, coords);
   }
 );
 
 connection.on(
   "GroupConfig",
-  (canvasSize: number, backgroundColor: string, pixels: Pixel[][]) => {
-    layerStore.empty();
-
+  (canvasSize: number, backgroundColor: string, pixels: Pixel[]) => {
+    console.log("Received Group Config:", canvasSize, backgroundColor, pixels);
     art.value.pixelGrid.width = canvasSize;
     art.value.pixelGrid.height = canvasSize;
     art.value.pixelGrid.backgroundColor = backgroundColor;
@@ -185,9 +192,9 @@ connection.on(
       canvasSize,
       canvasSize
     );
+    console.log("Canvas Size Set:", art.value.pixelGrid.width);
     replaceCanvas(pixels);
-    updateLayers.value = layerStore.grids.length;
-
+    console.log("Canvas Replaced");
     canvas.value?.drawLayers(0);
     canvas.value?.recenter();
   }
@@ -239,7 +246,7 @@ const connect = () => {
 const disconnect = () => {
   if (connected.value) {
     connection
-      .invoke("LeaveGroup", groupName.value, artist.value)
+      .invoke("LeaveGrid", artist.value)
       .then(() => {
         connection
           .stop()
@@ -264,7 +271,6 @@ const endPix = ref<Vector2>(new Vector2(0, 0));
 let tempGrid: string[][] = [];
 
 const art = ref<Art>(new Art());
-const selectedFrame = ref<number>(1);
 
 const fps = ref<number>(4);
 const currentPallet = ref<string[]>([]);
@@ -329,8 +335,7 @@ onMounted(async () => {
         art.value.isGif = data.isGif;
 
         canvas.value?.recenter();
-        art.value.pixelGrid.backgroundColor =
-          layerStore.grids[0].backgroundColor;
+        art.value.pixelGrid.backgroundColor = gridCanvas.value.backgroundColor;
       })
       .catch(() => {
         toast.add({
@@ -341,16 +346,14 @@ onMounted(async () => {
         });
         router.push("/new");
       });
-  } else if (layerStore.grids.length === 0) {
-    router.push("/new");
   } else {
     canvas.value?.recenter();
-    art.value.isGif = layerStore.grids[0].isGif;
-    art.value.pixelGrid.isGif = layerStore.grids[0].isGif;
-    art.value.pixelGrid.backgroundColor = layerStore.grids[0].backgroundColor;
-    art.value.pixelGrid.width = layerStore.grids[0].width;
-    art.value.pixelGrid.height = layerStore.grids[0].height;
-    tempGrid = JSON.parse(JSON.stringify(layerStore.grids[0].grid));
+    art.value.isGif = gridCanvas.value.isGif;
+    art.value.pixelGrid.isGif = gridCanvas.value.isGif;
+    art.value.pixelGrid.backgroundColor = gridCanvas.value.backgroundColor;
+    art.value.pixelGrid.width = gridCanvas.value.width;
+    art.value.pixelGrid.height = gridCanvas.value.height;
+    tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
     art.value.artistId = artistStore.artists.map((artist) => artist.id);
     art.value.artistName = artistStore.artists.map((artist) => artist.name);
   }
@@ -364,7 +367,6 @@ onUnmounted(() => {
 });
 
 function handleBeforeUnload(event: BeforeUnloadEvent) {
-  layerStore.save();
   artistStore.save();
 }
 
@@ -379,26 +381,7 @@ function toggleKeybinds(disable: boolean) {
 watch(
   cursorPositionComputed,
   (start: Vector2, end: Vector2) => {
-    if (cursor.value.selectedTool.label === "Rectangle") {
-      if (mouseButtonHeldDown.value) {
-        setEndVector();
-        drawAtCoords(getRectanglePixels(startPix.value, endPix.value));
-      }
-    } else if (cursor.value.selectedTool.label === "Ellipse") {
-      if (mouseButtonHeldDown.value) {
-        setEndVector();
-        drawAtCoords(getEllipsePixels(startPix.value, endPix.value));
-      }
-    } else if (cursor.value.selectedTool.label === "Select") {
-      if (mouseButtonHeldDown.value) {
-        setEndVector();
-        selection = ref<string[][]>(
-          getSelectPixels(startPix.value, endPix.value)
-        );
-      }
-    } else {
-      drawAtCoords(getLinePixels(start, end));
-    }
+    drawAtCoords(getLinePixels(start, end));
   },
   { deep: true }
 );
@@ -411,42 +394,6 @@ watch(
   () => art.value.pixelGrid.backgroundColor,
   (next) => {
     changeBackgroundColor(next);
-    for (let i = 0; i < layerStore.grids.length; i++) {
-      layerStore.grids[i].backgroundColor = next;
-    }
-  }
-);
-
-watch(selectedFrame, () => {
-  const workingGrid = layerStore.grids[selectedFrame.value];
-
-  if (workingGrid == null) {
-    const newGrid = new PixelGrid(
-      art.value.pixelGrid.width,
-      art.value.pixelGrid.height,
-      art.value.pixelGrid.backgroundColor,
-      art.value.pixelGrid.isGif
-    );
-    layerStore.grids[0].deepCopy(newGrid);
-    canvas.value?.drawLayers(0);
-
-    canvas.value?.recenter();
-  } else {
-    canvas.value?.recenter();
-  }
-});
-
-//functions
-watch(
-  () => layerStore.layer,
-  (next) => {
-    layerStore.layer = Math.max(next, 0);
-    if (layerStore.grids.length > 0) {
-      tempGrid = JSON.parse(
-        JSON.stringify(layerStore.grids[layerStore.layer].grid)
-      );
-      canvas.value?.drawLayers(layerStore.layer);
-    }
   }
 );
 
@@ -488,34 +435,28 @@ function getLinePixels(start: Vector2, end: Vector2): Vector2[] {
   return pixels;
 }
 
-function replaceCanvas(pixels: Pixel[][]) {
-  for (let l = 0; l < pixels.length; l++) {
-    layerStore.pushGrid(
-      new PixelGrid(
-        art.value.pixelGrid.width,
-        art.value.pixelGrid.height,
-        art.value.pixelGrid.backgroundColor,
-        false
-      )
-    );
-    for (let p = 0; p < pixels[l].length; p++) {
-      layerStore.grids[l].grid[pixels[l][p].x][pixels[l][p].y] =
-        pixels[l][p].color;
-    }
-  }
+function replaceCanvas(pixels: Pixel[]) {
+  gridCanvas.value = new PixelGrid(
+    art.value.pixelGrid.width,
+    art.value.pixelGrid.height,
+    art.value.pixelGrid.backgroundColor,
+    false
+  );
 }
 
 function drawPixels(layer: number, color: string, coords: Vector2[]) {
   for (const coord of coords) {
-    layerStore.grids[layer].grid[coord.x][coord.y] = color;
+    gridCanvas.value.grid[coord.x][coord.y] = color;
     canvas.value?.updateCell(layer, coord.x, coord.y, color);
     tempGrid[coord.x][coord.y] = color;
   }
 }
 
-function sendPixels(layer: number, color: string, coords: Vector2[]) {
+function sendPixels(color: string, coords: Vector2[]) {
+  console.log("Attempting to send pixels...", coords[0], connected.value);
   if (connected.value) {
-    connection.invoke("SendPixels", groupName.value, layer, color, coords);
+    console.log("Sending Pixels:", color, coords, artist.value.id);
+    connection.invoke("SendGridPixels", color, coords[0], artist.value.id);
   }
 }
 
@@ -533,10 +474,10 @@ function drawAtCoords(coords: Vector2[]) {
     cursor.value.selectedTool.label === "Ellipse"
   ) {
     if (tempGrid) {
-      for (let i = 0; i < layerStore.grids[layerStore.layer].height; i++) {
-        for (let j = 0; j < layerStore.grids[layerStore.layer].width; j++) {
-          layerStore.grids[layerStore.layer].grid[i][j] = tempGrid[i][j];
-          canvas.value?.updateCell(layerStore.layer, i, j, tempGrid[i][j]);
+      for (let i = 0; i < gridCanvas.value.height; i++) {
+        for (let j = 0; j < gridCanvas.value.width; j++) {
+          gridCanvas.value.grid[i][j] = tempGrid[i][j];
+          canvas.value?.updateCell(0, i, j, tempGrid[i][j]);
         }
       }
     }
@@ -548,18 +489,17 @@ function drawAtCoords(coords: Vector2[]) {
           for (let j = 0; j < cursor.value.size; j++) {
             if (
               coord.x + i >= 0 &&
-              coord.x + i < layerStore.grids[layerStore.layer].width &&
+              coord.x + i < gridCanvas.value.width &&
               coord.y + j >= 0 &&
-              coord.y + j < layerStore.grids[layerStore.layer].height
+              coord.y + j < gridCanvas.value.height
             ) {
               coordinates.push(new Vector2(coord.x + i, coord.y + j));
-              layerStore.grids[layerStore.layer].grid[coord.x + i][
-                coord.y + j
-              ] = cursor.value.color;
+              gridCanvas.value.grid[coord.x + i][coord.y + j] =
+                cursor.value.color;
 
-              if (!layerStore.grids[0].isGif) {
+              if (!gridCanvas.value.isGif) {
                 canvas.value?.updateCell(
-                  layerStore.layer,
+                  0,
                   coord.x + i,
                   coord.y + j,
                   cursor.value.color
@@ -568,308 +508,10 @@ function drawAtCoords(coords: Vector2[]) {
             }
           }
         }
-        sendPixels(layerStore.layer, cursor.value.color, coordinates);
-      } else if (cursor.value.selectedTool.label === "Eraser") {
-        for (let i = 0; i < cursor.value.size; i++) {
-          for (let j = 0; j < cursor.value.size; j++) {
-            if (
-              coord.x + i >= 0 &&
-              coord.x + i < layerStore.grids[layerStore.layer].width &&
-              coord.y + j >= 0 &&
-              coord.y + j < layerStore.grids[layerStore.layer].height
-            ) {
-              if (art.value.pixelGrid.backgroundColor != null) {
-                coordinates.push(new Vector2(coord.x + i, coord.y + j));
-                layerStore.grids[layerStore.layer].grid[coord.x + i][
-                  coord.y + j
-                ] = "empty";
-                canvas.value?.updateCell(
-                  layerStore.layer,
-                  coord.x + i,
-                  coord.y + j,
-                  "empty"
-                );
-              }
-            }
-          }
-        }
-        sendPixels(layerStore.layer, "empty", coordinates);
-      } else if (
-        coord.x >= 0 &&
-        coord.x < layerStore.grids[layerStore.layer].width &&
-        coord.y >= 0 &&
-        coord.y < layerStore.grids[layerStore.layer].height
-      ) {
-        if (cursor.value.selectedTool.label === "Pipette") {
-          let tmp = layerStore.grids[layerStore.layer].grid[coord.x][coord.y];
-          if (tmp === "empty") {
-            cursor.value.color = art.value.pixelGrid.backgroundColor;
-          } else {
-            cursor.value.color = tmp;
-          }
-        } else if (cursor.value.selectedTool.label === "Bucket") {
-          if (
-            layerStore.grids[layerStore.layer].grid[coord.x][coord.y] !=
-            cursor.value.color
-          ) {
-            coordinates = fill(
-              cursor.value.position.x,
-              cursor.value.position.y
-            );
-            sendPixels(layerStore.layer, cursor.value.color, coordinates);
-          }
-        } else if (
-          cursor.value.selectedTool.label === "Rectangle" ||
-          cursor.value.selectedTool.label === "Ellipse"
-        ) {
-          layerStore.grids[layerStore.layer].grid[coord.x][coord.y] =
-            cursor.value.color;
-
-          canvas.value?.updateCell(
-            layerStore.layer,
-            coord.x,
-            coord.y,
-            cursor.value.color
-          );
-        }
+        sendPixels(cursor.value.color, coordinates);
       }
     }
   });
-  if (layerStore.grids?.[0]?.isGif) {
-    canvas.value?.drawLayers(layerStore.layer);
-  }
-}
-
-function fill(
-  x: number,
-  y: number,
-  color: string = cursor.value.color
-): Vector2[] {
-  let vectors: Vector2[] = [];
-  if (y >= 0 && y < layerStore.grids[layerStore.layer].height) {
-    const oldColor = layerStore.grids[layerStore.layer].grid[x][y];
-    layerStore.grids[layerStore.layer].grid[x][y] = color;
-
-    canvas.value?.updateCell(layerStore.layer, x, y, color);
-
-    vectors.push(new Vector2(x, y));
-    if ("empty" !== color) {
-      if (x + 1 < layerStore.grids[layerStore.layer].width) {
-        if (layerStore.grids[layerStore.layer].grid[x + 1][y] === oldColor) {
-          vectors = vectors.concat(fill(x + 1, y, color));
-        }
-      }
-      if (y + 1 < layerStore.grids[layerStore.layer].height) {
-        if (layerStore.grids[layerStore.layer].grid[x][y + 1] === oldColor) {
-          vectors = vectors.concat(fill(x, y + 1, color));
-        }
-      }
-      if (x - 1 >= 0) {
-        if (layerStore.grids[layerStore.layer].grid[x - 1][y] === oldColor) {
-          vectors = vectors.concat(fill(x - 1, y, color));
-        }
-      }
-      if (y - 1 >= 0) {
-        if (layerStore.grids[layerStore.layer].grid[x][y - 1] === oldColor) {
-          vectors = vectors.concat(fill(x, y - 1, color));
-        }
-      }
-    }
-  }
-
-  return vectors;
-}
-
-//returns array array of color strings
-function getSelectPixels(start: Vector2, end: Vector2): string[][] {
-  let outArray: string[][] = [];
-  let leftBound = Math.min(start.x, end.x);
-  let rightBound = Math.max(start.x, end.x);
-  let lowerBound = Math.min(start.y, end.y);
-  let upperBound = Math.max(start.y, end.y);
-
-  let height = upperBound - lowerBound + 1;
-  let width = rightBound - leftBound + 1;
-
-  for (let i = 0; i < height; i++) {
-    outArray[i] = []; // initialize the row?
-    for (let j = 0; j < width; j++) {
-      outArray[i][j] =
-        layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
-    }
-  }
-  return outArray;
-}
-
-function getRectanglePixels(start: Vector2, end: Vector2): Vector2[] {
-  let coords: Vector2[] = [];
-  let leftBound = Math.min(start.x, end.x);
-  let rightBound = Math.max(start.x, end.x);
-  let lowerBound = Math.min(start.y, end.y);
-  let upperBound = Math.max(start.y, end.y);
-
-  for (let i = 0; i < cursor.value.size; i++) {
-    if (
-      leftBound + i <= rightBound &&
-      rightBound - i >= leftBound &&
-      upperBound - i >= lowerBound &&
-      lowerBound + i <= upperBound
-    ) {
-      coords = coords.concat(
-        calculateRectangle(
-          new Vector2(leftBound + i, lowerBound + i),
-          new Vector2(rightBound - i, upperBound - i)
-        )
-      );
-    }
-  }
-
-  return coords;
-}
-
-function calculateRectangle(start: Vector2, end: Vector2): Vector2[] {
-  const coords: Vector2[] = [];
-
-  let boundary = art.value.pixelGrid.height;
-
-  let stepX = start.x;
-  while (stepX != end.x) {
-    if (stepX >= 0 && stepX < boundary) {
-      if (start.y >= 0 && start.y < boundary)
-        coords.push(new Vector2(stepX, start.y));
-      if (end.y >= 0 && end.y < boundary)
-        coords.push(new Vector2(stepX, end.y));
-    }
-
-    if (stepX < end.x) stepX++;
-    else if (stepX > end.x) stepX--;
-  }
-
-  let stepY = start.y;
-  while (stepY != end.y) {
-    if (stepY >= 0 && stepY < boundary) {
-      if (start.x >= 0 && start.x < boundary)
-        coords.push(new Vector2(start.x, stepY));
-      if (end.x >= 0 && end.x < boundary)
-        coords.push(new Vector2(end.x, stepY));
-    }
-
-    if (stepY < end.y) stepY++;
-    else if (stepY > end.y) stepY--;
-  }
-
-  if (end.x >= 0 && end.x < boundary && end.y >= 0 && end.y < boundary) {
-    coords.push(end);
-  }
-  return coords;
-}
-
-function getEllipsePixels(start: Vector2, end: Vector2): Vector2[] {
-  let coords: Vector2[] = [];
-
-  let leftBound = Math.min(start.x, end.x);
-  let rightBound = Math.max(start.x, end.x);
-  let lowerBound = Math.min(start.y, end.y);
-  let upperBound = Math.max(start.y, end.y);
-
-  for (let i = 0; i < cursor.value.size; i++) {
-    if (
-      leftBound + i <= rightBound &&
-      rightBound - i >= leftBound &&
-      upperBound - i >= lowerBound &&
-      lowerBound + i <= upperBound
-    ) {
-      coords = coords.concat(
-        calculateEllipse(
-          new Vector2(leftBound + i, lowerBound + i),
-          new Vector2(rightBound - i, upperBound - i)
-        )
-      );
-    }
-  }
-
-  return coords;
-}
-
-function calculateEllipse(start: Vector2, end: Vector2): Vector2[] {
-  const coords: Vector2[] = [];
-  const boundary = art.value.pixelGrid.height;
-
-  function inBounds(x: number, y: number): boolean {
-    return x >= 0 && x < boundary && y >= 0 && y < boundary;
-  }
-
-  if (start.x == end.x && start.y == end.y && inBounds(start.x, start.y)) {
-    coords.push(start);
-    return coords;
-  }
-  let leftBound = Math.min(start.x, end.x);
-  let rightBound = Math.max(start.x, end.x);
-  let lowerBound = Math.min(start.y, end.y);
-  let upperBound = Math.max(start.y, end.y);
-
-  let xOffset = rightBound - leftBound;
-  let yOffset = upperBound - lowerBound;
-
-  let center = new Vector2(leftBound + xOffset / 2, lowerBound + yOffset / 2);
-
-  let a = Math.max(xOffset, yOffset) / 2; //Major Axis length
-  let b = Math.min(xOffset, yOffset) / 2; //Minor Axis length
-
-  if (xOffset > yOffset) {
-    // Major Axis is Horrizontal
-    for (let i = leftBound; i <= rightBound; i++) {
-      let yP = Math.round(ellipseXtoY(center, a, b, i));
-      let yN = center.y - (yP - center.y);
-      if (inBounds(i, yP)) coords.push(new Vector2(i, yP));
-      if (inBounds(i, yN)) coords.push(new Vector2(i, yN));
-    }
-    for (let i = lowerBound; i < upperBound; i++) {
-      let xP = Math.round(ellipseYtoX(center, b, a, i));
-      let xN = center.x - (xP - center.x);
-      if (inBounds(xP, i)) coords.push(new Vector2(xP, i));
-      if (inBounds(xN, i)) coords.push(new Vector2(xN, i));
-    }
-  } else {
-    // Major Axis is vertical
-    for (let i = lowerBound; i <= upperBound; i++) {
-      let xP = Math.round(ellipseYtoX(center, a, b, i));
-      let xN = center.x - (xP - center.x);
-      if (inBounds(xP, i)) coords.push(new Vector2(xP, i));
-      if (inBounds(xN, i)) coords.push(new Vector2(xN, i));
-    }
-    for (let i = leftBound; i < rightBound; i++) {
-      let yP = Math.round(ellipseXtoY(center, b, a, i));
-      let yN = center.y - (yP - center.y);
-      if (inBounds(i, yP)) coords.push(new Vector2(i, yP));
-      if (inBounds(i, yN)) coords.push(new Vector2(i, yN));
-    }
-  }
-  return coords;
-}
-
-function ellipseXtoY(
-  center: Vector2,
-  majorAxis: number,
-  minorAxis: number,
-  x: number
-): number {
-  let yPow = Math.pow((x - center.x) / majorAxis, 2);
-  let ySqrt = Math.sqrt(1 - yPow);
-  let y = minorAxis * ySqrt + center.y;
-  return y;
-}
-
-function ellipseYtoX(
-  center: Vector2,
-  majorAxis: number,
-  minorAxis: number,
-  y: number
-): number {
-  let xPow = Math.pow((y - center.y) / majorAxis, 2);
-  let xSqrt = Math.sqrt(1 - xPow);
-  let x = minorAxis * xSqrt + center.x;
-  return x;
 }
 
 function setStartVector() {
@@ -877,9 +519,7 @@ function setStartVector() {
     cursor.value.position.x,
     cursor.value.position.y
   );
-  tempGrid = JSON.parse(
-    JSON.stringify(layerStore.grids[layerStore.layer].grid)
-  );
+  tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
 }
 function setEndVector() {
   if (mouseButtonHeldDown.value) {
@@ -888,75 +528,21 @@ function setEndVector() {
       cursor.value.position.y
     );
   } else {
-    tempGrid = JSON.parse(
-      JSON.stringify(layerStore.grids[layerStore.layer].grid)
-    );
+    tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
   }
-}
-
-function resetArt() {
-  layerStore.clearStorage();
-  layerStore.empty();
-  artistStore.clearStorage();
-  artistStore.empty();
-
-  if (art.value.pixelGrid.isGif) {
-    let tempCount = 0;
-    while (localStorage.getItem(`frame${tempCount}`) != null) {
-      localStorage.removeItem(`frame${tempCount}`);
-      tempCount++;
-    }
-  }
-  router.push("/new");
 }
 
 function onMouseUp() {
-  if (cursor.value.selectedTool.label == "Rectangle") {
-    sendPixels(
-      layerStore.layer,
-      cursor.value.color,
-      getRectanglePixels(startPix.value, endPix.value)
-    );
-  } else if (cursor.value.selectedTool.label == "Ellipse") {
-    sendPixels(
-      layerStore.layer,
-      cursor.value.color,
-      getEllipsePixels(startPix.value, endPix.value)
-    );
-  } else if (cursor.value.selectedTool.label == "Select") {
-    selection.value = getSelectPixels(startPix.value, endPix.value);
-  }
-  layerStore.updateGrid();
-}
-
-function undo() {
-  layerStore.undo();
-  canvas?.value.drawLayers(layerStore.layer);
-}
-function redo() {
-  layerStore.redo();
-  canvas?.value.drawLayers(layerStore.layer);
+  gridCanvas.value.updateGrid();
 }
 
 //Save to file functions
 function flattenArt(): string[][] {
-  let width = layerStore.grids[0].width;
-  let height = layerStore.grids[0].height;
+  let width = gridCanvas.value.width;
+  let height = gridCanvas.value.height;
   let arr: string[][] = Array.from({ length: height }, () =>
-    Array(width).fill(layerStore.grids[0].backgroundColor.toLowerCase())
+    Array(width).fill(gridCanvas.value.backgroundColor.toLowerCase())
   );
-
-  for (let length = 0; length < layerStore.grids.length; length++) {
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
-        //only set empty cells to background color if its the first layer
-        //layers above the first will just replace cells if they have a value
-        if (layerStore.grids[length].grid[i][j] !== "empty") {
-          arr[i][j] = layerStore.grids[length].grid[i][j];
-        }
-      }
-    }
-  }
   return arr;
 }
 
@@ -1006,61 +592,6 @@ async function saveToFile(): Promise<void> {
   link.download = "image.png";
   link.href = upsizedCanvas.toDataURL("image/png");
   link.click();
-}
-
-async function saveGIFFromPainter(): Promise<void> {
-  let urls: string[] = [];
-  let grids = layerStore.grids;
-  for (let i = 0; i < grids.length; i++) {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Could not get context");
-    }
-    const image = context.createImageData(grids[i].width, grids[i].height);
-
-    canvas.width = grids[i].width;
-    canvas.height = grids[i].height;
-
-    for (let x = 0; x < grids[i].height; x++) {
-      for (let y = 0; y < grids[i].width; y++) {
-        let pixelHex;
-        if (grids[i].grid[x][y] === "empty") {
-          pixelHex = grids[i].backgroundColor;
-        } else {
-          pixelHex = grids[i].grid[x][y];
-        }
-        pixelHex = pixelHex.replace("#", "").toUpperCase();
-        const index = (x + y * grids[i].width) * 4;
-        image?.data.set(
-          [
-            parseInt(pixelHex.substring(0, 2), 16),
-            parseInt(pixelHex.substring(2, 4), 16),
-            parseInt(pixelHex.substring(4, 6), 16),
-            255
-          ],
-          index
-        );
-      }
-    }
-    context?.putImageData(image, 0, 0);
-
-    let upsizedCanvas = document.createElement("canvas");
-    upsizedCanvas.width = 1080;
-    upsizedCanvas.height = 1080;
-    let upsizedContext = upsizedCanvas.getContext("2d");
-    if (!upsizedContext) {
-      throw new Error("Could not get context");
-    }
-    upsizedContext.imageSmoothingEnabled = false;
-    upsizedContext.drawImage(canvas, 0, 0, 1080, 1080);
-
-    let dataURL = upsizedCanvas.toDataURL("image/png");
-    const strings = dataURL.split(",");
-    urls.push(strings[1]);
-  }
-
-  GIFCreationService.createGIF(urls, fps.value);
 }
 
 function toggleMusic(): void {
@@ -1157,11 +688,7 @@ function handleKeyDown(event: KeyboardEvent) {
       console.log("Ctrl+s was pressed.");
       event.preventDefault();
       console.log(art.value);
-      if (art.value.pixelGrid.isGif) {
-        saveGIFFromPainter();
-      } else {
-        saveToFile();
-      }
+      saveToFile();
     }
   }
 }

@@ -121,7 +121,7 @@ namespace MyTestVueApp.Server.Hubs
             {
                 Manager.AddGrid(200);
             }
-            Manager.AddGridMember(artist);
+            Manager.AddGridMember(Context.ConnectionId, artist);
             await Groups.AddToGroupAsync(Context.ConnectionId, GridName);
 
             var Grid = Manager.GetGrid();

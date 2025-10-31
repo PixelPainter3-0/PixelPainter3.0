@@ -174,9 +174,17 @@ namespace MyTestVueApp.Server.ServiceImplementations
             }
             return false;
         }
-        public void AddGridMember(Artist artist)
+        public void AddGridMember(string connectionId, Artist artist)
         {
             Grid.AddMember(artist);
+            if (Records.ContainsKey(artist.Id))
+            {
+                Records[artist.Id].Connections.Add(new(connectionId, Grid.GroupName));
+            }
+            else
+            {
+                Records.Add(artist.Id, new(connectionId, artist.Id, Grid.GroupName));
+            }
         }
         public GridGroup GetGrid()
         {
