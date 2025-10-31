@@ -65,11 +65,15 @@
     </template>
     <template #end>
       <Button
-        :icon="audioOn != -1 ? 'pi pi-volume-up' : 'pi pi-volume-off'"
-        :severity="audioOn != -1 ? 'primary' : 'secondary'"
-        label=""
         class="mr-2"
-        @click="toggleMusic()"
+        :label="started ? 'Stop Music' : 'Start Music'"
+        :icon="started ? 'pi pi-stop' : 'pi pi-play'"
+        :severity="started ? 'danger' : 'success'"
+        @click="toggleAudio"
+      />
+      <AudioSelect 
+        v-model:volume="volume"
+        @toggle-mute="toggleMute"
       />
     </template>
   </Toolbar>
@@ -90,6 +94,7 @@ import BrushSelection from "@/components/PainterUi/BrushSelection.vue";
 import ColorSelection from "@/components/PainterUi/ColorSelection.vue";
 import UploadButton from "@/components/PainterUi/UploadButton.vue";
 import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
+import AudioSelect from "@/components/PainterUi/AudioSelect.vue";
 
 //entities
 import { PixelGrid } from "@/entities/PixelGrid";
@@ -140,6 +145,13 @@ const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
 let selection = ref<string[][]>([]);
 
+const audioFiles = [
+  "/src/music/In-the-hall-of-the-mountain-king.mp3",
+  "/src/music/flight-of-the-bumblebee.mp3",
+  "/src/music/OrchestralSuiteNo3.mp3"
+];
+const audioRef = ref(new Audio());
+
 // Connection Information
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
@@ -150,13 +162,50 @@ let connection = new SignalR.HubConnectionBuilder()
   })
   .build();
 
-const audioFiles = [
-  "/src/music/In-the-hall-of-the-mountain-king.mp3",
-  "/src/music/flight-of-the-bumblebee.mp3",
-  "/src/music/OrchestralSuiteNo3.mp3"
-];
-const audioRef = ref(new Audio());
+const started = ref(false);
+const volume = ref(50);
+const audioIndex = ref(0);
 
+const audio = ref<HTMLAudioElement | null>(null);
+
+const toggleAudio = () => {
+  if (!started.value) {
+    // Start the audio
+    started.value = true;
+    audio.value = new Audio(audioFiles[audioIndex.value]);
+    audio.value.loop = true;
+    audio.value.volume = volume.value / 100;
+
+    audio.value.play().catch((err) => {
+      console.warn("Playback blocked:", err);
+    });
+  } else {
+    // Stop the audio
+    started.value = false;
+    if (audio.value) {
+      audio.value.pause();
+      audio.value.currentTime = 0; // reset to beginning
+      audio.value = null;
+    }
+  }
+};
+const previousVolume = ref(50);
+const toggleMute = () => {
+  if (!audio.value) return;
+
+  if (volume.value > 0) {
+    previousVolume.value = volume.value;
+    volume.value = 0;
+  } else {
+    volume.value = previousVolume.value;
+  }
+};
+
+watch(volume, (newVal) => {
+  if (audio.value && started.value) {
+    audio.value.volume = newVal / 100;
+  }
+});
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
 });
