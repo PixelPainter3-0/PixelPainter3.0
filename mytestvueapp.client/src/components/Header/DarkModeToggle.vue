@@ -28,17 +28,17 @@ const DARK_PRIMARY = {
   950: "#500724",
 };
 const LIGHT_PRIMARY_DARKER = {
-  50:  "#fce4ef",
-  100: "#f8c7de",
-  200: "#f39bc2",
-  300: "#ea6aa1",
-  400: "#e0478b",
-  500: "#2C73D9", //hover color
-  600: "#1da1f2", //primary color
-  700: "#9d174d",
-  800: "#831843",
-  900: "#6b0f37",
-  950: "#500724",
+  50:  "#f0f7ff",
+  100: "#d9ecff",
+  200: "#b9dcff",
+  300: "#91c5ff",
+  400: "#6baeff",
+  500: "#2C73D9", // hover color (kept)
+  600: "#1da1f2", // primary color (kept)
+  700: "#1b5ecb",
+  800: "#184ea9",
+  900: "#153f88",
+  950: "#113168",
 };
 
 function applyTheme(theme: "light" | "dark") {
