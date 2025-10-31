@@ -15,3 +15,24 @@ body {
   color: inherit;
 }
 
+/* Tag color variables */
+:root {
+  /* Light */
+  --tag-bg: #e5e7eb;
+  --tag-text: #111827;
+  --tag-border: #d1d5db;
+  --tag-hover-bg: #d1d5db;
+  --tag-hover-border: #cbd5e1;
+  --tag-more-bg: #e5e7eb;
+}
+
+/* Dark mode (PrimeVue uses .dark-mode-toggle on <html>) */
+html.dark-mode-toggle {
+  --tag-bg: #2a313a;
+  --tag-text: #ffffff;
+  --tag-border: #434b55;
+  --tag-hover-bg: #4b5563;
+  --tag-hover-border: #6b7280;
+  --tag-more-bg: #444155;
+}
+
