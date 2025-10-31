@@ -1372,7 +1372,7 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Eraser";
       canvas?.value.updateCursor();
-    } else if (event.key === "d") {
+    } else if (!event.ctrlKey && event.key === "d") {
       event.preventDefault();
       cursor.value.selectedTool.label = "Pipette";
       canvas?.value.updateCursor();
@@ -1464,8 +1464,8 @@ function handleKeyDown(event: KeyboardEvent) {
       updatePallet();
       //@ts-ignore
       cursor.value.color = currentPallet.value._value[11];
-    } else if (event.ctrlKey && event.key === "s") {
-      console.log("Ctrl+s was pressed.");
+    } else if (event.ctrlKey && event.key === "d") {
+      console.log("Ctrl+d was pressed.");
       event.preventDefault();
       console.log(art.value);
       if (art.value.pixelGrid.isGif) {
@@ -1473,6 +1473,10 @@ function handleKeyDown(event: KeyboardEvent) {
       } else {
         saveToFile();
       }
+    } else if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+      event.preventDefault();
+      console.log("Ctrl+s was pressed.");
+      document.getElementById("uploadButton")?.click();
     } else if ((event.ctrlKey || event.metaKey) && event.key === "z") {
       event.preventDefault();
       undo();
