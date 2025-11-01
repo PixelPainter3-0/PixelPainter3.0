@@ -3,43 +3,54 @@
     <Card class="flex align-items-center justify-content-start w-30rem m-auto">
       <template #title>Select Background Color And Canvas Resolution</template>
       <template #content>
-        <label for="backgroundColorPick">Background Color: </label>
-        <ColorPicker
-          class="w-auto p-2"
-          v-model="backgroundColor"
-          id="backgroundColorPick"
-          format="hex"
-        ></ColorPicker>
-        <br />
-        <label for="resolution">Resolution: </label>
-        <InputNumber
-          class="w-auto p-2"
-          id="resolution"
-          v-model="resolution"
-          showButtons
-          buttonLayout="horizontal"
-          suffix=" px"
-          :min="1"
-          :max="64"
-        >
-          <template #incrementbuttonicon>
-            <span class="pi pi-plus" />
-          </template>
-          <template #decrementbuttonicon>
-            <span class="pi pi-minus" />
-          </template>
-        </InputNumber>
-        <br />
-        <label for="type" class="mb-5">Type: </label>
-        <ToggleButton
-          id="type"
-          class="mx-1 p-2 w-2.5"
-          v-model="isImage"
-          onLabel="Image"
-          onIcon="pi pi-image"
-          offLabel="GIF"
-          offIcon="pi pi-images"
-        />
+          <label for="backgroundColorPick">Background Color: </label>
+          <ColorPicker class="w-auto p-2"
+                       v-model="backgroundColor"
+                       id="backgroundColorPick"
+                       format="hex"></ColorPicker>
+          <br />
+          <label for="xResolution">Width: </label>
+          <InputNumber class="w-auto p-2"
+                       id="xResolution"
+                       v-model="xResolution"
+                       showButtons
+                       buttonLayout="horizontal"
+                       suffix=" px"
+                       :min="1"
+                       :max="64">
+              <template #incrementbuttonicon>
+                  <span class="pi pi-plus" />
+              </template>
+              <template #decrementbuttonicon>
+                  <span class="pi pi-minus" />
+              </template>
+          </InputNumber>
+          <br />
+          <label for="yResolution">Height: </label>
+          <InputNumber class="w-auto p-2"
+                       id="yResolution"
+                       v-model="yResolution"
+                       showButtons
+                       buttonLayout="horizontal"
+                       suffix=" px"
+                       :min="1"
+                       :max="64">
+              <template #incrementbuttonicon>
+                  <span class="pi pi-plus" />
+              </template>
+              <template #decrementbuttonicon>
+                  <span class="pi pi-minus" />
+              </template>
+          </InputNumber>
+          <br />
+          <label for="type" class="mb-5">Type: </label>
+          <ToggleButton id="type"
+                        class="mx-1 p-2 w-2.5"
+                        v-model="isImage"
+                        onLabel="Image"
+                        onIcon="pi pi-image"
+                        offLabel="GIF"
+                        offIcon="pi pi-images" />
       </template>
     </Card>
   </div>
@@ -67,7 +78,9 @@ import { useLayerStore } from "@/store/LayerStore";
 
 const layerStore = useLayerStore();
 
-const resolution = ref<number>(32);
+const xResolution = ref<number>(32);
+const yResolution = ref<number>(32);
+
 const backgroundColor = ref<string>("ffffff");
 const isImage = ref<boolean>(true);
 
@@ -75,8 +88,8 @@ function updateLocalStorage(): void {
   layerStore.empty(); //just in case
   
   let pixelGrid = new PixelGrid(
-    resolution.value,
-    resolution.value,
+    xResolution.value,
+    yResolution.value,
     backgroundColor.value.toUpperCase(),
     !isImage.value // Constructor wants isGif so pass in !isImage
   );
