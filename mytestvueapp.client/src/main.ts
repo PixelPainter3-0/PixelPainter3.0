@@ -18,10 +18,6 @@ import "primeflex/primeflex.css";
 
 import Tooltip from "primevue/tooltip"
 
-
-
-
-
 const pinia = createPinia();
 
 createApp(App)
@@ -38,23 +34,3 @@ createApp(App)
   .use(pinia)
   .directive('tooltip', Tooltip)
   .mount("#app");
-
-//Set the primary color of the theme
-import { updatePreset } from "@primevue/themes";
-updatePreset({
-  semantic: {
-    primary: {
-      50: "#fdf2f8",
-      100: "#fce7f3",
-      200: "#fbcfe8",
-      300: "#f9a8d4",
-      400: "#f472b6",
-      500: "#ec4899",
-      600: "#db2777",
-      700: "#be185d",
-      800: "#9d174d",
-      900: "#831843",
-      950: "#500724",
-    },
-  },
-});
