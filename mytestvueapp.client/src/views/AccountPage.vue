@@ -4,10 +4,8 @@
       <Card class="h-fit profile-card">
         <template #content>
           <Avatar icon="pi pi-user" class="mr-2" size="xlarge" shape="circle" />
-          <div class="text-3xl p-font-bold">{{ 
-          // @ts-ignore
-           curArtist.name
-           }}</div>
+          <div class="text-3xl p-font-bold">{{ curArtist.name }}</div>
+
           <div class="flex mt-4 p-2 gap-2 flex-column">
             <Button
               :disabled="!canEdit"
@@ -38,19 +36,21 @@
               <div class="flex gap-1 flex-row align-items-center">
                 <div class="flex flex-column gap-2">
                   <InputText
+                    id="username"
                     :disabled="!isEditing"
                     class="mr-1"
                     v-model="newUsername"
                     variant="filled"
                   />
                 </div>
-                <Button v-if="!isEditing"
+                <Button
+                  v-if="!isEditing"
                   severity="secondary"
                   rounded
                   icon="pi pi-pencil"
                   @click="isEditing = true"
                 />
-                <span v-else class="">
+                <span v-else>
                   <Button
                     severity="danger"
                     text
@@ -69,8 +69,8 @@
                 </span>
               </div>
               <Message
-                :label="errorMessage"
                 v-if="errorMessage != ''"
+                :label="errorMessage"
                 severity="error"
                 variant="simple"
                 size="small"
@@ -80,7 +80,7 @@
             <div class="align-items-stretch flex">
               <Button
                 class="block m-2"
-                label="logout"
+                label="Logout"
                 icon="pi pi-sign-out"
                 @click="logout()"
               />
@@ -93,18 +93,10 @@
             </div>
           </template>
         </Card>
-        <div class="flex flex-column gap-2">
-          <h2>Current Page Status: {{ pageStatus }}</h2>
-          <Button
-            class="block m-2"
-            label=" Click to change page status"
-            icon="pi pi-eye"
-            @click="privateSwitchChange()"
-          />
-        </div>
       </div>
+
       <div v-if="route.hash == '#created_art'">
-        <h2>My Art</h2>
+        <h2>{{ createdArtHeading }}</h2>
         <div class="shrink-limit flex flex-wrap">
           <ArtCard
             v-for="(art, idx) in myArt"
@@ -115,6 +107,7 @@
           />
         </div>
       </div>
+
       <div v-if="route.hash == '#liked_art'">
         <h2>Liked Art</h2>
         <div class="shrink-limit flex flex-wrap">
@@ -133,37 +126,55 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
+import { useRoute } from "vue-router";
+import { useToast } from "primevue/usetoast";
+
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
-import router from "@/router";
-import { useToast } from "primevue/usetoast";
+
+import type Art from "@/entities/Art";
+import Artist from "@/entities/Artist";
+
+// PrimeVue components used in template
 import Card from "primevue/card";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import Artist from "@/entities/Artist";
 import Avatar from "primevue/avatar";
 import Message from "primevue/message";
-import { useRoute } from "vue-router";
-import type Art from "@/entities/Art";
+// Child component
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 
 const toast = useToast();
 const route = useRoute();
 
-const artist = ref<Artist>(new Artist());
-const isEditing = ref<boolean>(false);
-const newUsername = ref<string>("");
 const isAdmin = ref<boolean>(false);
 const curArtist = ref<Artist>(new Artist());
 const curUser = ref<Artist>(new Artist());
 const pageStatus = ref<string>("");
 
-var myArt = ref<Art[]>([]);
-var likedArt = ref<Art[]>([]);
+const isEditing = ref<boolean>(false);
+const newUsername = ref<string>("");
 
-const canEdit = computed<boolean>(() => {
-  return curUser.value.id === curArtist.value.id || isAdmin.value;
-});
+const myArt = ref<Art[]>([]);
+const likedArt = ref<Art[]>([]);
+
+const canEdit = computed<boolean>(
+  () => curUser.value.id === curArtist.value.id || isAdmin.value
+);
+
+function normalizeTags(a: any) {
+  let tags = a?.tags;
+  if (Array.isArray(tags) && tags.length && typeof tags[0] === "string") {
+    tags = tags.map((t: string) => ({ name: t }));
+  }
+  if (!tags && Array.isArray(a?.artTags)) {
+    tags = a.artTags.map((at: any) => at?.tag ?? at).filter(Boolean);
+  }
+  if (!tags && Array.isArray(a?.tagList)) {
+    tags = a.tagList.map((t: any) => (typeof t === "string" ? { name: t } : t));
+  }
+  return Array.isArray(tags) ? tags : [];
+}
 
 async function loadArtistData(artistName: string): Promise<void> {
   if (!artistName) return;
@@ -174,72 +185,73 @@ async function loadArtistData(artistName: string): Promise<void> {
   try {
     const artistInfo = await LoginService.GetArtistByName(artistName);
     curArtist.value = artistInfo;
-    newUsername.value = artistInfo.name;
+    newUsername.value = artistInfo.name ?? "";
 
-    if (artistInfo.privateProfile) {
-      if (curUser.value.id !== artistInfo.id && !isAdmin.value) {
-        toast.add({
-          severity: "error",
-          summary: "Access Denied",
-          detail: "Account page is declared as private",
-          life: 3000
-        });
-        router.go(-1);
-        return;
-      }
-      pageStatus.value = "Private";
-    } else {
-      pageStatus.value = "Public";
-    }
+    pageStatus.value = artistInfo.privateProfile ? "Private" : "Public";
 
-    const [created, liked] = await Promise.all([
+    const [createdRes, likedRes] = await Promise.allSettled([
       ArtAccessService.getAllArtByUserID(artistInfo.id),
-      ArtAccessService.getLikedArt(artistInfo.id)
+      ArtAccessService.getLikedArt(artistInfo.id),
     ]);
 
-    myArt.value = (created ?? []).map((a: any) => ({
-      ...a,
-      tags: a?.tags ?? [],
-      artistName: a?.artistName ?? [],
-      title: a?.title ?? "",
-      numComments: a?.numComments ?? 0,
-      numLikes: a?.numLikes ?? 0,
-      numDislikes: a?.numDislikes ?? 0
-    }));
+    if (createdRes.status === "fulfilled") {
+      myArt.value = (createdRes.value ?? []).map((a: any) => ({
+        ...a,
+        tags: normalizeTags(a),
+        artistName: a?.artistName ?? [],
+        title: a?.title ?? "",
+        numComments: a?.numComments ?? 0,
+        numLikes: a?.numLikes ?? 0,
+        numDislikes: a?.numDislikes ?? 0,
+      }));
+    } else {
+      toast.add({
+        severity: "warn",
+        summary: "Art",
+        detail: "Failed to load creator's art.",
+        life: 2500,
+      });
+    }
 
-    likedArt.value = (liked ?? []).map((a: any) => ({
-      ...a,
-      tags: a?.tags ?? [],
-      artistName: a?.artistName ?? [],
-      title: a?.title ?? "",
-      numComments: a?.numComments ?? 0,
-      numLikes: a?.numLikes ?? 0,
-      numDislikes: a?.numDislikes ?? 0
-    }));
-  } catch {
+    if (likedRes.status === "fulfilled") {
+      likedArt.value = (likedRes.value ?? []).map((a: any) => ({
+        ...a,
+        tags: normalizeTags(a),
+        artistName: a?.artistName ?? [],
+        title: a?.title ?? "",
+        numComments: a?.numComments ?? 0,
+        numLikes: a?.numLikes ?? 0,
+        numDislikes: a?.numDislikes ?? 0,
+      }));
+    } else {
+      likedArt.value = [];
+    }
+  } catch (e) {
     toast.add({
       severity: "error",
       summary: "Error",
       detail: "Failed to load artist data",
-      life: 3000
+      life: 3000,
     });
   }
 }
 
 onMounted(async () => {
-  const user = await LoginService.getCurrentUser();
-  curUser.value = user;
-  if (user.id == 0) {
-    router.go(-1);
-    toast.add({
-      severity: "error",
-      summary: "Warning",
-      detail: "User must be logged in to view account page",
-      life: 3000
-    });
-    return;
+  // Default tab if none/invalid
+  if (!["#settings", "#created_art", "#liked_art"].includes(route.hash)) {
+    changeHash("#created_art");
   }
-  isAdmin.value = user.isAdmin;
+
+  // Try to get current user, but allow anonymous
+  try {
+    const user = await LoginService.getCurrentUser();
+    if (user && user.id !== 0) {
+      curUser.value = user;
+      isAdmin.value = !!(user as any).isAdmin;
+    }
+  } catch {
+    // ignore, treat as anonymous
+  }
 
   await loadArtistData(String(route.params.artist ?? ""));
 });
@@ -251,21 +263,22 @@ watch(
   }
 );
 
-async function logout(): Promise<void> {
-  LoginService.logout().then(() => {
-    window.location.replace(`/`);
+function changeHash(hash: string): void {
+  if (hash === "#settings" && !canEdit.value) {
     toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "User logged out",
-      life: 3000
+      severity: "info",
+      summary: "Read-only",
+      detail: "Login to manage this account.",
+      life: 2500,
     });
-  });
+    return;
+  }
+  window.location.hash = hash;
 }
 
 function cancelEdit(): void {
   isEditing.value = false;
-  newUsername.value = curUser.value.name;
+  newUsername.value = curArtist.value.name ?? "";
 }
 
 const errorMessage = computed<string>(() => {
@@ -279,82 +292,84 @@ const errorMessage = computed<string>(() => {
 });
 
 async function updateUsername(): Promise<void> {
-  LoginService.updateUsername(newUsername.value)
-    .then((success) => {
-      if (success) {
-        toast.add({
-          severity: "success",
-          summary: "Success",
-          detail: "Username successfully changed",
-          life: 3000
-        });
-        curArtist.value.name = newUsername.value;
-        artist.value.name = newUsername.value;
-        isEditing.value = false;
-      } else {
-        toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Username is already taken. Try another",
-          life: 3000
-        });
-      }
-    })
-    .catch(() => {
+  try {
+    const success = await LoginService.updateUsername(newUsername.value);
+    if (success) {
+      curArtist.value.name = newUsername.value;
+      isEditing.value = false;
+      toast.add({
+        severity: "success",
+        summary: "Updated",
+        detail: "Username changed",
+        life: 2500,
+      });
+    } else {
       toast.add({
         severity: "error",
         summary: "Error",
-        detail: "An error occurred. Please try again later",
-        life: 3000
+        detail: "Username is already taken.",
+        life: 3000,
       });
+    }
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "An error occurred. Please try again later.",
+      life: 3000,
     });
+  }
+}
+
+async function logout(): Promise<void> {
+  try {
+    await LoginService.logout();
+    window.location.replace(`/`);
+    toast.add({
+      severity: "success",
+      summary: "Success",
+      detail: "User logged out",
+      life: 3000,
+    });
+  } catch {
+    // swallow
+  }
 }
 
 async function confirmDelete(): Promise<void> {
-  LoginService.deleteArtist(curArtist.value.id)
-    .then(() => {
-      window.location.href = "/";
-      toast.add({
-        severity: "success",
-        summary: "User Deleted",
-        detail: "The User has been deleted successfully",
-        life: 3000
-      });
-    })
-    .catch(() => {
-      toast.add({
-        severity: "error",
-        summary: "Error",
-        detail:
-          "error deleting user, please make sure you have spelt it correctly",
-        life: 3000
-      });
+  try {
+    // @ts-ignore
+    await LoginService.deleteArtist(curArtist.value.id);
+    window.location.href = "/";
+    toast.add({
+      severity: "success",
+      summary: "User Deleted",
+      detail: "The user has been deleted successfully",
+      life: 3000,
     });
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Error deleting user.",
+      life: 3000,
+    });
+  }
 }
 
-function changeHash(hash: string): void {
-  window.location.hash = hash;
-}
-
-async function privateSwitchChange() {
-  await LoginService.privateSwitchChange(curArtist.value.id).then(() => {
-    if (pageStatus.value === "Private") {
-      pageStatus.value = "Public";
-    } else {
-      pageStatus.value = "Private";
-    }
-    curArtist.value.privateProfile = !curArtist.value.privateProfile;
-  });
-}
+// Computed properties
+const isOwnProfile = computed(() => curUser.value.id === curArtist.value.id);
+// Heading that matches the viewed account
+const createdArtHeading = computed(() =>
+  isOwnProfile.value ? "My Art" : `${curArtist.value.name ?? "Artist"}'s Art`
+);
 </script>
 
 <style scoped>
-/* Ensure the left profile card has a sensible minimum width */
 .profile-card {
-  min-width: 16rem; /* ~256px */
+  min-width: 16rem;
 }
 
-/* Stack and fill on small screens */
 @media (max-width: 640px) {
   .profile-card {
     width: 100%;

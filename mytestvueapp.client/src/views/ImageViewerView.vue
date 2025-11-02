@@ -142,7 +142,21 @@
           />
         </div>
 
-        <!-- 6) Delete Art -->
+           <!-- 6) Tag Location -->
+         <div class="viewer-actions row end">
+           <!-- ensure point can icon -->
+           <Button
+             v-if="art.currentUserIsOwner || isAdmin"
+             class="danger-action"
+             title="Place"
+             label="Place on Map"
+             icon="pi pi-map-marker"
+             @click="() => router.push(`/mapadd/${id}`)"
+             :isAdmin="isAdmin"
+           />
+         </div>
+
+        <!-- 7) Delete Art -->
         <div class="viewer-actions row end">
           <!-- ensure trash can icon -->
           <DeleteArtButton

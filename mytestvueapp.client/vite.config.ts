@@ -97,6 +97,10 @@ export default defineConfig({
       "^/tag": {
         target,
         secure: false,
+       },
+      "^/mapaccess": {
+        target,
+        secure: false,
       }
     },
     host: '0.0.0.0',
