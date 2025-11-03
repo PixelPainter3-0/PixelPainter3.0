@@ -2,9 +2,10 @@
   <DrawingCanvas
     ref="canvas"
     :style="{ cursor: cursor.selectedTool.cursor }"
-    :grid="art.pixelGrid"
+    :grid="layerStore.grids[0]"
     :showLayers="showLayers"
     :greyscale="greyscale"
+    :isGrid="false"
     v-model="cursor"
     @mousedown="
       mouseButtonHeldDown = true;
@@ -62,19 +63,16 @@
         v-model:color="cursor.color"
         v-model:size="cursor.size"
         :isBackground="false"
-        :isGrid = "false"
+        :isGrid="false"
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
-      <BrushSelection 
-        v-model="cursor.selectedTool"
-        :isGrid = "false"
-      />
+      <BrushSelection v-model="cursor.selectedTool" :isGrid="false" />
       <ColorSelection
         v-model:color="art.pixelGrid.backgroundColor"
         v-model:size="cursor.size"
         :isBackground="true"
-        :isGrid = "false"
+        :isGrid="false"
         @enable-key-binds="keyBindActive = true"
         @disable-key-binds="keyBindActive = false"
       />
@@ -91,7 +89,7 @@
         v-model:showLayers="showLayers"
         v-model:greyscale="greyscale"
       />
-      <HelpPopUp :isGrid = "false"/>
+      <HelpPopUp :isGrid="false" />
     </template>
     <template #end>
       <Button
@@ -213,6 +211,13 @@ const centerHover = ref<boolean>(false);
 const gravityHover = ref<boolean>(false);
 const colorHover = ref<boolean>(false);
 
+const audioFiles = [
+  "/src/music/In-the-hall-of-the-mountain-king.mp3",
+  "/src/music/flight-of-the-bumblebee.mp3",
+  "/src/music/OrchestralSuiteNo3.mp3"
+];
+const audioRef = ref(new Audio());
+
 // Connection Information
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
@@ -222,11 +227,7 @@ let connection = new SignalR.HubConnectionBuilder()
     transport: SignalR.HttpTransportType.WebSockets
   })
   .build();
-const audioFiles = [
-  "/src/music/In-the-hall-of-the-mountain-king.mp3",
-  "/src/music/flight-of-the-bumblebee.mp3",
-  "/src/music/OrchestralSuiteNo3.mp3"
-];
+
 const started = ref(false);
 const volume = ref(50);
 const audioIndex = ref(0);
@@ -1383,9 +1384,13 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Rectangle";
       canvas?.value.updateCursor();
-    } else if (event.key === "l") {
+    } else if (event.key === "o") {
       event.preventDefault();
       cursor.value.selectedTool.label = "Ellipse";
+      canvas?.value.updateCursor();
+    } else if (event.key === "l") {
+      event.preventDefault();
+      cursor.value.selectedTool.label = "Line";
       canvas?.value.updateCursor();
     } else if (!event.ctrlKey && event.key === "s") {
       event.preventDefault();
