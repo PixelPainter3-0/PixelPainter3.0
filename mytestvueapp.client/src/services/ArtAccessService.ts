@@ -27,36 +27,36 @@ export default class ArtAccessService {
 
   public static async getAllArtByUserID(id: number): Promise<Art[]> {
     try {
-      const response = await fetch(`/artaccess/GetAllArtByUserID?id=${id}`);
+      const response = await fetch(
+        `/artaccess/GetAllArtByUserID?id=${encodeURIComponent(id)}`
+      );
+      if (!response.ok) throw new Error(`Failed to load art (${response.status})`);
       const json = await response.json();
-
       const allArt: Art[] = [];
-
-      for (const jsonArt of json) {
-        allArt.push(jsonArt as Art);
-      }
-
+      for (const jsonArt of json) allArt.push(jsonArt as Art);
       return allArt;
     } catch (error) {
-      console.error;
-      throw error;
+      console.error(error);
+      return [];
     }
   }
 
   public static async getLikedArt(artistId: number): Promise<Art[]> {
     try {
       const response = await fetch(
-        `/artaccess/GetLikedArt?artistId=${artistId}`
+        `/artaccess/GetLikedArt?artistId=${encodeURIComponent(artistId)}`
       );
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) return [];
+        throw new Error(`Failed to load liked art (${response.status})`);
+      }
       const json = await response.json();
       const allArt: Art[] = [];
-      for (const jsonArt of json) {
-        allArt.push(jsonArt as Art);
-      }
+      for (const jsonArt of json) allArt.push(jsonArt as Art);
       return allArt;
     } catch (error) {
-      console.error;
-      throw error;
+      console.error(error);
+      return [];
     }
   }
   public static async getCurrentUsersArt(): Promise<Art[]> {

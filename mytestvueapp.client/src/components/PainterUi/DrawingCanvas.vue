@@ -25,6 +25,7 @@ const props = defineProps<{
   grid: PixelGrid;
   showLayers: boolean;
   greyscale: boolean;
+  isGrid: boolean;
 }>();
 
 //exposes (only put methods here if there are things painterview does that DIRECTLY update the canvas)
@@ -94,7 +95,7 @@ function init(): void {
   dropShadow.filters = [dropShadowFilter];
 
   const background = new Sprite(Texture.WHITE);
-  background.width = layerStore.grids[0].width * PIXEL_SIZE;
+n  background.width = layerStore.grids[0].width * PIXEL_SIZE;
   background.height = layerStore.grids[0].height * PIXEL_SIZE;
   background.tint = layerStore.grids[0].backgroundColor;
 
@@ -113,52 +114,115 @@ function drawLayers(layer: number): void {
   if (viewport.children.length > 2) {
     viewport.removeChildren(2);
   }
-  let width = layerStore.grids[0].width;
-  let height = layerStore.grids[0].height;
+  let width = props.grid.width;
+  let height = props.grid.height;
 
   const dropShadow = viewport.children[0] as Sprite;
   const background = viewport.children[1] as Sprite;
+  if(!props.isGrid){
+    if (dropShadow.width != width) {
+      dropShadow.width = props.grid.width * PIXEL_SIZE;
+      dropShadow.height = props.grid.height * PIXEL_SIZE;
 
-  if (dropShadow.width != width || dropShadow.height != height) {
-    dropShadow.width = layerStore.grids[0].width * PIXEL_SIZE;
-    dropShadow.height = layerStore.grids[0].height * PIXEL_SIZE;
+      background.tint = layerStore.grids[layer].backgroundColor;
+      background.width = props.grid.width * PIXEL_SIZE;
+      background.height = props.grid.height * PIXEL_SIZE;
+    }
 
-    background.tint = layerStore.grids[layer].backgroundColor;
-    background.width = layerStore.grids[0].width * PIXEL_SIZE;
-    background.height = layerStore.grids[0].height * PIXEL_SIZE;
-  }
-
-  for (index; index <= layer; index++) {
-    for (let i = 0; i < width; i++) {
-      for (let j = 0; j < height; j++) {
-        const sprite = viewport.addChild(new Sprite(Texture.WHITE));
-        if (layerStore.grids[index].grid[i][j] === "empty" ||
-					(layerStore.grids[0].isGif && layerStore.grids[index].grid[i][j] === props.grid.backgroundColor)) {
-          sprite.tint = layerStore.grids[index].backgroundColor;
-          sprite.alpha = 0;
-        } else {
-          let tmp = layerStore.grids[index].grid[i][j];
-          if (
-            index < layerStore.layer &&
-            (props.greyscale || props.grid.isGif)
-          ) {
-            tmp = filterGreyScale(tmp);
+    for (index; index <= layer; index++) {
+      for (let i = 0; i < width; i++) {
+        for (let j = 0; j < height; j++) {
+          const sprite = viewport.addChild(new Sprite(Texture.WHITE));
+          if (layerStore.grids[index].grid[i][j] === "empty" ||
+            (props.grid.isGif && layerStore.grids[index].grid[i][j] === props.grid.backgroundColor)) {
+            sprite.tint = layerStore.grids[index].backgroundColor;
+            sprite.alpha = 0;
+          } else {
+            let tmp = layerStore.grids[index].grid[i][j];
+            if (
+              index < layerStore.layer &&
+              (props.greyscale || props.grid.isGif)
+            ) {
+              tmp = filterGreyScale(tmp);
+            }
+            sprite.tint = tmp;
+            sprite.alpha = 1;
           }
-          sprite.tint = tmp;
-          sprite.alpha = 1;
+          sprite.width = sprite.height = PIXEL_SIZE;
+          sprite.position.set(i * PIXEL_SIZE, j * PIXEL_SIZE);
+          sprite.interactive = index === layer ? true : false; //reduce lag
         }
-        sprite.width = sprite.height = PIXEL_SIZE;
-        sprite.position.set(i * PIXEL_SIZE, j * PIXEL_SIZE);
-        sprite.interactive = index === layer ? true : false; //reduce lag
+      }
+    }
+  } else { // This is for TheGridView which does not pull from local storage
+    if (dropShadow.width != width) {
+      dropShadow.width = props.grid.width * PIXEL_SIZE;
+      dropShadow.height = props.grid.height * PIXEL_SIZE;
+
+      background.tint = props.grid.backgroundColor;
+      background.width = props.grid.width * PIXEL_SIZE;
+      background.height = props.grid.height * PIXEL_SIZE;
+    }
+
+    for (index; index <= layer; index++) {
+      for (let i = 0; i < width; i++) {
+        for (let j = 0; j < height; j++) {
+          const sprite = viewport.addChild(new Sprite(Texture.WHITE));
+          if (props.grid.grid[i][j] === "empty" ||
+            (props.grid.isGif && props.grid.grid[i][j] === props.grid.backgroundColor)) {
+            sprite.tint = props.grid.backgroundColor;
+            sprite.alpha = 0;
+          } else {
+            let tmp = props.grid.grid[i][j];
+            if (
+              index < layerStore.layer &&
+              (props.greyscale || props.grid.isGif)
+            ) {
+              tmp = filterGreyScale(tmp);
+            }
+            sprite.tint = tmp;
+            sprite.alpha = 1;
+          }
+          sprite.width = sprite.height = PIXEL_SIZE;
+          sprite.position.set(i * PIXEL_SIZE, j * PIXEL_SIZE);
+          sprite.interactive = index === layer ? true : false; //reduce lag
+        }
       }
     }
   }
 }
 
 function updateCell(layer: number, x: number, y: number, color: string): void {
-  if (layer <= layerStore.layer) {
-    let idx = 2;
+  if(!props.isGrid){
+    if (layer <= layerStore.layer) {
+      let idx = 2;
 
+      if (!props.grid.isGif) {
+        //square the width to get last index of grid before current,
+        //mult by layer to get selected layer,
+        //add by 2 to account for dropshadow and background sprites in viewport
+        idx += props.grid.width ** 2 * layer;
+        if (!props.showLayers) {
+          idx = 2;
+        }
+      }
+
+      //no way around this, viewport stores sprites in a 1d array
+      idx += x * props.grid.width + y;
+      const cell = viewport.children[idx] as Sprite;
+      if (color === "empty") {
+        cell.alpha = 0;
+      } else {
+        let tmp = color;
+        if (layer < layerStore.layer && props.greyscale) {
+          tmp = filterGreyScale(tmp);
+        }
+        cell.tint = tmp;
+        cell.alpha = 1;
+      }
+    }
+  }else{
+    let idx = 2;
     if (!props.grid.isGif) {
       //height times width to get last index of grid before current,
       //mult by layer to get selected layer,
@@ -176,9 +240,6 @@ function updateCell(layer: number, x: number, y: number, color: string): void {
       cell.alpha = 0;
     } else {
       let tmp = color;
-      if (layer < layerStore.layer && props.greyscale) {
-        tmp = filterGreyScale(tmp);
-      }
       cell.tint = tmp;
       cell.alpha = 1;
     }
@@ -289,9 +350,9 @@ function recenter(): void {
   viewport.fit();
   viewport.setZoom(Math.min((40 / layerStore.grids[0].width) , (40 / layerStore.grids[0].height)));
   viewport.moveCenter(
-    (layerStore.grids[0].width * PIXEL_SIZE) / 2,
-    (layerStore.grids[0].height * PIXEL_SIZE) / 2 +
-      layerStore.grids[0].height * 2.5
+    (props.grid.width * PIXEL_SIZE) / 2,
+    (props.grid.height * PIXEL_SIZE) / 2 +
+      props.grid.height * 2.5
   );
 }
 

@@ -15,7 +15,12 @@ namespace MyTestVueApp.Server.ServiceImplementations
         private readonly ILogger<ArtAccessService> Logger;
         private readonly ITagService TagService;
         private readonly ILoginService LoginService;
-        public ArtAccessService(IOptions<ApplicationConfiguration> appConfig, ILogger<ArtAccessService> logger, ILoginService loginService, ITagService tagService)
+        public ArtAccessService(
+            IOptions<ApplicationConfiguration> appConfig,
+            ILogger<ArtAccessService> logger,
+            ILoginService loginService,
+            ITagService tagService
+        )
         {
             AppConfig = appConfig;
             Logger = logger;
@@ -245,6 +250,8 @@ namespace MyTestVueApp.Server.ServiceImplementations
         /// </summary>
         /// <param name="artistId">Id of the user</param>
         /// <returns>A list of art objects</returns>
+        /// 
+
         public async Task<IEnumerable<Art>> GetLikedArt(int artistId)
         {
             var paintings = new List<Art>();
@@ -254,54 +261,71 @@ namespace MyTestVueApp.Server.ServiceImplementations
             {
                 connection.Open();
 
-                var query =
-                    $@"
-                    SELECT
-	                      Likes.ArtId,
-                          Art.Title,
-	                      Art.Width, 
-	                      Art.Height, 
-	                      Art.Encode, 
-	                      Art.CreationDate,
-	                      Art.isPublic,
-	                      COUNT(distinct Likes.ArtistId) as Likes, 
-	                      Count(distinct Comment.Id) as Comments
-                      FROM Likes
-                      left join Art on Art.Id = Likes.ArtId
-                      LEFT JOIN Comment ON Art.ID = Comment.ArtID
-                      where Likes.ArtistId = @ArtistId
-                      GROUP BY Likes.ArtistId, Likes.ArtId, Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic;
-                        ";
+                var query = @"
+            SELECT
+                A.Id,
+                A.Title,
+                A.Width,
+                A.Height,
+                A.Encode,
+                A.CreationDate,
+                A.isPublic,
+                A.IsGIF,
+                A.GifId,
+                A.gifFrameNum,
+                COUNT(DISTINCT AL.ArtistId) AS Likes,
+                COUNT(DISTINCT DL.ArtistId) AS Dislikes,
+                COUNT(DISTINCT C.Id)        AS Comments
+            FROM Likes L
+            JOIN Art A              ON A.Id   = L.ArtId
+            LEFT JOIN Likes    AL   ON AL.ArtId = A.Id
+            LEFT JOIN Dislikes DL   ON DL.ArtId = A.Id
+            LEFT JOIN Comment  C    ON C.ArtId  = A.Id
+            WHERE L.ArtistId = @ArtistId
+            GROUP BY A.Id, A.Title, A.Width, A.Height, A.Encode, A.CreationDate, A.isPublic, A.IsGIF, A.GifId, A.gifFrameNum;
+        ";
 
                 using (var command = new SqlCommand(query, connection))
                 {
-                    command.Parameters.AddWithValue("@ArtistID", artistId);
+                    command.Parameters.AddWithValue("@ArtistId", artistId);
+
                     using (var reader = await command.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
-                            var pixelGrid = new PixelGrid()
+                            var pixelGrid = new PixelGrid
                             {
                                 Width = reader.GetInt32(2),
                                 Height = reader.GetInt32(3),
                                 EncodedGrid = reader.GetString(4)
                             };
+
                             var painting = new Art
-                            {   //ArtId, ArtName
+                            {
                                 Id = reader.GetInt32(0),
                                 Title = reader.GetString(1),
                                 PixelGrid = pixelGrid,
                                 CreationDate = reader.GetDateTime(5),
                                 IsPublic = reader.GetBoolean(6),
-                                NumLikes = reader.GetInt32(7),
-                                NumComments = reader.GetInt32(8)
+                                IsGif = reader.GetBoolean(7),
+                                GifID = reader.GetInt32(8),
+                                GifFrameNum = reader.GetInt32(9),
+                                NumLikes = reader.GetInt32(10),
+                                NumDislikes = reader.GetInt32(11),
+                                NumComments = reader.GetInt32(12)
                             };
+
+                            // Populate artists and tags so JSON is not null
+                            painting.SetArtists((await GetArtistsByArtId(painting.Id)).ToList());
+                            painting.Tags = (await TagService.GetTagsForArt(painting.Id)).ToList();
+
                             paintings.Add(painting);
                         }
                     }
-                    return paintings;
                 }
             }
+
+            return paintings;
         }
 
         public async Task<IEnumerable<Art>> GetDislikedArt(int artistId)
@@ -848,6 +872,17 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     }
                 }
             }
+        }
+
+        public async Task<List<Art>> GetArtByArtistWithTags(int artistId)
+        {
+            // Reuse existing ADO.NET method and hydrate tags via TagService
+            var list = (await GetArtByArtist(artistId)).ToList();
+            foreach (var art in list)
+            {
+                art.Tags = (await TagService.GetTagsForArt(art.Id)).ToList();
+            }
+            return list;
         }
 
     }
