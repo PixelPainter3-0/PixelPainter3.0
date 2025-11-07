@@ -470,6 +470,7 @@ const cursorPositionComputed = computed(
 );
 
 onMounted(async () => {
+  console.log("Canvas properties: ",layerStore.grids[0]);
   document.addEventListener("keydown", handleKeyDown);
   window.addEventListener("beforeunload", handleBeforeUnload);
 

@@ -357,8 +357,9 @@ function recenter(): void {
 }
 
 watch(
-  () => props.grid.backgroundColor,
-  () => {
+  () => props.grid?.backgroundColor,
+  (newColor) => {
+    if (!newColor) return;
     const bg = viewport.children[1] as Sprite;
     if (bg.tint !== props.grid.backgroundColor) {
       bg.tint = props.grid.backgroundColor;
