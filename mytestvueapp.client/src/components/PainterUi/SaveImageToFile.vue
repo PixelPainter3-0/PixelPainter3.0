@@ -6,6 +6,7 @@
     @mouseover="isHovered = true"
     @mouseleave="isHovered = false"
     @click="handleClick()"
+    :id="'downloadButton'"
   ></Button>
 </template>
 <script setup lang="ts">

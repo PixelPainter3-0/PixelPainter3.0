@@ -1253,7 +1253,7 @@ function flattenArt(): string[][] {
   return arr;
 }
 
-async function saveToFile(): Promise<void> {
+/*async function saveToFile(): Promise<void> {
   const grid: string[][] = flattenArt();
 
   const canvas = document.createElement("canvas");
@@ -1354,7 +1354,7 @@ async function saveGIFFromPainter(): Promise<void> {
   }
 
   GIFCreationService.createGIF(urls, fps.value);
-}
+}*/
 
 
 
@@ -1472,11 +1472,13 @@ function handleKeyDown(event: KeyboardEvent) {
       console.log("Ctrl+d was pressed.");
       event.preventDefault();
       console.log(art.value);
-      if (art.value.pixelGrid.isGif) {
+      document.getElementBy
+      document.getElementById("downloadButton")?.click();
+      /*if (art.value.pixelGrid.isGif) {
         saveGIFFromPainter();
       } else {
         saveToFile();
-      }
+      }*/
     } else if ((event.ctrlKey || event.metaKey) && event.key === "s") {
       event.preventDefault();
       console.log("Ctrl+s was pressed.");
