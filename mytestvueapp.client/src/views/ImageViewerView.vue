@@ -142,7 +142,21 @@
           />
         </div>
 
-        <!-- 6) Delete Art -->
+           <!-- 6) Tag Location -->
+         <div class="viewer-actions row end">
+           <!-- ensure point can icon -->
+           <Button
+             v-if="art.currentUserIsOwner || isAdmin"
+             class="danger-action"
+             title="Place"
+             label="Place on Map"
+             icon="pi pi-map-marker"
+             @click="() => router.push(`/mapadd/${id}`)"
+             :isAdmin="isAdmin"
+           />
+         </div>
+
+        <!-- 7) Delete Art -->
         <div class="viewer-actions row end">
           <!-- ensure trash can icon -->
           <DeleteArtButton
@@ -949,12 +963,13 @@ async function gifDisplay(): Promise<void> {
 /* Tag pills: larger */
 .tag-list { display:flex; flex-wrap:wrap; gap:.5rem; list-style:none; margin:0; padding:0; }
 .tag-pill {
-  background:#2a313a; color:#ffffff;
+  background: var(--tag-bg);
+  color: var(--tag-text);
   padding:.5rem .9rem; font-size:.8rem; font-weight:600; line-height:1;
-  border-radius:9999px; border:1px solid #4b5563; letter-spacing:.3px;
+  border-radius:9999px; border:1px solid var(--tag-border); letter-spacing:.3px;
   cursor:pointer; user-select:none; transition:background .15s, border-color .15s;
 }
-.tag-pill:hover { background:#4b5563; border-color:#6b7280; }
+.tag-pill:hover { background: var(--tag-hover-bg); border-color: var(--tag-hover-border); }
 .tag-pill:focus-visible { outline:2px solid #545862; outline-offset:2px; }
 
 /* Button rows: even spacing above and below */

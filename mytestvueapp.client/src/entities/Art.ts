@@ -28,6 +28,9 @@ export default class Art {
   gifFrameNum: number;
   gifFps: number;
 
+  pointId: number;
+
+
   constructor() {
     this.id = 0;
     this.title = "";
@@ -50,5 +53,7 @@ export default class Art {
 
     this.tags = []; // Initialize Tags as an empty array
     this.isDisliked = false;
+
+    this.pointId = 0;
   }
 }

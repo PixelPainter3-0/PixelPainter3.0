@@ -9,11 +9,13 @@ namespace MyTestVueApp.Server.Hubs
     {
         private readonly IConnectionManager Manager;
         private readonly ILogger<SignalHub> Logger;
+        private readonly string GridName;
 
         public SignalHub(IConnectionManager manager, ILogger<SignalHub> logger)
         {
             Manager = manager;
             Logger = logger;
+            GridName = "K8GcUiUQZ5dnN673tC7G";
         }
 
         public async Task JoinGroup(string groupName, Artist artist)
@@ -98,6 +100,7 @@ namespace MyTestVueApp.Server.Hubs
                 try
                 {
                     Manager.RemoveUserFromAllGroups(Context.ConnectionId);
+                    
                 }
                 catch (ArgumentException ex)
                 {
@@ -110,6 +113,38 @@ namespace MyTestVueApp.Server.Hubs
                 Logger.LogError($"Error, Disconnected: {exception.Message}");
             }
             await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task JoinGrid(Artist artist)
+        {
+            if (!Manager.GridExists())
+            {
+                Manager.AddGrid(200);
+            }
+            Manager.AddGridMember(Context.ConnectionId, artist);
+            await Groups.AddToGroupAsync(Context.ConnectionId, GridName);
+
+            var Grid = Manager.GetGrid();
+            await Clients.Client(Context.ConnectionId).SendAsync("GroupConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList());
+
+            await Clients.Group(GridName).SendAsync("NewMember", artist);
+        }
+        public async Task SendGridPixels(string color, Coordinate coord, int artistId)
+        {
+            Manager.GridPaint(artistId, color, coord);
+            await Clients.Group(GridName).SendAsync("ReceivePixel", 0, color, coord);
+        }
+        public async Task LeaveGrid(Artist artist)
+        {
+            try
+            {
+                Manager.RemoveUserFromGrid(Context.ConnectionId, artist);
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogError(ex.Message);
+            }
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GridName);
         }
     }
 }
