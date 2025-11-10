@@ -1472,7 +1472,6 @@ function handleKeyDown(event: KeyboardEvent) {
       console.log("Ctrl+d was pressed.");
       event.preventDefault();
       console.log(art.value);
-      document.getElementBy
       document.getElementById("downloadButton")?.click();
       /*if (art.value.pixelGrid.isGif) {
         saveGIFFromPainter();
