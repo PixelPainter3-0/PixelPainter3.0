@@ -970,7 +970,18 @@ function clear(): void {
 //returns array array of color strings
 function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   let outArray: string[][] = [];
-  let leftBound = Math.min(start.x, end.x);//TODO: no negative or too high values
+
+  //if tesselation becomes a thing, it would have to compare to some multiple of width or height
+  start.x = Math.max(start.x, 0);
+  start.x = Math.min(start.x, layerStore.grids[layerStore.layer].width - 1);
+  start.y = Math.max(start.y, 0);
+  start.y = Math.min(start.y, layerStore.grids[layerStore.layer].height - 1);
+  end.x = Math.max(end.x, 0);
+  end.x = Math.min(end.x, layerStore.grids[layerStore.layer].width - 1);
+  end.y = Math.max(end.y, 0);
+  end.y = Math.min(end.y, layerStore.grids[layerStore.layer].height - 1);
+
+  let leftBound = Math.min(start.x, end.x);
   let rightBound = Math.max(start.x, end.x);
   let lowerBound = Math.min(start.y, end.y);
   let upperBound = Math.max(start.y, end.y);
