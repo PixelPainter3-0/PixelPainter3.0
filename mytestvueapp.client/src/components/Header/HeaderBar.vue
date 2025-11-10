@@ -194,19 +194,36 @@ watch(
 <style scoped>
 /* Theme variables (unscoped via :global so they actually apply) */
 :global(:root) {
-  --header-bg: rgba(255,255,255,0.85);
+  /* Adjust transparency here: change the last value (alpha) from 0.62 to a lower number for more see-through,
+     or a higher number for more solid. Example: 0.5 is more transparent, 0.9 is more solid. */
+  --header-bg: rgba(255,255,255,0.62);
   --header-border: rgba(0,0,0,0.08);
   --header-shadow: 0 4px 18px -6px rgba(0,0,0,0.25);
 }
 :global(html.dark-mode-toggle) {
+  /* Adjust transparency here for dark mode header (alpha = 0.54 below) */
   --header-bg: rgba(22,22,22,0.74);
   --header-border: rgba(255,255,255,0.14);
   --header-shadow: 0 6px 24px -8px rgba(0,0,0,0.6);
 }
 
-/* Shell + toolbar */
+/* Shell + toolbar
+   NOTE: header-shell is now sticky and animates via transform at ALL viewports
+   so the same hide-on-scroll behavior will apply on desktop and mobile.
+   If you want to tweak behavior specifically for desktop change the values below. */
 .header-shell {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   background: var(--header-bg);
+  transform: translateY(0);
+  transition: transform 220ms ease;
+  will-change: transform;
+}
+
+/* applied when JS sets hideHeader = true */
+.header-shell.hide-on-scroll {
+  transform: translateY(-100%);
 }
 
 .custom-background {
@@ -239,23 +256,11 @@ watch(
 /* Mobile menu (hidden by default) */
 .mobile-menu {
   display: none;
-  width: 40%
+  width: 40%;
 }
 
-/* Mobile hide-on-scroll behavior */
+/* Mobile-specific rules */
 @media (max-width: 1000px) {
-  .header-shell {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    transform: translateY(0);
-    transition: transform 220ms ease;
-    will-change: transform;
-  }
-  .header-shell.hide-on-scroll {
-    transform: translateY(-100%);
-  }
-
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
@@ -294,12 +299,8 @@ watch(
   }
 }
 
-/* Desktop reset */
+/* Desktop-specific: just ensure mobile menu & toggle are hidden */
 @media (min-width: 1001px) {
-  .header-shell {
-    position: relative;
-    transform: none !important;
-  }
   .mobile-menu { display: none !important; }
   .menu-toggle { display: none; }
 }
@@ -326,4 +327,4 @@ watch(
 }
 </style>
 
-<!-- 2  -->
+<!-- 4  -->
