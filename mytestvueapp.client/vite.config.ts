@@ -103,7 +103,11 @@ export default defineConfig({
         secure: false,
       }
     },
+    host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ['pixelpainter.app'],
+    allowedHosts: [
+      'pixelpainter.app',
+      '0.0.0.0',
+    ],
   }
 });

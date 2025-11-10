@@ -48,7 +48,7 @@
                     } else {
                         console.log(`Art found for point ${point.id}:`, pointArt);
 
-                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='http://localhost:5173/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
+                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='https://pixelpainter.app/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
 
                     }
                 } catch (error) {
