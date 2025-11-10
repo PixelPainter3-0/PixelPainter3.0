@@ -970,7 +970,7 @@ function clear(): void {
 //returns array array of color strings
 function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   let outArray: string[][] = [];
-  let leftBound = Math.min(start.x, end.x);
+  let leftBound = Math.min(start.x, end.x);//TODO: no negative or too high values
   let rightBound = Math.max(start.x, end.x);
   let lowerBound = Math.min(start.y, end.y);
   let upperBound = Math.max(start.y, end.y);
@@ -978,11 +978,11 @@ function getSelectPixels(start: Vector2, end: Vector2): string[][] {
   let height = upperBound - lowerBound + 1;
   let width = rightBound - leftBound + 1;
 
-  for (let i = 0; i < height; i++) {
+  for (let i = 0; i < width; i++) {
     outArray[i] = []; // initialize the row?
-    for (let j = 0; j < width; j++) {
+    for (let j = 0; j < height; j++) {
       outArray[i][j] =
-        layerStore.grids[layerStore.layer].grid[lowerBound + i][leftBound + j];
+        layerStore.grids[layerStore.layer].grid[leftBound + i][lowerBound + j];
     }
   }
   return outArray;
