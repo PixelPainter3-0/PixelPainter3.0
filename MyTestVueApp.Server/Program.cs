@@ -37,6 +37,15 @@ builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
 builder.Services.AddTransient<ITagService, TagService>();
 builder.Services.AddTransient<IMapAccessService, MapAccessService>();
 
+builder.Services.AddCors(options =>
+  {
+    options.AddPolicy("CorsPolicy", builder => builder
+      .WithOrigins("https://pixelpainter.app")
+      .AllowAnyMethod()
+      .AllowAnyHeader()
+      .AllowCredentials());
+  });
+
 var app = builder.Build();
 
 app.UseDefaultFiles();
@@ -50,6 +59,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // app.UseHttpsRedirection();
+
+app.UseRouting();
+app.UseCors("CorsPolicy");
 
 app.UseAuthorization();
 
