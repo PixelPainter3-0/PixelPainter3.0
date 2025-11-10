@@ -16,7 +16,7 @@ namespace MyTestVueApp.Server.Entities
 
         
         public Group(string groupName, List<Artist> contributors, string[][][] canvas, int canvasSize, string backgroundColor): this(groupName)
-        {
+          {
             Name = groupName;
             foreach(string[][] grid in canvas){
               Pixels.Add(grid);

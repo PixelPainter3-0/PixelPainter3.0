@@ -7,6 +7,7 @@
     @mouseover="isHover = true"
     @mouseleave="isHover = false"
     :disabled="tagCreationLoading || loading"
+    :id="'uploadButton'"
   ></Button>
 
   <!---->

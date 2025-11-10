@@ -24,12 +24,17 @@
 
       <template #subtitle>
         <div class="text-sm m-0 px-2 max-w-11rem text-overflow-ellipsis">
-          <div v-if="art.artistName && art.artistName.length > 1">
-            {{ art.artistName[0] }}, etc.
+          <div v-if="artistNames.length > 1">
+            <button class="artist-link" @click.stop="goToArtist(artistNames[0])">
+              {{ artistNames[0] }}
+            </button>, etc.
           </div>
-          <div v-else-if="!art.artistName || art.artistName.length === 0"></div>
-          <!--Should never be used-->
-          <div v-else>{{ art.artistName[0] }}</div>
+          <div v-else-if="artistNames.length === 1">
+            <button class="artist-link" @click.stop="goToArtist(artistNames[0])">
+              {{ artistNames[0] }}
+            </button>
+          </div>
+          <div v-else></div>
         </div>
       </template>
 
@@ -139,6 +144,11 @@ const numComments = computed(() => {
   }
   return commentLabel;
 });
+const artistNames = computed<string[]>(() => props.art.artistName ?? []);
+
+function goToArtist(name: string) {
+  router.push(`/accountpage/${encodeURIComponent(name)}`);
+}
 </script>
 
 <style scoped>
@@ -159,14 +169,14 @@ const numComments = computed(() => {
 }
 
 .tag-pill {
-  background: #2a313a;
-  color: #fff;
+  background: var(--tag-bg);
+  color: var(--tag-text);
   font-size: 0.55rem;
   font-weight: 600;
   padding: 0.3rem 0.55rem;
   line-height: 1;
   border-radius: 9999px;
-  border: 1px solid #434b55;
+  border: 1px solid var(--tag-border);
   max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -176,11 +186,28 @@ const numComments = computed(() => {
   cursor: pointer; /* make it clear it's clickable */
 }
 .tag-pill.more {
-  background: #444155;
+  background: var(--tag-more-bg);
 }
 .tag-pill:hover {
-  background: #4b5563;
-  border-color: #6b7280;
+  background: var(--tag-hover-bg);
+  border-color: var(--tag-hover-border);
+}
+
+/* Username link styles */
+.artist-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #9ca3af; /* gray by default */
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.artist-link:hover,
+.artist-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 </style>
 

@@ -58,7 +58,20 @@ export default class LoginService {
 
   public static async getCurrentUser(): Promise<Artist> {
     try {
-      const response = await fetch("/login/GetCurrentUser");
+      const response = await fetch("/login/GetCurrentUser", {
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        // Return an anonymous Artist instead of throwing
+        const anon = {} as Artist;
+        // @ts-ignore
+        anon.id = 0;
+        // optional defaults
+        // @ts-ignore
+        anon.name = "";
+        return anon;
+      }
 
       if (!response.ok) {
         throw new Error("Error retrieving user");
@@ -66,11 +79,16 @@ export default class LoginService {
 
       const data = await response.json();
       const user: Artist = data;
-
       return user;
     } catch (error) {
       console.error(error);
-      throw error;
+      // Fallback to anonymous on network errors too
+      const anon = {} as Artist;
+      // @ts-ignore
+      anon.id = 0;
+      // @ts-ignore
+      anon.name = "";
+      return anon;
     }
   }
 

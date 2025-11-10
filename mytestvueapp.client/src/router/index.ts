@@ -58,6 +58,16 @@ const router = createRouter({
       name: "TagGallery",
       component: () => import('@/views/GalleryView.vue'),
       props: true
+    },
+    {
+      path: "/map",
+      name: "MapViewer",
+      component: () => import("../views/MapViewer.vue")
+    },
+    {
+      path: "/mapadd/:id",
+      name: "MapPlacer",
+      component: () => import("../views/MapPlacer.vue")
     }
   ]
 });

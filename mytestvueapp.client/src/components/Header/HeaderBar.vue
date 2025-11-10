@@ -16,7 +16,10 @@
           <Button rounded label="Painter" icon="pi pi-pencil" />
         </RouterLink>
         <RouterLink class="p-2" to="/thegrid">
-          <Button rounded label="The Grid" icon="pi pi-globe" @click="updateLocalStorage()"/>
+          <Button rounded label="The Grid" icon="pi pi-globe"/>
+        </RouterLink>
+        <RouterLink class="p-2" to="/map">
+          <Button rounded label="Map" icon="pi pi-map"/>
         </RouterLink>
         <RouterLink class="p-2" to="/gallery">
           <Button rounded label="Gallery" icon="pi pi-image" />
@@ -47,6 +50,8 @@ import { useLayerStore } from "@/store/LayerStore";
 import { useArtistStore } from "@/store/ArtistStore";
 import { PixelGrid } from "@/entities/PixelGrid";
 
+const emit = defineEmits(["openModal", "connect", "disconnect"]);
+
 const layerStore = useLayerStore();
 const artistStore = useArtistStore();
 
@@ -66,8 +71,7 @@ function updateLocalStorage(): void {
     !isImage.value // Constructor wants isGif so pass in !isImage
   );
 
-  layerStore.pushGrid(pixelGrid);
-  router.push("/paint");
+  router.push("/thegrid");
 }
 
 onMounted(async () => {
@@ -78,6 +82,7 @@ onMounted(async () => {
     isLoggedIn.value = result;
   });
 });
+
 </script>
 
 <style scoped>

@@ -11,6 +11,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
         Dictionary<string, Artist> ArtistLookup = new();
         //artistId, MembershipRecord
         Dictionary<int, MembershipRecord> Records = new();
+        GridGroup Grid;
 
         public void AddGroup(string groupName, List<Artist> contributors, string[][][] canvas, int canvasSize, string backgroundColor)
         {
@@ -86,7 +87,6 @@ namespace MyTestVueApp.Server.ServiceImplementations
 
         public void RemoveUserFromAllGroups(string connectionId)
         {
-
             if (!ArtistLookup.ContainsKey(connectionId) || !Records.ContainsKey(ArtistLookup[connectionId].Id) )
             {
                 throw new ArgumentException("RemoveUserFromGroup: This connection doesnt exist, so we cannot remove it!");
@@ -161,5 +161,85 @@ namespace MyTestVueApp.Server.ServiceImplementations
         {
             return ArtistLookup.ContainsKey(connectionId);
         }
+
+        public void AddGrid(int size)
+        {
+            Grid = new GridGroup(size);
+        }
+        public bool GridExists()
+        {
+            if(Grid != null)
+            {
+                return true;
+            }
+            return false;
+        }
+        public void AddGridMember(string connectionId, Artist artist)
+        {
+            Grid.AddMember(artist);
+            if (Records.ContainsKey(artist.Id))
+            {
+                Records[artist.Id].Connections.Add(new(connectionId, Grid.GroupName));
+            }
+            else
+            {
+                Records.Add(artist.Id, new(connectionId, artist.Id, Grid.GroupName));
+            }
+        }
+        public GridGroup GetGrid()
+        {
+            return Grid;
+        }
+        public void GridPaint(int memberId, string color, Coordinate coord)
+        {
+            Grid.PaintPixels(memberId, color, coord);
+        }
+        public void RemoveUserFromGrid(string connectionId, Artist artist)
+        {
+
+            if (!Records.ContainsKey(artist.Id))
+            {
+                throw new ArgumentException("This artist is not tracked by the connection manager, so we cant remove them!");
+            }
+
+            MembershipRecord record = Records[artist.Id];
+            List<ConnectionBinding> allConnectionsToGroup = new();
+            ConnectionBinding? connectionToDelete = null;
+
+            foreach (ConnectionBinding binding in record.Connections)
+            {
+                if (binding.groupName == Grid.GroupName)
+                {
+                    allConnectionsToGroup.Add(binding);
+                    if (binding.connectionId == connectionId)
+                    {
+                        connectionToDelete = binding;
+                    }
+                }
+            }
+
+            if (connectionToDelete == null || allConnectionsToGroup.Count == 0)
+            { // Invalid request
+                throw new ArgumentException("RemoveUserFromGroup: Invalid ConnectionId!");
+            }
+
+            if (allConnectionsToGroup.Count() == 1)
+            { // Remove member from group
+                Grid.RemoveArtist(artist);
+                record.Connections.Remove(connectionToDelete);
+                ArtistLookup.Remove(connectionId);
+            }
+            else
+            { // Just remove the connection
+                record.Connections.Remove(connectionToDelete);
+                ArtistLookup.Remove(connectionId);
+            }
+
+            if (record.Connections.Count == 0)
+            { // Remove record from records if the Artist doesnt have any open connections;
+                Records.Remove(artist.Id);
+            }
+        }
+
     }
 }
