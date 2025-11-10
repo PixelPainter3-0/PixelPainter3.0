@@ -133,7 +133,7 @@
         await MapAccessService.updateArtLocation(artId, pointId);
         window.location.href = "https://pixelpainter.app/art/" + artId;
     }
-
+    
     // Make globally accessible
     (window as any).handleTagArt = handleTagArt;
 
