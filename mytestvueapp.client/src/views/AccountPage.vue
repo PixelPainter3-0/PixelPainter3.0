@@ -16,6 +16,11 @@
               @click="changeHash('#settings')"
             />
             <Button
+              label="Notification Settings"
+              :severity="route.hash == '#notification_settings' ? 'primary' : 'secondary'"
+              @click="changeHash('#notification_settings')"
+            />
+            <Button
               label="Creator's Art"
               :severity="route.hash == '#created_art' ? 'primary' : 'secondary'"
               @click="changeHash('#created_art')"
@@ -103,6 +108,59 @@
           />
         </div>
       </div>
+
+  <div v-if="route.hash == '#notification_settings'">
+  <h2>Notification Settings</h2>
+  <Card>
+    <template #content>
+      <h3>Enable or Disable Notification Types</h3>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Art Liked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifLikes ? 'Enabled' : 'Disabled'"
+          :severity="notifLikes ? 'primary' : 'secondary'"
+          :icon="notifLikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifLikes = !notifLikes"
+        />
+      </div>
+
+      <div class="align-items-stretch flex">
+        <p class="w-10">Comment Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifComments ? 'Enabled' : 'Disabled'"
+          :severity="notifComments ? 'primary' : 'secondary'"
+          :icon="notifComments ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifComments = !notifComments"
+        />
+      </div>
+
+      <div class="align-items-stretch flex">
+        <p class="w-10">Reply Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifReplies ? 'Enabled' : 'Disabled'"
+          :severity="notifReplies ? 'primary' : 'secondary'"
+          :icon="notifReplies ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifReplies = !notifReplies"
+        />
+      </div>
+
+      <!-- ✅ Save Button -->
+      <div class="flex justify-content-end mt-3">
+        <Button
+          label="Save Notification Settings"
+          icon="pi pi-save"
+          severity="success"
+          @click="saveNotifications"
+        />
+      </div>
+    </template>
+  </Card>
+</div>
+
+
       <div v-if="route.hash == '#created_art'">
         <h2>My Art</h2>
         <div class="shrink-limit flex flex-wrap">
@@ -135,6 +193,7 @@
 import { ref, onMounted, computed } from "vue";
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
+import NotificationService from "@/services/NotificationService";
 import router from "@/router";
 import { useToast } from "primevue/usetoast";
 import Card from "primevue/card";
@@ -158,8 +217,13 @@ const curArtist = ref<Artist>(new Artist());
 const curUser = ref<Artist>(new Artist());
 const pageStatus = ref<string>("");
 const canEdit = ref<boolean>(false);
-
 var curUsername = ref<string>("");
+
+
+
+const notifLikes = ref<boolean>(true);
+const notifComments = ref<boolean>(true);
+const notifReplies = ref<boolean>(true);
 
 var myArt = ref<Art[]>([]);
 var likedArt = ref<Art[]>([]);
@@ -178,9 +242,12 @@ onMounted(async () => {
         life: 3000
       });
     }
-
+    newUsername.value = user.name;
+    artist.value = user;
     isAdmin.value = user.isAdmin;
+    updateNotifications();
   });
+
 
   await LoginService.GetArtistByName(name).then((promise: Artist) => {
     curArtist.value = promise;
@@ -236,6 +303,44 @@ async function logout(): Promise<void> {
     });
   });
 }
+
+function updateNotifications(): void {
+  console.log(artist.value);
+  const value = artist.value.notificationsEnabled ?? 0;
+  notifLikes.value = (value & 1) !== 0;
+  notifComments.value = (value & 2) !== 0;
+  notifReplies.value = (value & 4) !== 0;
+}
+function computeNotificationsEnabled(): number {
+  let value = 0;
+  if (notifLikes.value) value += 1;
+  if (notifComments.value) value += 2;
+  if (notifReplies.value) value += 4;
+  return value;
+}
+
+async function saveNotifications(): Promise<void> {
+  const newValue = computeNotificationsEnabled(); 
+  const success = await NotificationService.updateNotificationsEnabled(artist.value.id, newValue);
+  if (success) {
+    artist.value.notificationsEnabled = newValue;
+    toast.add({
+      severity: "success",
+      summary: "Success",
+      detail: "Notification settings updated",
+      life: 2000
+    });
+  } else {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Failed to update notifications",
+      life: 2000
+    });
+  }
+}
+
+
 
 function cancelEdit(): void {
   isEditing.value = false;
@@ -336,4 +441,4 @@ async function privateSwitchChange() {
     width: 100%;
   }
 }
-</style>
+</style>  

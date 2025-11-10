@@ -399,6 +399,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                           ,[CreationDate]
                           ,[PrivateProfile]
                           ,[Email]
+                          ,[NotificationsEnabled]
                       FROM [PixelPainter].[dbo].[Artist]
                       WHERE SubId = @SubId
                     ";
@@ -419,6 +420,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 CreationDate = reader.GetDateTime(4),
                                 PrivateProfile = reader.GetBoolean(5),
                                 Email = reader.GetString(6),
+                                NotificationsEnabled = reader.GetInt32(7)
                             };
                             return artist;
                         }

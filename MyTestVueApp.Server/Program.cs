@@ -35,6 +35,7 @@ builder.Services.AddTransient<ICommentAccessService, CommentAccessService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
 builder.Services.AddTransient<ITagService, TagService>();
+builder.Services.AddTransient<IArtistService, ArtistService>();
 
 var app = builder.Build();
 

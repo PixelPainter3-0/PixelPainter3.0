@@ -9,5 +9,7 @@
         public bool PrivateProfile { get; set; } = false;
         public DateTime CreationDate { get; set; }
         public string Email { get; set; } = "";
+
+        public int NotificationsEnabled { get; set; } = 0;
     }
 }
