@@ -39,10 +39,10 @@ import { env } from "process";
 // }
 
 const target = env.ASPNETCORE_HTTPS_PORT
-  ? `http://localhost:${env.ASPNETCORE_HTTPS_PORT}`
+  ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
   : env.ASPNETCORE_URLS
   ? env.ASPNETCORE_URLS.split(";")[0]
-  : "http://localhost:7154";
+  : "https://localhost:7154";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -103,12 +103,6 @@ export default defineConfig({
         secure: false,
       }
     },
-    host: '0.0.0.0',
-    port: 5173,
-    // https: {
-    //   key: fs.readFileSync(keyFilePath),
-    //   cert: fs.readFileSync(certFilePath)
-    // },
-    allowedHosts: ['pixelpainter.app'],
+    port: 5173
   }
 });
