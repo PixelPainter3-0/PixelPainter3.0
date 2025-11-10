@@ -53,7 +53,7 @@
                     } else {
                         console.log(`Art found for point ${point.id}:`, pointArt);
 
-                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='https://localhost:/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
+                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='https://pixelpainter.app/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
 
                     }
                 } catch (error) {
@@ -131,7 +131,7 @@
         const pointId = await MapAccessService.createPoint(lat, lng, "untitled", 1);
         console.log(pointId);
         await MapAccessService.updateArtLocation(artId, pointId);
-        window.location.href = "http://localhost:5173/art/" + artId;
+        window.location.href = "https://pixelpainter.app/art/" + artId;
     }
 
     // Make globally accessible

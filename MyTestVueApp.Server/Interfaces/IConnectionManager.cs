@@ -18,5 +18,11 @@ namespace MyTestVueApp.Server.Interfaces
         public IEnumerable<Artist> GetContributingArtists(string groupName);
         public bool GroupExists(string groupName);
         public bool HasConnection(string connectionId);
+        public void AddGrid(int size);
+        public bool GridExists();
+        public void AddGridMember(string connectionId, Artist artist);
+        public GridGroup GetGrid();
+        public void GridPaint(int memberId, string color, Coordinate coord);
+        public void RemoveUserFromGrid(string connectionId, Artist artist);
     }
 }
