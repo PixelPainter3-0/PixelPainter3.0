@@ -95,7 +95,7 @@ function init(): void {
   dropShadow.filters = [dropShadowFilter];
 
   const background = new Sprite(Texture.WHITE);
-n  background.width = layerStore.grids[0].width * PIXEL_SIZE;
+  background.width = layerStore.grids[0].width * PIXEL_SIZE;
   background.height = layerStore.grids[0].height * PIXEL_SIZE;
   background.tint = layerStore.grids[0].backgroundColor;
 
@@ -208,7 +208,7 @@ function updateCell(layer: number, x: number, y: number, color: string): void {
       }
 
       //no way around this, viewport stores sprites in a 1d array
-      idx += x * props.grid.width + y;
+      idx += x * props.grid.height + y;
       const cell = viewport.children[idx] as Sprite;
       if (color === "empty") {
         cell.alpha = 0;

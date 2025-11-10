@@ -353,6 +353,7 @@ const createGroup = (groupName: string) => {
       artistStore.artists,
       grids,
       layerStore.grids[0].width,
+      layerStore.grids[0].height,
       layerStore.grids[0].backgroundColor
     )
     .then(() => {
