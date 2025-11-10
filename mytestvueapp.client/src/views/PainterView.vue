@@ -222,7 +222,7 @@ const audioRef = ref(new Audio());
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
 let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("http://159.65.240.86:7154/signalhub", {
+  .withUrl("https://159.65.240.86:7154/signalhub", {
     skipNegotiation: true,
     transport: SignalR.HttpTransportType.WebSockets
   })
