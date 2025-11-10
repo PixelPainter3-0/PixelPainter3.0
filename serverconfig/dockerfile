@@ -19,4 +19,4 @@ RUN mv /app/serverconfig/appsettings.json /app/MyTestVueApp.Server
 # RUN dotnet dev-certs https --export-path /root/.aspnet/https/mytestvueapp.client.pem 
 
 WORKDIR /app/MyTestVueApp.Server
-ENTRYPOINT ["dotnet", "run", "--host"]
+ENTRYPOINT ["dotnet", "run"]
