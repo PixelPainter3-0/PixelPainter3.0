@@ -98,15 +98,6 @@
             </div>
           </template>
         </Card>
-        <div class="flex flex-column gap-2">
-          <h2>Current Page Status: {{ pageStatus }}</h2>
-          <Button
-            class="block m-2"
-            label=" Click to change page status"
-            icon="pi pi-eye"
-            @click="privateSwitchChange()"
-          />
-        </div>
       </div>
 
   <div v-if="route.hash == '#notification_settings'">
@@ -148,7 +139,7 @@
       </div>
 
       <!-- ✅ Save Button -->
-      <div class="flex justify-content-end mt-3">
+      <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
           icon="pi pi-save"
@@ -197,14 +188,13 @@ import { useToast } from "primevue/usetoast";
 
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
+import NotificationService from "@/services/NotificationService";
 
 import type Art from "@/entities/Art";
 import Artist from "@/entities/Artist";
 
 // PrimeVue components used in template
-import NotificationService from "@/services/NotificationService";
-import router from "@/router";
-import { useToast } from "primevue/usetoast";
+//import router from "@/router";
 import Card from "primevue/card";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
@@ -212,6 +202,7 @@ import Avatar from "primevue/avatar";
 import Message from "primevue/message";
 // Child component
 import ArtCard from "@/components/Gallery/ArtCard.vue";
+//import { createBuilderStatusReporter } from "typescript";
 
 const toast = useToast();
 const route = useRoute();
@@ -230,51 +221,10 @@ const notifLikes = ref<boolean>(true);
 const notifComments = ref<boolean>(true);
 const notifReplies = ref<boolean>(true);
 
-var myArt = ref<Art[]>([]);
-var likedArt = ref<Art[]>([]);
+
 const myArt = ref<Art[]>([]);
 const likedArt = ref<Art[]>([]);
 
-onMounted(async () => {
-  await LoginService.getCurrentUser().then((user: Artist) => {
-    curUser.value = user;
-    // @ts-ignore
-    curUsername.value = curUser.value;
-    if (user.id == 0) {
-      router.go(-1);
-      toast.add({
-        severity: "error",
-        summary: "Warning",
-        detail: "User must be logged in to view account page",
-        life: 3000
-      });
-    }
-    newUsername.value = user.name;
-    artist.value = user;
-    isAdmin.value = user.isAdmin;
-    updateNotifications();
-  });
-
-
-  await LoginService.GetArtistByName(name).then((promise: Artist) => {
-    curArtist.value = promise;
-    newUsername.value = promise.name;
-    if (curArtist.value.privateProfile) {
-      if (curUser.value.id != curArtist.value.id && !isAdmin.value) {
-        router.go(-1);
-        toast.add({
-          severity: "error",
-          summary: "Access Denied",
-          detail: "Account page is declared as private",
-          life: 3000
-        });
-      }
-      pageStatus.value = "Private";
-    } else {
-      pageStatus.value = "Public";
-    }
-    ArtAccessService.getAllArtByUserID(curArtist.value.id).then((art) => {
-      myArt.value = (art ?? []).map((a: any) => ({
 const canEdit = computed<boolean>(
   () => curUser.value.id === curArtist.value.id || isAdmin.value
 );
@@ -301,6 +251,7 @@ async function loadArtistData(artistName: string): Promise<void> {
 
   try {
     const artistInfo = await LoginService.GetArtistByName(artistName);
+    console.log(artistInfo);
     curArtist.value = artistInfo;
     newUsername.value = artistInfo.name ?? "";
 
@@ -355,8 +306,8 @@ async function loadArtistData(artistName: string): Promise<void> {
 
 onMounted(async () => {
   // Default tab if none/invalid
-  if (!["#settings", "#created_art", "#liked_art"].includes(route.hash)) {
-    changeHash("#created_art");
+  if (!["#settings", "notifications_settings", "#created_art", "#liked_art"].includes(route.hash)) {
+    changeHash("#settings");
   }
 
   // Try to get current user, but allow anonymous
@@ -371,7 +322,10 @@ onMounted(async () => {
   }
 
   await loadArtistData(String(route.params.artist ?? ""));
+  updateNotifications();
 });
+
+
 
 watch(
   () => route.params.artist,
@@ -383,17 +337,25 @@ watch(
 function changeHash(hash: string): void {
   if (hash === "#settings" && !canEdit.value) {
     toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "User logged out",
-      life: 3000
+      severity: "info",
+      summary: "Read-only",
+      detail: "Login to manage this account.",
+      life: 2500,
     });
-  });
+    return;
+  }
+  window.location.hash = hash;
+}
+
+
+function cancelEdit(): void {
+  isEditing.value = false;
+  newUsername.value = curArtist.value.name ?? "";
 }
 
 function updateNotifications(): void {
-  console.log(artist.value);
-  const value = artist.value.notificationsEnabled ?? 0;
+  console.log(curArtist.value);
+  const value = curArtist.value.notificationsEnabled ?? 0;
   notifLikes.value = (value & 1) !== 0;
   notifComments.value = (value & 2) !== 0;
   notifReplies.value = (value & 4) !== 0;
@@ -408,9 +370,9 @@ function computeNotificationsEnabled(): number {
 
 async function saveNotifications(): Promise<void> {
   const newValue = computeNotificationsEnabled(); 
-  const success = await NotificationService.updateNotificationsEnabled(artist.value.id, newValue);
+  const success = await NotificationService.updateNotificationsEnabled(curArtist.value.id, newValue);
   if (success) {
-    artist.value.notificationsEnabled = newValue;
+    curArtist.value.notificationsEnabled = newValue;
     toast.add({
       severity: "success",
       summary: "Success",
@@ -426,22 +388,8 @@ async function saveNotifications(): Promise<void> {
     });
   }
 }
-      severity: "info",
-      summary: "Read-only",
-      detail: "Login to manage this account.",
-      life: 2500,
-    });
-    return;
-  }
-  window.location.hash = hash;
-}
 
 
-
-function cancelEdit(): void {
-  isEditing.value = false;
-  newUsername.value = curArtist.value.name ?? "";
-}
 
 const errorMessage = computed<string>(() => {
   if (newUsername.value.length > 16) {

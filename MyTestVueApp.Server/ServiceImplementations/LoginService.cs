@@ -348,6 +348,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     ,[IsAdmin]
                     ,[CreationDate]
                     ,[PrivateProfile]
+                    ,[NotificationsEnabled]
                 FROM [PixelPainter].[dbo].[Artist]
                 where Artist.Name = @Name
                     ";
@@ -367,6 +368,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 IsAdmin = reader.GetBoolean(3),
                                 CreationDate = reader.GetDateTime(4),
                                 PrivateProfile = reader.GetBoolean(5),
+                                NotificationsEnabled = reader.GetInt32(6),
 
                             };
                             

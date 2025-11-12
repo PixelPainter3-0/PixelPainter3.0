@@ -10,6 +10,6 @@
         public DateTime CreationDate { get; set; }
         public string Email { get; set; } = "";
 
-        public int NotificationsEnabled { get; set; } = 0;
+        public int NotificationsEnabled { get; set; }
     }
 }
