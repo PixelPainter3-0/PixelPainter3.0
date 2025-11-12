@@ -190,9 +190,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
         {
             return Grid;
         }
-        public void GridPaint(int memberId, string color, Coordinate coord)
+        public bool GridPaint(int memberId, string color, Coordinate coord)
         {
-            Grid.PaintPixels(memberId, color, coord);
+            return Grid.PaintPixels(memberId, color, coord);
         }
         public void RemoveUserFromGrid(string connectionId, Artist artist)
         {
