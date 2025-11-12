@@ -117,15 +117,13 @@ jobs:
 
       - name: Update signalhub url PainterView
         uses: adamreisnz/replace-in-file@v1.4.0
-        id: replace_content
         with:
-          files: 'mytestvueapp.client/src/views/PainterView.vue' # Specify the file(s) to modify
+          files: 'mytestvueapp.client/src/views/PainterView.vue'
           from: 'http://localhost:7154/signalhub'
           to: 'https://pixelpainter.app:7155/signalhub'
 
       - name: Update signalhub url GridView
         uses: adamreisnz/replace-in-file@v1.4.0
-        id: replace_content
         with:
           files: 'mytestvueapp.client/src/views/TheGridView.vue' # Specify the file(s) to modify
           from: 'http://localhost:7154/signalhub'
