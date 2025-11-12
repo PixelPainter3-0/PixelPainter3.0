@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using MyTestVueApp.Server.Entities;
 using MyTestVueApp.Server.Interfaces;
 using MyTestVueApp.Server.Models;
 using MyTestVueApp.Server.ServiceImplementations;
-using System.Security.Authentication;
 
 namespace MyTestVueApp.Server.Controllers
 {
@@ -12,166 +10,86 @@ namespace MyTestVueApp.Server.Controllers
     [Route("[controller]")]
     public class NotificationController : ControllerBase
     {
-        private readonly ILogger<NotificationController> Logger;
-        private readonly INotificationService NotificationService;
-        private readonly ICommentAccessService CommentService;
-        private readonly ILikeService LikeService;
-        private readonly IDislikeService DislikeService;
-
-        public NotificationController(ILogger<NotificationController> logger, INotificationService notificationService, ICommentAccessService commentService, ILikeService likeService, IDislikeService dislikeService)
+        private readonly ILogger<NotificationController> logger;
+        private readonly INotificationService notificationService;
+        public NotificationController(ILogger<NotificationController> Logger, INotificationService NotificationService)
         {
-            Logger = logger;
-            NotificationService = notificationService;
-            CommentService = commentService;
-            LikeService = likeService;
-            DislikeService = dislikeService;
+            logger = Logger;
+            notificationService = NotificationService;
         }
-        /// <summary>
-        /// Gets all notifications for a user
-        /// </summary>
-        /// <param name="userId">Id of the user to get notifications for</param>
-        /// <returns>A list of notifications</returns>
-        [HttpGet]
-        [Route("GetNotifications")]
+
+        [HttpGet("GetNotificationsForArtist")]
         [ProducesResponseType(typeof(List<Notification>), 200)]
-        public async Task<IActionResult> GetNotifications([FromQuery] string userId){
+        public async Task<IActionResult> GetNotificationsForArtist([FromQuery] int userId)
+        {
             try
             {
-                int uid;
-                if (int.TryParse(userId, out uid))
-                {
-                    var notifications = await NotificationService.GetNotificationsForArtist(uid);
-                    return Ok(notifications);
-                }
-                else
-                {
-                    throw new HttpRequestException("User Id is an int");
-                }
+                var notifications = await notificationService.GetNotificationsForArtist(userId);
+                return Ok(notifications);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex) 
-            {
-                return StatusCode(500);
+                logger.LogError(ex, "Error getting notifications for user {UserId}", userId);
+                return StatusCode(500, ex.Message);
             }
         }
-        /// <summary>
-        /// Marks a comment as viewed in the database
-        /// </summary>
-        /// <param name="commentId">Comment to mark</param>
-        [HttpPost]
-        [Route("MarkCommentViewed")]
+
+        [HttpPost("MarkCommentViewed")]
         public async Task<IActionResult> MarkCommentViewed([FromBody] int commentId)
         {
             try
             {
-                Comment comment = await CommentService.GetCommentByCommentId(commentId);
-                if (comment != null)
-                {
-                    if(await NotificationService.MarkComment(comment.Id))
-                    {
-                        return Ok();
-                    } else
-                    {
-                        throw new Exception("An unknown Error has Occured");
-                    }
-                    
-                }
-                else
-                {
-                    throw new HttpRequestException("CommentId must be an int");
-                }
-            } catch (HttpRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            } catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
-            } catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-        /// <summary>
-        /// Marks a like viewed in the database
-        /// </summary>
-        /// <param name="likeModel">Id of the art, and id of the artist</param>
-        [HttpPost]
-        [Route("MarkLikeViewed")]
-        public async Task<IActionResult> MarkLikeViewed([FromBody] LikesModel likeModel)
-        {
-            try
-            {
-                Like like = await LikeService.GetLikeByIds(likeModel.ArtId, likeModel.ArtistId);
-                if (like != null)
-                {
-                    if (await NotificationService.MarkLike(like.ArtId, like.ArtistId))
-                    {
-                        return Ok();
-                    }
-                    else
-                    {
-                        throw new Exception("An unknown Error has Occured");
-                    }
-                }
-                else
-                {
-                    throw new ArgumentException("Like with art id: " + likeModel.ArtId + " and artist id: "+ likeModel.ArtistId+ " was not found");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
+                bool success = await notificationService.MarkComment(commentId);
+                return success ? Ok() : StatusCode(500, "Failed to mark comment viewed");
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error marking comment {CommentId} viewed", commentId);
                 return StatusCode(500, ex.Message);
             }
         }
 
-        /// <summary>
-        /// Marks a dislike viewed in the database
-        /// </summary>
-        /// <param name="dislikeModel">Id of the art, and id of the artist</param>
-        [HttpPost]
-        [Route("MarkDislikeViewed")]
+        [HttpPost("MarkLikeViewed")]
+        public async Task<IActionResult> MarkLikeViewed([FromBody] LikesModel likeModel)
+        {
+            try
+            {
+                bool success = await notificationService.MarkLike(likeModel.ArtId, likeModel.ArtistId);
+                return success ? Ok() : StatusCode(500, "Failed to mark like viewed");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error marking like for art {ArtId} and artist {ArtistId} viewed", likeModel.ArtId, likeModel.ArtistId);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("MarkDislikeViewed")]
         public async Task<IActionResult> MarkDislikeViewed([FromBody] DislikesModel dislikeModel)
         {
             try
             {
-                Dislike dislike = await DislikeService.GetDislikeByIds(dislikeModel.ArtId, dislikeModel.ArtistId);
-                if (dislike != null)
-                {
-                    if (await NotificationService.MarkDislike(dislike.ArtId, dislike.ArtistId))
-                    {
-                        return Ok();
-                    }
-                    else
-                    {
-                        throw new Exception("An unknown Error has Occured");
-                    }
-                }
-                else
-                {
-                    throw new ArgumentException("Dislike with art id: " + dislikeModel.ArtId + " and artist id: " + dislikeModel.ArtistId + " was not found");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
+                bool success = await notificationService.MarkDislike(dislikeModel.ArtId, dislikeModel.ArtistId);
+                return success ? Ok() : StatusCode(500, "Failed to mark dislike viewed");
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error marking dislike for art {ArtId} and artist {ArtistId} viewed", dislikeModel.ArtId, dislikeModel.ArtistId);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("UpdateNotificationsEnabled")]
+        public async Task<IActionResult> UpdateNotificationsEnabled([FromBody] UpdateNotificationsModel model)
+        {
+            try
+            {
+                bool success = await notificationService.UpdateNotificationsEnabledAsync(model.ArtistId, model.NotificationsEnabled);
+                return success ? Ok() : StatusCode(500, "Failed to update notifications settings");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating notifications for artist {ArtistId}", model.ArtistId);
                 return StatusCode(500, ex.Message);
             }
         }
