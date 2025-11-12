@@ -222,7 +222,7 @@ const audioRef = ref(new Audio());
 const connected = ref<boolean>(false);
 const groupName = ref<string>("");
 let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("https://pixelpainter.app:7155/signalhub", {
+  .withUrl("http://localhost:7154/signalhub", {
     skipNegotiation: true,
     transport: SignalR.HttpTransportType.WebSockets
   })
