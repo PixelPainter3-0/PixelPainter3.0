@@ -146,4 +146,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            rm /etc/nginx/sites-enabled/default
+            ln /var/www/app/pixelpainter/serverconfig/nginx.conf /etc/nginx/sites-enabled/default
             systemctl reload nginx
