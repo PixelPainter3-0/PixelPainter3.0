@@ -7,16 +7,7 @@
     :greyscale="greyscale"
     :isGrid="true"
     v-model="cursor"
-    @mousedown="
-      mouseButtonHeldDown = true;
-      setStartVector();
-      setEndVector();
-    "
-    @mouseup="
-      mouseButtonHeldDown = false;
-      setEndVector();
-      onMouseUp();
-    "
+    @mousedown="handleClickDraw()"
     @contextmenu.prevent
   />
   <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="loggedIn">
@@ -141,24 +132,12 @@ const artistStore = useArtistStore();
 const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
-let selection = ref<string[][]>([]);
-
 const audioFiles = [
   "/src/music/In-the-hall-of-the-mountain-king.mp3",
   "/src/music/flight-of-the-bumblebee.mp3",
   "/src/music/OrchestralSuiteNo3.mp3"
 ];
 const audioRef = ref(new Audio());
-
-// Connection Information
-const connected = ref<boolean>(false);
-const groupName = ref<string>("");
-let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("http://localhost:7154/signalhub", {
-    skipNegotiation: true,
-    transport: SignalR.HttpTransportType.WebSockets
-  })
-  .build();
 
 const started = ref(false);
 const volume = ref(50);
@@ -204,6 +183,17 @@ watch(volume, (newVal) => {
     audio.value.volume = newVal / 100;
   }
 });
+
+// Connection Information
+const connected = ref<boolean>(false);
+const groupName = ref<string>("");
+let connection = new SignalR.HubConnectionBuilder()
+  .withUrl("http://localhost:7154/signalhub", {
+    skipNegotiation: true,
+    transport: SignalR.HttpTransportType.WebSockets
+  })
+  .build();
+
 connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
 });
@@ -224,11 +214,19 @@ connection.onclose((error) => {
   }
 });
 
+// connection.on(
+//   "ReceivePixels",
+//   (layer: number, color: string, coords: Vector2[]) => {
+//     console.log("Receiving Pixels:", layer, color, coords);
+//     drawPixels(layer, color, coords);
+//   }
+// );
+
 connection.on(
-  "ReceivePixels",
-  (layer: number, color: string, coords: Vector2[]) => {
-    console.log("Receiving Pixels:", layer, color, coords);
-    drawPixels(layer, color, coords);
+  "ReceivePixel",
+  (layer: number, color: string, coord: Vector2) => {
+    console.log("Received Pixel");
+    drawPixels(layer, color, [coord]);
   }
 );
 
@@ -314,9 +312,6 @@ const disconnect = () => {
 const cursor = ref<Cursor>(
   new Cursor(new Vector2(-1, -1), PainterTool.getDefaults()[1], 1, "000000")
 );
-
-const mouseButtonHeldDown = ref<boolean>(false);
-
 const startPix = ref<Vector2>(new Vector2(0, 0));
 const endPix = ref<Vector2>(new Vector2(0, 0));
 let tempGrid: string[][] = [];
@@ -429,17 +424,7 @@ function toggleKeybinds(disable: boolean) {
   }
 }
 
-watch(
-  cursorPositionComputed,
-  (start: Vector2, end: Vector2) => {
-    drawAtCoords(getLinePixels(start, end));
-  },
-  { deep: true }
-);
-
-watch(mouseButtonHeldDown, async () => {
-  drawAtCoords([cursor.value.position]);
-});
+// Removed continuous-draw watchers so grid only draws on explicit clicks
 
 watch(
   () => art.value.pixelGrid.backgroundColor,
@@ -493,6 +478,18 @@ function replaceCanvas(pixels: Pixel[]) {
     art.value.pixelGrid.backgroundColor,
     false
   );
+  for (let p = 0; p < pixels.length; p++) {
+    gridCanvas.value.grid[pixels[p].x][pixels[p].y] =
+      pixels[p].color;
+  }
+
+  // keep tempGrid in sync so other logic sees the new state
+  tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
+
+  // force the DrawingCanvas to re-render from the new PixelGrid
+  // (calls the component method that draws all layers)
+  canvas.value?.drawLayers(0);
+  canvas.value?.recenter();
 }
 
 function drawPixels(layer: number, color: string, coords: Vector2[]) {
@@ -517,52 +514,31 @@ function changeBackgroundColor(color: string) {
   }
 }
 
+// Single-click draw handler used by the template @mousedown
+function handleClickDraw() {
+  const coord = new Vector2(cursor.value.position.x, cursor.value.position.y);
+  drawAtCoords([coord]);
+}
+
 function drawAtCoords(coords: Vector2[]) {
-  let coordinates: Vector2[] = [];
-
+  // Only draw the first coordinate provided (single-pixel per click)
+  if (!coords || coords.length === 0) return;
+  const coord = coords[0];
   if (
-    cursor.value.selectedTool.label === "Rectangle" ||
-    cursor.value.selectedTool.label === "Ellipse"
-  ) {
-    if (tempGrid) {
-      for (let i = 0; i < gridCanvas.value.height; i++) {
-        for (let j = 0; j < gridCanvas.value.width; j++) {
-          gridCanvas.value.grid[i][j] = tempGrid[i][j];
-          canvas.value?.updateCell(0, i, j, tempGrid[i][j]);
-        }
-      }
-    }
-  }
-  coords.forEach((coord: Vector2) => {
-    if (mouseButtonHeldDown.value) {
-      if (cursor.value.selectedTool.label === "Brush") {
-        for (let i = 0; i < cursor.value.size; i++) {
-          for (let j = 0; j < cursor.value.size; j++) {
-            if (
-              coord.x + i >= 0 &&
-              coord.x + i < gridCanvas.value.width &&
-              coord.y + j >= 0 &&
-              coord.y + j < gridCanvas.value.height
-            ) {
-              coordinates.push(new Vector2(coord.x + i, coord.y + j));
-              gridCanvas.value.grid[coord.x + i][coord.y + j] =
-                cursor.value.color;
+    coord.x < 0 ||
+    coord.x >= gridCanvas.value.width ||
+    coord.y < 0 ||
+    coord.y >= gridCanvas.value.height
+  )
+    return;
 
-              if (!gridCanvas.value.isGif) {
-                canvas.value?.updateCell(
-                  0,
-                  coord.x + i,
-                  coord.y + j,
-                  cursor.value.color
-                );
-              }
-            }
-          }
-        }
-        sendPixels(cursor.value.color, coordinates);
-      }
-    }
-  });
+  // Set the grid and update the canvas for a single pixel
+  // gridCanvas.value.grid[coord.x][coord.y] = cursor.value.color;
+  // if (!gridCanvas.value.isGif) {
+  //   canvas.value?.updateCell(0, coord.x, coord.y, cursor.value.color);
+  // }
+  // Send the single pixel
+  sendPixels(cursor.value.color, [coord]);
 }
 
 function setStartVector() {
@@ -571,20 +547,6 @@ function setStartVector() {
     cursor.value.position.y
   );
   tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
-}
-function setEndVector() {
-  if (mouseButtonHeldDown.value) {
-    endPix.value = new Vector2(
-      cursor.value.position.x,
-      cursor.value.position.y
-    );
-  } else {
-    tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
-  }
-}
-
-function onMouseUp() {
-  gridCanvas.value.updateGrid();
 }
 
 //Save to file functions
@@ -643,22 +605,6 @@ async function saveToFile(): Promise<void> {
   link.download = "image.png";
   link.href = upsizedCanvas.toDataURL("image/png");
   link.click();
-}
-
-function toggleMusic(): void {
-  if (audioOn.value != -1) {
-    audioOn.value = -1;
-    audioRef.value.pause();
-  } else {
-    audioOn.value = 1;
-    audioRef.value.pause();
-    audioRef.value.currentTime = 0;
-
-    var randomIndex = Math.floor(Math.random() * audioFiles.length);
-    var chosenMusic = audioFiles[randomIndex];
-    audioRef.value.src = chosenMusic;
-    audioRef.value.play();
-  }
 }
 
 function handleKeyDown(event: KeyboardEvent) {
@@ -735,8 +681,8 @@ function handleKeyDown(event: KeyboardEvent) {
       updatePallet();
       //@ts-ignore
       cursor.value.color = currentPallet.value._value[11];
-    } else if (event.ctrlKey && event.key === "s") {
-      console.log("Ctrl+s was pressed.");
+    } else if (event.ctrlKey && event.key === "d") {
+      console.log("Ctrl+d was pressed.");
       event.preventDefault();
       console.log(art.value);
       saveToFile();
