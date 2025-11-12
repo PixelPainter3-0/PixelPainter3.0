@@ -164,7 +164,7 @@
                 @keydown.enter="handleEnter"
               />
             </div>
-            <ColorPicker class="m-1" v-model="selectedColor"></ColorPicker>
+            <ColorPicker class="m-1 parent" v-model="selectedColor" appendTo="body"></ColorPicker>
           </div>
           <div class="mt-1" v-if="!props.isGrid">Size: {{ size }}</div>
 
@@ -183,7 +183,7 @@
   </FloatingCard>
 </template>
 <script setup lang="ts">
-import { ref, defineEmits, watch } from "vue";
+import { ref, defineEmits, watch, nextTick } from "vue";
 import FloatingCard from "./FloatingCard.vue";
 import ColorPicker from "primevue/colorpicker";
 import Slider from "primevue/slider";
@@ -215,8 +215,14 @@ if (temp) {
 }
 setCurrentPallet(0);
 
-watch(selectedColor, () => {
-  hexColor.value = "#" + selectedColor.value;
+watch(selectedColor, async (newColor) => {
+  if (newColor) {
+    hexColor.value = "#" + newColor.replace(/^#/, "");
+
+    await nextTick(); // wait for DOM update
+    const el = document.getElementById("1");
+    if (el) el.offsetHeight; // force layout reflow
+  }
 });
 
 function setSaved(): void {
