@@ -44,6 +44,11 @@ const router = createRouter({
       component: () => import("../views/TheGridView.vue")
     },
     {
+      path: "/connect",
+      name: "Connect to The Grid",
+      component: () => import("../views/GridConnection.vue")
+    },
+    {
       path: "/notifications",
       name: "Notifications",
       component: () => import("../views/NotificationView.vue")

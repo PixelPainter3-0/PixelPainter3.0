@@ -19,7 +19,7 @@
     "
     @contextmenu.prevent
   />
-  <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="loggedIn">
+  <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
     <template #start>
       <UploadButton
         v-if="artist.isAdmin"
@@ -34,6 +34,8 @@
       <SaveImageToFile
         :art="art"
         :fps="fps"
+        :grid="gridCanvas"
+        :isGrid="true"
         :filtered="false"
         :filtered-art="''"
         :gif-from-viewer="['']"
@@ -42,6 +44,7 @@
     </template>
     <template #center>
       <ColorSelection
+        v-if="cursor?.selectedTool?.cursor"
         v-model:color="cursor.color"
         v-model:size="cursor.size"
         :isBackground="false"
@@ -74,11 +77,6 @@
       />
     </template>
   </Toolbar>
-  <Toolbar class="fixed bottom-0 left-0 right-0 m-2" v-if="!loggedIn">
-    <template #center>
-      <p class="font-bold text-xl">Login to collaborate on the canvas</p>
-    </template>
-  </Toolbar>
 </template>
 <script setup lang="ts">
 //vue prime
@@ -105,7 +103,7 @@ import Artist from "@/entities/Artist";
 import LoginService from "@/services/LoginService";
 
 //vue
-import { ref, watch, computed, onMounted, onUnmounted } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from "vue";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
@@ -387,6 +385,8 @@ onMounted(async () => {
 
         canvas.value?.recenter();
         art.value.pixelGrid.backgroundColor = gridCanvas.value.backgroundColor;
+        cursor.value.color = '#000000';
+
       })
       .catch(() => {
         toast.add({
@@ -402,6 +402,7 @@ onMounted(async () => {
     art.value.isGif = gridCanvas.value.isGif;
     art.value.pixelGrid.isGif = gridCanvas.value.isGif;
     art.value.pixelGrid.backgroundColor = gridCanvas.value.backgroundColor;
+    cursor.value.color = '#000000';
     art.value.pixelGrid.width = gridCanvas.value.width;
     art.value.pixelGrid.height = gridCanvas.value.height;
     tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
