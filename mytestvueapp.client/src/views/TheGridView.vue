@@ -96,7 +96,7 @@ import Artist from "@/entities/Artist";
 import LoginService from "@/services/LoginService";
 
 //vue
-import { ref, watch, computed, onMounted, onUnmounted } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from "vue";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
@@ -117,7 +117,7 @@ const toast = useToast();
 const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
-const resolution = ref<number>(200);
+const resolution = ref<number>(16);
 const backgroundColor = ref<string>("ffffff");
 const isImage = ref<boolean>(true);
 const gridCanvas = ref(
@@ -231,8 +231,8 @@ connection.on(
 );
 
 connection.on(
-  "GroupConfig",
-  (canvasSize: number, backgroundColor: string, pixels: Pixel[]) => {
+  "GridConfig",
+  async (canvasSize: number, backgroundColor: string, pixels: Pixel[][]) => {
     console.log("Received Group Config:", canvasSize, backgroundColor, pixels);
     art.value.pixelGrid.width = canvasSize;
     art.value.pixelGrid.height = canvasSize;
@@ -242,10 +242,10 @@ connection.on(
       canvasSize
     );
     console.log("Canvas Size Set:", art.value.pixelGrid.width);
-    replaceCanvas(pixels);
+    await replaceCanvas(pixels);
     console.log("Canvas Replaced");
-    canvas.value?.drawLayers(0);
-    canvas.value?.recenter();
+    //canvas.value?.drawLayers(0);
+    //canvas.value?.recenter();
   }
 );
 
@@ -471,23 +471,39 @@ function getLinePixels(start: Vector2, end: Vector2): Vector2[] {
   return pixels;
 }
 
-function replaceCanvas(pixels: Pixel[]) {
+async function waitForCanvas(retries = 30, delay = 50) {
+  console.log("Await Canvas");
+  for (let i = 0; i < retries; i++) {
+    if (canvas.value) return true;
+    // give Vue / child component time to mount
+    await new Promise((r) => setTimeout(r, delay));
+  }
+  return !!canvas.value;
+}
+
+async function replaceCanvas(pixels: Pixel[][]) {
+  console.log("Replace Canvas");
+  console.log("Pixels:", pixels)
   gridCanvas.value = new PixelGrid(
     art.value.pixelGrid.width,
     art.value.pixelGrid.height,
     art.value.pixelGrid.backgroundColor,
     false
   );
-  for (let p = 0; p < pixels.length; p++) {
-    gridCanvas.value.grid[pixels[p].x][pixels[p].y] =
-      pixels[p].color;
+  console.log("Grid Canvas Updated");
+  for(let a = 0; a < pixels.length; a++){
+    for (let p = 0; p < pixels.length; p++) {
+      gridCanvas.value.grid[pixels[a][p].x][pixels[a][p].y] =
+        pixels[a][p].color;
+    }
   }
-
+  console.log("Grid Value", gridCanvas.value);
   // keep tempGrid in sync so other logic sees the new state
   tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
+  
+  await nextTick();
+  await waitForCanvas();
 
-  // force the DrawingCanvas to re-render from the new PixelGrid
-  // (calls the component method that draws all layers)
   canvas.value?.drawLayers(0);
   canvas.value?.recenter();
 }

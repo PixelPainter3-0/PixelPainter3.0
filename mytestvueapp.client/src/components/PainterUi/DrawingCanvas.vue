@@ -104,6 +104,7 @@ function init(): void {
 }
 
 function drawLayers(layer: number): void {
+  console.log("DrawLayer");
   let index = 0;
   if (!props.showLayers) {
     index = layer; //for showing only the selected layer
