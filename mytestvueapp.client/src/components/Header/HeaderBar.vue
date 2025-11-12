@@ -196,13 +196,13 @@ watch(
 :global(:root) {
   /* Adjust transparency here: change the last value (alpha) from 0.62 to a lower number for more see-through,
      or a higher number for more solid. Example: 0.5 is more transparent, 0.9 is more solid. */
-  --header-bg: rgba(255,255,255,0.62);
+  --header-bg: rgba(255,255,255,0.6);
   --header-border: rgba(0,0,0,0.08);
   --header-shadow: 0 4px 18px -6px rgba(0,0,0,0.25);
 }
 :global(html.dark-mode-toggle) {
   /* Adjust transparency here for dark mode header (alpha = 0.54 below) */
-  --header-bg: rgba(22,22,22,0.74);
+  --header-bg: rgba(22,22,22,0.6);
   --header-border: rgba(255,255,255,0.14);
   --header-shadow: 0 6px 24px -8px rgba(0,0,0,0.6);
 }
@@ -297,12 +297,45 @@ watch(
     padding-right: 0.55rem;
     min-height: 56px;
   }
-}
 
-/* Desktop-specific: just ensure mobile menu & toggle are hidden */
-@media (min-width: 1001px) {
-  .mobile-menu { display: none !important; }
-  .menu-toggle { display: none; }
+  /* Make header controls (dark mode / google login / notification) smaller on mobile to match mobile breakpoint */
+  @media (max-width: 1000px) {
+    /* Target PrimeVue buttons inside the header toolbar (affects DarkModeSwitcher, GoogleLogin output, Notification button) */
+    .custom-background .p-toolbar .p-button {
+      padding: 0.32rem 0.5rem;
+      font-size: 0.82rem;
+      height: 36px;
+      min-width: 36px;
+    }
+
+    /* Reduce icon sizes inside those buttons */
+    .custom-background .p-toolbar .p-button .pi {
+      font-size: 0.95rem;
+    }
+
+    /* DarkModeSwitcher has an extra class 'mr-2' in template — shrink that wrapper too */
+    .custom-background .mr-2 {
+      margin-right: 0.5rem;
+      transform: scale(0.96);
+      transform-origin: center;
+    }
+  }
+
+  /* Extra compact styling for very small phones */
+  @media (max-width: 420px) {
+    .custom-background .p-toolbar .p-button {
+      padding: 0.22rem 0.4rem;
+      font-size: 0.75rem;
+      height: 32px;
+      min-width: 32px;
+    }
+    .custom-background .p-toolbar .p-button .pi {
+      font-size: 0.85rem;
+    }
+    .custom-background .mr-2 {
+      transform: scale(0.92);
+    }
+  }
 }
 
 /* Transition (Vue <Transition name="slide-down">) */
@@ -327,4 +360,4 @@ watch(
 }
 </style>
 
-<!-- 4  -->
+<!-- 5  -->

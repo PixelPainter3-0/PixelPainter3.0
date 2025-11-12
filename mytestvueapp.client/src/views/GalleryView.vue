@@ -479,7 +479,7 @@ function sortGallery(): void {
 }
 
 /* Mobile: full-width single column feed */
-@media (max-width: 767px) {
+@media (max-width: 780px) {
   :deep(.tag-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
 
   .gallery-feed {

@@ -7,53 +7,41 @@
       {{ art.title }}
     </h2>
   </div>
-  <div class="justify-content-center flex w-full h-full align-items-center">
+  <div class="justify-content-center flex w-full h-full align-items-center viewer-main">
     <div v-if="!art.isGif && art" class="border-2">
       <MyCanvas
         v-model="squareColor"
         v-if="!art.isGif && art"
         :key="art.id"
         :art="art"
-        :pixelSize="20"
+        :pixelSize="pixelSize"
         :canvas-number="1"
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-35rem ml-5">
+    <Card class="w-35rem ml-5 viewer-info-card">
       <template #content>
         <!-- 1) Artist -->
         <div class="artist-block">
           <div class="py-1 artist-line">
             <span class="by-label">By:</span>
-            <span
-              class="font-semibold artist-name primary"
-              :style="{
-                textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
-                cursor: 'pointer'
-              }"
-              title="View artist profile"
-              @click="router.push(`/accountpage/${art.artistName[0]}`)"
-              @mouseover="hoverIndex = 'main'"
-              @mouseleave="hoverIndex = null"
-            >
-              {{ art.artistName[0] }}
-            </span>
-          </div>
-
-          <div
-            v-for="(artist, index) in art.artistName.slice(1)"
-            :key="index"
-            class="py-1 artist-name coartist"
-            :style="{
-              textDecoration: hoverIndex === index ? 'underline' : 'none',
-              cursor: hoverIndex === index ? 'pointer' : 'default'
-            }"
-            title="View artist profile"
-            @click="router.push(`/accountpage/${artist}`)"
-            @mouseover="hoverIndex = index"
-            @mouseleave="hoverIndex = null"
-          >
-            {{ artist }}
+            <template v-for="(artistName, index) in art.artistName" :key="index">
+              <span
+                class="font-semibold artist-name"
+                :class="{ primary: index === 0, coartist: index > 0 }"
+                :style="{
+                  textDecoration: hoverIndex === index ? 'underline' : 'none',
+                  cursor: 'pointer'
+                }"
+                title="View artist profile"
+                @click="router.push(`/accountpage/${artistName}`)"
+                @mouseover="hoverIndex = index"
+                @mouseleave="hoverIndex = null"
+              >
+                {{ artistName }}
+              </span>
+              <span v-if="index < art.artistName.length - 1">, </span>
+            </template>
           </div>
         </div>
 
@@ -231,7 +219,7 @@ import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
 import DeleteArtButton from "@/components/DeleteArtButton.vue";
 import Art from "@/entities/Art";
 import MyCanvas from "@/components/MyCanvas/MyCanvas.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import Comment from "@/entities/Comment";
 import CommentOnArt from "@/components/Comment/CommentOnArt.vue";
 import ArtAccessService from "../services/ArtAccessService";
@@ -279,6 +267,18 @@ const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
+const pixelSize = ref<number>(20); // responsive pixel size, capped at 20
+
+function calculatePixelSize(): void {
+  const MAX = 20;
+  const MIN = 4;
+  const width = window.innerWidth;
+  // scale factor: adjust divisor to tune responsiveness
+  let size = Math.floor(width / 34);
+  if (size > MAX) size = MAX;
+  if (size < MIN) size = MIN;
+  pixelSize.value = size;
+}
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {
@@ -312,6 +312,12 @@ onMounted(async () => {
     });
   updateComments();
   getIsAdmin();
+  calculatePixelSize();
+  window.addEventListener("resize", calculatePixelSize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", calculatePixelSize);
 });
 
 async function editArt(): Promise<void> {
@@ -948,6 +954,134 @@ async function gifDisplay(): Promise<void> {
 </script>
 
 <style scoped>
+/* Viewer layout: place info card to the right on wide screens, below the art on small screens */
+.viewer-main {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+  /* allow wrapping so items can stack or shrink instead of forcing horizontal scroll */
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 1rem;
+  /* prevent page horizontal scroll caused by the viewer section */
+  overflow-x: hidden;
+}
+
+/* Ensure the card behaves responsively */
+.viewer-info-card {
+  /* keep existing desktop max width */
+  max-width: 35rem;
+  width: 35rem;
+  /* allow the card to shrink inside a flex container (prevents overflow) */
+  flex-shrink: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+/* Tablet: reduce card width so it can sit alongside the art without forcing horizontal scroll */
+@media (max-width: 1300px) {
+  .viewer-info-card {
+    max-width: 28rem;
+    width: auto;
+    flex: 0 0 38%; /* try to occupy ~38% of the row */
+    margin-left: 0.5rem !important;
+  }
+  
+}
+
+/* Small tablets / large phones: tighten further */
+@media (max-width: 992px) {
+  .viewer-info-card {
+    max-width: 22rem;
+    flex: 0 0 45%;
+    margin-left: 0.5rem !important;
+  }
+  .viewer-main > .border-2 {
+    flex: 1 1 50%;
+  }
+}
+
+/* Mobile: stack and use full width (already present, kept for clarity) */
+@media (max-width: 940px) {
+  .viewer-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .viewer-info-card {
+    width: 100% !important;
+    max-width: 100%;
+    margin-left: 0 !important;
+  }
+  .viewer-main > .border-2 {
+    margin: 0 auto;
+    max-width: 100%;
+  }
+}
+
+/* Make the art/canvas container flexible and prevent it from forcing overflow */
+.viewer-main > .border-2 {
+  max-width: 100%;
+  box-sizing: border-box;
+  /* allow the element to shrink in flex layouts */
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* ---- Responsive layout overrides to match HeaderBar mobile breakpoint (<=1000px) ---- */
+/* Keep items side-by-side until 1000px, then stack. Prevent premature wrapping. */
+.viewer-main {
+  /* force single row until the explicit mobile breakpoint */
+  flex-wrap: nowrap;
+}
+
+
+/* Info card: fixed max width on desktop, no hard width to avoid overflow */
+.viewer-info-card {
+  flex: 0 1 auto;       /* prefers 35rem but can shrink */
+  max-width: min(35rem, 100%);
+  width: auto;
+  min-width: 0;
+  margin-left: 1rem;     /* replaces ml-5 on tight screens */
+  box-sizing: border-box;
+}
+
+/* Match HeaderBar mobile breakpoint */
+@media (max-width: 1300px) {
+  .viewer-main {
+    flex-direction: column;   /* stack canvas above card */
+    align-items: stretch;
+  }
+  .viewer-info-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+  .viewer-main > .border-2 {
+    margin: 0 auto;
+    max-width: 100%;
+  }
+}
+
+/* Ensure media scales and never causes horizontal scroll */
+.viewer-main img,
+.viewer-main canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Keep horizontal scroll disabled within the viewer area */
+.viewer-main {
+  overflow-x: hidden;
+}
+
 /* Artist line: only the name underlines on hover */
 .artist-line { display: inline-flex; align-items: center; gap: .35rem; }
 .by-label { color: inherit; text-decoration: none !important; }
@@ -989,7 +1123,9 @@ async function gifDisplay(): Promise<void> {
 /* Filters block */
 .filters-panel { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #32363d; }
 
-@media (max-width: 768px) {
+@media (max-width: 840px) {
   .viewer-actions.row.end { justify-content:flex-start; }
 }
 </style>
+
+<!-- 6 -->

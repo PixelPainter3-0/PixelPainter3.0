@@ -1,5 +1,6 @@
 <template>
   <Button
+    class="comment-vote-dislike"
     rounded
     :severity="disliked ? 'primary' : 'secondary'"
     :icon="disliked ? 'pi pi-thumbs-down-fill' : 'pi pi-thumbs-down'"
@@ -88,3 +89,10 @@ async function dislikedClicked(): Promise<void> {
   }
 }
 </script>
+
+<style scoped>
+/* Add external space between the like and dislike buttons (no inner padding) */
+.comment-vote-dislike {
+  margin: 0.5rem 1rem 1rem 1rem;
+}
+</style>
