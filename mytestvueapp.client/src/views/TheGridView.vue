@@ -112,7 +112,6 @@ import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 const route = useRoute();
 const canvas = ref<any>();
 const toast = useToast();
-const audioOn = ref<number>(-1);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
 const resolution = ref<number>(200);
@@ -196,10 +195,6 @@ connection.on("Send", (user: string, msg: string) => {
   console.log("Received Message", user + " " + msg);
 });
 
-// connection.on("NewMember", (newartist: Artist) => {
-//   console.log("Joined Grid");
-// });
-
 connection.onclose((error) => {
   if (error) {
     toast.add({
@@ -211,14 +206,6 @@ connection.onclose((error) => {
     connected.value = false;
   }
 });
-
-// connection.on(
-//   "ReceivePixels",
-//   (layer: number, color: string, coords: Vector2[]) => {
-//     console.log("Receiving Pixels:", layer, color, coords);
-//     drawPixels(layer, color, coords);
-//   }
-// );
 
 connection.on(
   "ReceivePixel",
@@ -350,7 +337,6 @@ onMounted(async () => {
     LoginService.getCurrentUser().then((user: Artist) => {
       artist.value = user;
     });
-    // connect("GridGroupName", false);
   } else {
     artist.value.id = 0;
     artist.value.name = "Guest";
@@ -435,42 +421,6 @@ watch(
 );
 
 //functions
-function getLinePixels(start: Vector2, end: Vector2): Vector2[] {
-  const pixels: Vector2[] = [];
-
-  const dx = Math.abs(end.x - start.x);
-  const dy = Math.abs(end.y - start.y);
-
-  const sx = start.x < end.x ? 1 : -1;
-  const sy = start.y < end.y ? 1 : -1;
-
-  let err = dx - dy;
-
-  let currentX = start.x;
-  let currentY = start.y;
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    pixels.push(new Vector2(currentX, currentY));
-
-    // Check if we have reached the end point
-    if (currentX === end.x && currentY === end.y) break;
-
-    const e2 = 2 * err;
-
-    if (e2 > -dy) {
-      err -= dy;
-      currentX += sx;
-    }
-
-    if (e2 < dx) {
-      err += dx;
-      currentY += sy;
-    }
-  }
-
-  return pixels;
-}
 
 function replaceCanvas(pixels: Pixel[]) {
   gridCanvas.value = new PixelGrid(
@@ -540,14 +490,6 @@ function drawAtCoords(coords: Vector2[]) {
   // }
   // Send the single pixel
   sendPixels(cursor.value.color, [coord]);
-}
-
-function setStartVector() {
-  startPix.value = new Vector2(
-    cursor.value.position.x,
-    cursor.value.position.y
-  );
-  tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
 }
 
 //Save to file functions
