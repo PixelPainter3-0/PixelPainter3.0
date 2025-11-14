@@ -58,7 +58,9 @@
         </div>
 
         <!-- 2) Upload date -->
-        <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+        <div v-if="art.pointId" class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+        <div v-if="art.pointId" class="placed-at">Placed at {{pointTitle}} in {{artspaceTitle}}</div>
+        
 
         <!-- Tags Section -->
         <div v-if="art.tags && art.tags.length" class="mt-3">
@@ -266,6 +268,10 @@ const toast = useToast();
 const art = ref<Art>(new Art());
 const gif = ref<Art[]>([]);
 const fps = ref<number>(0);
+const pointId = ref<number>(0);
+const pointTitle = ref<string>("");
+const artspaceId = ref<number>(0);
+const artspaceTitle = ref<string>("");
 const allComments = ref<Comment[]>([]);
 const totalNumComments = ref<number>(0);
 const id = Number(route.params.id);
@@ -283,7 +289,12 @@ onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {
       art.value = promise;
-      uploadDate.value = new Date(promise.creationDate);
+      console.log(promise);
+      uploadDate.value = new Date(promise.creationDate);  
+      pointId.value = promise.pointId;
+      pointTitle.value = promise.pointTitle;
+      artspaceId.value = promise.artspaceId;
+      artspaceTitle.value = promise.artspaceTitle;
       names.value = art.value.artistName;
       if (promise.isGif) {
         ArtAccessService.getGif(promise.gifID).then((promiseGif: Art[]) => {
