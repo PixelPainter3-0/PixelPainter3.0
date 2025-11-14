@@ -157,5 +157,5 @@ export default class LoginService {
     } catch {
       return false;
     }
-  }
+  } 
 }
