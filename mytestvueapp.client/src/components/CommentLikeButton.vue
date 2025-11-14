@@ -1,5 +1,6 @@
 <template>
   <Button
+    class="comment-vote-like"
     rounded
     :severity="liked ? 'primary' : 'secondary'"
     :icon="liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"
