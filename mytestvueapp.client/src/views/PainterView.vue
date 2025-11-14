@@ -843,6 +843,32 @@ function drawAtCoords(coords: Vector2[]) {
   }
 }
 
+function pasteSelection(){
+    if (copiedSelection != null){
+        //console.log(copiedSelection.value.length);
+        //console.log(copiedSelection.value[0].length);
+
+        let w = copiedSelection.value.length;
+        let h = copiedSelection.value[0].length;
+
+        let startW = Math.max(0, endPix.value.x);
+        let startH = Math.max(0, endPix.value.y);
+        let endW = Math.min(layerStore.grids[layerStore.layer].width, endPix.value.x + copiedSelection.value.length);
+        let endH = Math.min(layerStore.grids[layerStore.layer].height, endPix.value.y + copiedSelection.value[0].length);
+
+        for (let i = startW; i < endW; i++) {
+            for (let j = startH; j < endH; j++) {
+                console.log("Now attempting to place " + copiedSelection.value[i - startW][j - startH] + " at x:" + i + " y:" + j);
+
+                layerStore.grids[layerStore.layer].grid[i][j]
+                    = copiedSelection.value[i - startW][j - startH];
+                canvas.value?.updateCell(layerStore.layer, i, j,
+                    copiedSelection.value[i - startW][j - startH]);
+            }
+        }
+    }
+}
+
 function fill(
   x: number,
   y: number,
@@ -1419,13 +1445,17 @@ function handleKeyDown(event: KeyboardEvent) {
       event.preventDefault();
       cursor.value.selectedTool.label = "Line";
       canvas?.value.updateCursor();
-    } else if (!event.ctrlKey && event.key === "s") {
+    } else if (!(event.ctrlKey || event.metaKey) && event.key === "s") {
       event.preventDefault();
       cursor.value.selectedTool.label = "Select";
       canvas?.value.updateCursor();
-    } else if (event.ctrlKey && event.key === "c") {
+    } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
       event.preventDefault();
       copiedSelection.value = selection.value;
+      canvas?.value.updateCursor();
+    } else if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+      event.preventDefault();
+      pasteSelection();
       canvas?.value.updateCursor();
     } else if (event.key === "q" && cursor.value.size > 1) {
       event.preventDefault();
