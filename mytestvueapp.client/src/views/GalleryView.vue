@@ -138,6 +138,7 @@ import { useRoute } from "vue-router";
 import router from "@/router"; // add this
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import Art from "@/entities/Art";
+import Point from "@/entities/Point";
 import ArtAccessService from "@/services/ArtAccessService";
 import MapAccessService from "../services/MapAccessService";
 import InputText from "primevue/inputtext";
