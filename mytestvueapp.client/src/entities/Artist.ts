@@ -6,6 +6,7 @@ export default class Artist {
   privateProfile: boolean;
   creationDate: string;
   email: string;
+  notificationsEnabled: number;
 
   constructor() {
     this.id = 0;
@@ -14,5 +15,6 @@ export default class Artist {
     this.privateProfile = false;
     this.creationDate = "";
     this.email = "";
+    this.notificationsEnabled = 0;
   }
 }
