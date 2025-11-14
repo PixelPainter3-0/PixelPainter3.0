@@ -19,9 +19,11 @@ namespace MyTestVueApp.Server.ServiceImplementations
         private readonly ILikeService likeService;
         private readonly IDislikeService dislikeService;
         private readonly IArtistService artistService;
+        private readonly ICommentLikeService commentLikeService;
+        private readonly ICommentDislikeService commentDislikeService;
 
 
-        public NotificationService(IOptions<ApplicationConfiguration> AppConfig, ILogger<NotificationService> Logger, IArtAccessService ArtAccessService, ICommentAccessService CommentAccessService, ILikeService LikeService, IDislikeService DislikeService, IArtistService ArtistService)
+        public NotificationService(IOptions<ApplicationConfiguration> AppConfig, ILogger<NotificationService> Logger, IArtAccessService ArtAccessService, ICommentAccessService CommentAccessService, ILikeService LikeService, IDislikeService DislikeService, IArtistService ArtistService, ICommentLikeService CommentLikeService, ICommentDislikeService CommentDislikeService)
         {
             appConfig = AppConfig;
             logger = Logger;
@@ -30,6 +32,8 @@ namespace MyTestVueApp.Server.ServiceImplementations
             likeService = LikeService;
             dislikeService = DislikeService;
             artistService = ArtistService;
+            commentLikeService = CommentLikeService;
+            commentDislikeService = CommentDislikeService;
         }
 
         public async Task<IEnumerable<Notification>> GetNotificationsForArtist(int artistId)
@@ -45,9 +49,11 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 return notifications;
             }
 
-            int enabledMask = artist.NotificationsEnabled == 0 ? 7 : artist.NotificationsEnabled;
+            int enabledMask = artist.NotificationsEnabled == 0 ? 63 : artist.NotificationsEnabled;
 
             var artworks = await artService.GetArtByArtist(artistId);
+
+            var comments = await commentService.GetCommentByUserId(artistId);
 
             foreach (var artwork in artworks)
             {
@@ -71,11 +77,29 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         });
                     }
                 }
+                if ((enabledMask & 32) != 0)
+                {
+                    var dislikes = await dislikeService.GetDislikesByArtwork(artwork.Id);
+                    foreach (var dislike in dislikes)
+                    {
+                        if (dislike.ArtistId == artistId || dislike.DislikedOn < thirtyDaysAgo) continue;
+
+                        notifications.Add(new Notification
+                        {
+                            CommentId = -1,
+                            ArtId = dislike.ArtId,
+                            ArtistId = dislike.ArtistId,
+                            Type = 2,
+                            User = dislike.Artist,
+                            Viewed = dislike.Viewed,
+                            ArtName = artwork.Title
+                        });
+                    }
+                }
 
                 // Comments
                 if ((enabledMask & 2) != 0)
                 {
-                    var comments = await commentService.GetCommentsByArtId(artwork.Id);
                     foreach (var comment in comments)
                     {
                         if (comment.ArtistId == artistId || comment.CreationDate < thirtyDaysAgo || comment.ReplyId != null) continue;
@@ -93,22 +117,6 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     }
                 }
 
-                var dislikes = await dislikeService.GetDislikesByArtwork(artwork.Id);
-                foreach (var dislike in dislikes)
-                {
-                    if (dislike.ArtistId == artistId || dislike.DislikedOn < thirtyDaysAgo) continue;
-
-                    notifications.Add(new Notification
-                    {
-                        CommentId = -1,
-                        ArtId = dislike.ArtId,
-                        ArtistId = dislike.ArtistId,
-                        Type = 2,
-                        User = dislike.Artist,
-                        Viewed = dislike.Viewed,
-                        ArtName = artwork.Title
-                    });
-                }
             }
 
             // Replies
@@ -132,6 +140,60 @@ namespace MyTestVueApp.Server.ServiceImplementations
                             Viewed = reply.Viewed,
                             ArtName = ""
                         });
+                    }
+                }
+            }
+
+            //Comment Like 
+            if ((enabledMask & 8) != 0)
+            {
+                var userComments = await commentService.GetCommentByUserId(artistId);
+
+                    foreach (var userComment in userComments)
+                    {
+                    var commentLikes = await commentLikeService.GetLikesByComment(userComment.Id);
+                        foreach (var commentLike in commentLikes)
+                        {
+                            if (userComment.ArtistId != commentLike.ArtistId)
+                            {
+                                notifications.Add(new Notification
+                                {
+                                    CommentId = commentLike.CommentId,
+                                    ArtistId = userComment.ArtistId,
+                                    ArtId = -1,
+                                    Type = 4,
+                                    User = userComment.CommenterName,
+                                    Viewed = userComment.Viewed,
+                                    ArtName = ""
+                                });
+                            }
+                        }
+                    }
+            }
+
+            //Comment Dislike
+            if ((enabledMask & 16) != 0)
+            {
+                var userComments = await commentService.GetCommentByUserId(artistId);
+
+                foreach (var userComment in userComments)
+                {
+                    var commentDislikes = await commentDislikeService.GetDislikesByComment(userComment.Id);
+                    foreach (var commentDislike in commentDislikes)
+                    {
+                        if (userComment.ArtistId != commentDislike.ArtistId)
+                        {
+                            notifications.Add(new Notification
+                            {
+                                CommentId = commentDislike.CommentId,
+                                ArtistId = userComment.ArtistId,
+                                ArtId = -1,
+                                Type = 5,
+                                User = userComment.CommenterName,
+                                Viewed = userComment.Viewed,
+                                ArtName = ""
+                            });
+                        }
                     }
                 }
             }

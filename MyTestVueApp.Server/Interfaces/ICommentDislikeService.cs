@@ -8,5 +8,7 @@ namespace MyTestVueApp.Server.Interfaces
         public Task<int> InsertCommentDislike(Artist artist, int commentId);
         public Task<int> RemoveCommentDislike(Artist artist, int commentId);
         public Task<bool> IsCommentDisliked(Artist artist, int commentId);
+        public Task<IEnumerable<CommentDislike>> GetDislikesByComment(int commentId);
+
     }
 }
