@@ -30,14 +30,14 @@ namespace MyTestVueApp.Server.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             await Clients.Group(groupName).SendAsync("Send", $"{artist.Name} has joined the group {groupName}.");
            
-            await Clients.Client(Context.ConnectionId).SendAsync("GroupConfig", Manager.GetGroup(groupName).CanvasSize, Manager.GetGroup(groupName).BackgroundColor, Manager.GetGroup(groupName).GetPixelsAsList());
+            await Clients.Client(Context.ConnectionId).SendAsync("GroupConfig", Manager.GetGroup(groupName).CanvasWidth, Manager.GetGroup(groupName).CanvasHeight, Manager.GetGroup(groupName).BackgroundColor, Manager.GetGroup(groupName).GetPixelsAsList());
             await Clients.Client(Context.ConnectionId).SendAsync("Members", Manager.GetGroup(groupName).MemberRecord);
             
             await Clients.Group(groupName).SendAsync("NewMember", artist);
         }
 
 
-        public async Task CreateGroup(string groupName, Artist artist, List<Artist> contributors, string[][][] canvas, int canvasSize, string backgroundColor)
+        public async Task CreateGroup(string groupName, Artist artist, List<Artist> contributors, string[][][] canvas, int canvasWidth, int canvasHeight, string backgroundColor)
         {
             if (Manager.GroupExists(groupName))
             {
@@ -45,7 +45,7 @@ namespace MyTestVueApp.Server.Hubs
                 throw new HubException("User attempted to create a group that already exists!");
             }
 
-            Manager.AddGroup(groupName, contributors, canvas,canvasSize,backgroundColor);
+            Manager.AddGroup(groupName, contributors, canvas,canvasWidth,canvasHeight,backgroundColor);
             Manager.AddUser(Context.ConnectionId, artist, groupName);
 
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
