@@ -53,7 +53,8 @@
                     } else {
                         console.log(`Art found for point ${point.id}:`, pointArt);
 
-                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='https://pixelpainter.app/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
+                        //`<a href='https://pixelpainter.app/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`
+                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup("<b>Tag art at point \"" + point.title.toString() + "\"?</b><br>" + `<a href="#" onclick="handleTagArtPoint(${point.id})">Confirm</a>`);
 
                     }
                 } catch (error) {
@@ -126,9 +127,9 @@
     }
 
     
-    async function handleTagArt(lat: number, lng: number) {
+    async function handleTagArt(lat: number, lng: number, pointTitle: string) {
         console.log("Function ran before redirect " + lat + ", " + lng);
-        const pointId = await MapAccessService.createPoint(lat, lng, "untitled", 1);
+        const pointId = await MapAccessService.createPoint(lat, lng, pointTitle, 1);
         console.log(pointId);
         await MapAccessService.updateArtLocation(artId, pointId);
         window.location.href = "https://pixelpainter.app/art/" + artId;
@@ -136,6 +137,15 @@
     
     // Make globally accessible
     (window as any).handleTagArt = handleTagArt;
+
+    async function handleTagArtPoint(pointId: number) {
+        console.log("Function ran before redirect " + artId + ", " + pointId);
+        await MapAccessService.updateArtLocation(artId, pointId);
+        console.log(pointId);
+        window.location.href = "http://pixelpainter.app/art/" + artId;
+    }
+
+    (window as any).handleTagArtPoint = handleTagArtPoint;
 
 
 
@@ -152,7 +162,7 @@
     function inMapClick(e: L.LeafletMouseEvent) {
         inRange
             .setLatLng(e.latlng)
-            .setContent("<b>Tag art at " + e.latlng.lat.toFixed(4).toString() + ", " + e.latlng.lng.toFixed(4).toString() +"?</b><br>" + `<a href="#" onclick="handleTagArt(${e.latlng.lat}, ${e.latlng.lng})">Confirm</a>`)
+            .setContent("<b>Tag art at " + e.latlng.lat.toFixed(4).toString() + ", " + e.latlng.lng.toFixed(4).toString() + "</b><br><b>With name: </b>" + `<input type="text" id="name"><br><a href="#" onclick="handleTagArt(${e.latlng.lat}, ${e.latlng.lng}, document.getElementById('name').value)">Confirm</a>`)
             .openOn(map);
     }
 

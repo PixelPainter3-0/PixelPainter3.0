@@ -25,6 +25,9 @@ namespace MyTestVueApp.Server.Entities
         public int NumDislikes { get; set; }
         public int NumComments { get; set; }
         public int PointId { get; set; }
+        public string PointTitle { get; set; }
+        public int ArtspaceId { get; set; }
+        public string ArtspaceTitle { get; set; }
         public bool CurrentUserIsOwner { get; set; } = false;
         public List<Tag> Tags { get; set; }
 
