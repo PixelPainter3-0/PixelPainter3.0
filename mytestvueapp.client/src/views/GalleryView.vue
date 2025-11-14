@@ -105,7 +105,7 @@
     </header>
 
     <!-- Feed: single column on mobile, multi on larger screens -->
-    <div class="gallery-feed flex flex-wrap" v-if="!loading && displayArt.length > 0">
+    <div class="gallery-feed" v-if="!loading && displayArt.length > 0">
       <div
         v-for="index in displayAmount"
         :key="index"
@@ -458,34 +458,44 @@ function sortGallery(): void {
   font-weight: 700;
 }
 
-/* FEED LAYOUT */
-/* Default (tablet/desktop): fixed card width with wrap to keep alignment */
+/* FEED LAYOUT (matches AccountPage art-grid behavior) */
 .gallery-feed {
-  --card-w: 280px;        /* desktop default card width */
-  display: flex;
-  flex-wrap: wrap;
+  --art-card-min: 260px;             /* adjust min card width here */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
+  grid-auto-rows: auto;
   gap: 1rem;
-  justify-content: flex-start;
-  align-content: flex-start;
+  width: 100%;
+  max-width: 1200px;                 /* keep in sync with AccountPage */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;                /* no horizontal scroll */
 }
-.feed-item {
-  width: var(--card-w);
-  flex: 0 0 var(--card-w);
+.feed-item { min-width: 0; }
+
+/* Force exactly 4 columns on desktop to avoid 4→5 jump near ~1202px */
+@media (min-width: 1001px) {
+  .gallery-feed {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-flow: row;
+  }
 }
 
 /* Tablet: slightly smaller fixed card width if needed */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .gallery-feed { --card-w: 240px; gap: 0.9rem; }
+  .gallery-feed { --art-card-min: 220px; gap: 0.9rem; }
 }
 
 /* Mobile: full-width single column feed */
 @media (max-width: 780px) {
-  :deep(.tag-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
+   :deep(.tag-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
 
   .gallery-feed {
-    display: grid !important;
-    grid-template-columns: 1fr;
+    display: flex !important;
+    flex-direction: column;
     gap: 1rem;
+    max-width: 100%;
   }
   .feed-item { width: 100%; }
 }
@@ -496,4 +506,4 @@ function sortGallery(): void {
 }
 </style>
 
-<!-- 4 -->
+<!-- 5 -->

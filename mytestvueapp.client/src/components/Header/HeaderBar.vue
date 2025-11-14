@@ -46,9 +46,6 @@
             <RouterLink to="/gallery" class="mobile-link">
               <Button label="Gallery" icon="pi pi-image" @click="menuOpen = false" />
             </RouterLink>
-            <RouterLink to="/thegrid" class="mobile-link">
-              <Button label="The Grid" icon="pi pi-globe" @click="menuOpen = false" />
-            </RouterLink>
             <RouterLink to="/map" class="mobile-link">
               <Button label="Map" icon="pi pi-map" @click="menuOpen = false" />
             </RouterLink>
@@ -256,7 +253,8 @@ watch(
 /* Mobile menu (hidden by default) */
 .mobile-menu {
   display: none;
-  width: 40%;
+  width: 20%;
+  min-width: 170px;
 }
 
 /* Mobile-specific rules */

@@ -1052,7 +1052,7 @@ async function gifDisplay(): Promise<void> {
 }
 
 /* Match HeaderBar mobile breakpoint */
-@media (max-width: 1300px) {
+@media (max-width: 1000px) {
   .viewer-main {
     flex-direction: column;   /* stack canvas above card */
     align-items: stretch;
