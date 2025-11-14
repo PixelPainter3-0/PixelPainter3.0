@@ -196,7 +196,6 @@ watch(perPage, () => {
 
 // NEW: tag data for multi-select
 const allTags = ref<any[]>([]);
-const points = ref<Point[]>([]);
 const allLocations = ref<any[]>([]);
 const selectedTagIds = ref<number[]>([]);
 const selectedLocationIds = ref<number[]>([]);
@@ -359,9 +358,7 @@ onMounted(async () => {
 
   // Load locations for the multi-select
   try {
-    points = await MapAccessService.getAllPoints();
-    console.log('Raw API response:', points);
-    allLocations.value = points;
+    allLocations.value = await MapAccessService.getAllPoints();
     allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
     console.log('allLocations:', allLocations.value);
   } catch (err) {
