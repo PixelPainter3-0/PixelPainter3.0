@@ -51,12 +51,12 @@
                         let popupContent = `<b>${point.title}</b>`
 
                         pointArt.slice(0, 3).forEach(taggedArt => {
-                            popupContent += `<br><a href='http://localhost:5173/art/${taggedArt.id}' target="_blank">${taggedArt.title}</a>`;
+                            popupContent += `<br><a href='http://pixelpainter.app/art/${taggedArt.id}' target="_blank">${taggedArt.title}</a>`;
                         });
 
 
                         if (pointArt.length > 3) {
-                            popupContent += `<br><i> <a href='http://localhost:5173/gallery' target="_blank">... ${pointArt.length - 3} more</a></i>`;
+                            popupContent += `<br><i> <a href='http://pixelpainter.app/gallery' target="_blank">... ${pointArt.length - 3} more</a></i>`;
                         }
 
 

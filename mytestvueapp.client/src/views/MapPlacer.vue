@@ -132,7 +132,7 @@
         const pointId = await MapAccessService.createPoint(lat, lng, pointTitle, 1);
         console.log(pointId);
         await MapAccessService.updateArtLocation(artId, pointId);
-        window.location.href = "http://localhost:5173/art/" + artId;
+        window.location.href = "https://pixelpainter.app/art/" + artId;
     }
     
     // Make globally accessible
