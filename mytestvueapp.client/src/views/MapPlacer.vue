@@ -142,7 +142,7 @@
         console.log("Function ran before redirect " + artId + ", " + pointId);
         await MapAccessService.updateArtLocation(artId, pointId);
         console.log(pointId);
-        window.location.href = "http://localhost:5173/art/" + artId;
+        window.location.href = "http://pixelpainter.app/art/" + artId;
     }
 
     (window as any).handleTagArtPoint = handleTagArtPoint;
