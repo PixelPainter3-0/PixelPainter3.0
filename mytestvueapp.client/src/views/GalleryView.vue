@@ -196,7 +196,7 @@ watch(perPage, () => {
 
 // NEW: tag data for multi-select
 const allTags = ref<any[]>([]);
-var points = ref<Point[]>([]);
+const points = ref<Point[]>([]);
 const allLocations = ref<any[]>([]);
 const selectedTagIds = ref<number[]>([]);
 const selectedLocationIds = ref<number[]>([]);
