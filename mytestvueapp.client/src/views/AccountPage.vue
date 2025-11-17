@@ -8,22 +8,26 @@
 
           <div class="flex mt-4 p-2 gap-2 flex-column">
             <Button
+              class="profile-nav-btn"
               :disabled="!canEdit"
               label="Account Settings"
               :severity="route.hash == '#settings' ? 'primary' : 'secondary'"
               @click="changeHash('#settings')"
             />
             <Button
+              class="profile-nav-btn"
               label="Notification Settings"
               :severity="route.hash == '#notification_settings' ? 'primary' : 'secondary'"
               @click="changeHash('#notification_settings')"
             />
             <Button
+              class="profile-nav-btn"
               label="Creator's Art"
               :severity="route.hash == '#created_art' ? 'primary' : 'secondary'"
               @click="changeHash('#created_art')"
             />
             <Button
+              class="profile-nav-btn"
               label="Liked Art"
               :severity="route.hash == '#liked_art' ? 'primary' : 'secondary'"
               @click="changeHash('#liked_art')"
@@ -33,127 +37,139 @@
       </Card>
 
       <div v-if="route.hash == '#settings'" class="account-content">
-        <h2>Account Settings</h2>
-        <Card>
-          <template #content>
-            <div class="mb-4">
-              <label for="username">Username</label>
-              <div class="flex gap-1 flex-row align-items-center">
-                <div class="flex flex-column gap-2">
-                  <InputText
-                    id="username"
-                    :disabled="!isEditing"
-                    class="mr-1"
-                    v-model="newUsername"
-                    variant="filled"
+        <!-- settings-block: keeps the h2 aligned with the centered settings card -->
+        <div class="settings-block">
+          <h2>Account Settings</h2>
+          <!-- use shared settings-card styling -->
+          <Card class="settings-card">
+            <template #content>
+              <div class="mb-4">
+                <label for="username">Username</label>
+                <!-- input-row: keeps the input and edit button together without overflow -->
+                <div class="input-row">
+                  <div class="input-wrap">
+                    <InputText
+                      id="username"
+                      :disabled="!isEditing"
+                      v-model="newUsername"
+                      variant="filled"
+                    />
+                  </div>
+                  <Button
+                    v-if="!isEditing"
+                    class="edit-btn"
+                    severity="secondary"
+                    rounded
+                    icon="pi pi-pencil"
+                    @click="isEditing = true"
                   />
+                  <span v-else class="edit-actions">
+                    <Button
+                      severity="danger"
+                      text
+                      rounded
+                      icon="pi pi-times"
+                      @click="cancelEdit()"
+                    />
+                    <Button
+                      severity="success"
+                      text
+                      rounded
+                      icon="pi pi-check"
+                      @click="updateUsername()"
+                      :disabled="errorMessage != ''"
+                    />
+                  </span>
                 </div>
-                <Button
-                  v-if="!isEditing"
-                  severity="secondary"
-                  rounded
-                  icon="pi pi-pencil"
-                  @click="isEditing = true"
+                <Message
+                  v-if="errorMessage != ''"
+                  :label="errorMessage"
+                  severity="error"
+                  variant="simple"
+                  size="small"
+                  class="mt-2"
                 />
-                <span v-else>
-                  <Button
-                    severity="danger"
-                    text
-                    rounded
-                    icon="pi pi-times"
-                    @click="cancelEdit()"
-                  />
-                  <Button
-                    severity="success"
-                    text
-                    rounded
-                    icon="pi pi-check"
-                    @click="updateUsername()"
-                    :disabled="errorMessage != ''"
-                  />
-                </span>
               </div>
-              <Message
-                v-if="errorMessage != ''"
-                :label="errorMessage"
-                severity="error"
-                variant="simple"
-                size="small"
-                class="mt-2"
-              />
-            </div>
-            <div class="align-items-stretch flex">
-              <Button
-                class="block m-2"
-                label="Logout"
-                icon="pi pi-sign-out"
-                @click="logout()
-                "
-              />
-              <Button
-                class="block m-2"
-                label="Delete Artist"
-                severity="danger"
-                @click="confirmDelete()"
-              />
-            </div>
-          </template>
-        </Card>
+              <div class="align-items-stretch flex">
+                <Button
+                  class="block m-2"
+                  label=" Logout"
+                  icon="pi pi-sign-out"
+                  @click="logout()"
+                />
+                <Button
+                  class="block m-2"
+                  label="Delete Artist"
+                  severity="danger"
+                  @click="confirmDelete()"
+                />
+                
+              </div>
+            </template>
+          </Card>
+        </div>
       </div>
+    </div>
 
   <div v-if="route.hash == '#notification_settings'">
-  <h2>Notification Settings</h2>
-  <Card>
-    <template #content>
-      <h3>Enable or Disable Notification Types</h3>
-      <div class="align-items-stretch flex">
-        <p class="w-10">Art Liked Notification</p>
-        <Button
-          class="block m-2 flex"
-          :label="notifLikes ? 'Enabled' : 'Disabled'"
-          :severity="notifLikes ? 'primary' : 'secondary'"
-          :icon="notifLikes ? 'pi pi-check' : 'pi pi-times'"
-          @click="notifLikes = !notifLikes"
-        />
-      </div>
+  <!-- notification settings uses same settings-block so h2 aligns with card -->
+  <div class="settings-block">
+    <h2>Notification Settings</h2>
+    <!-- use shared settings-card styling -->
+    <Card class="settings-card">
+     <template #content>
+       <h3>Enable or Disable Notification Types</h3>
+       <div class="align-items-stretch flex">
+         <p class="w-10">Art Liked Notification</p>
+         <Button
+           class="block m-2 flex"
+           :label="notifLikes ? '' : ''"
+           :severity="notifLikes ? 'primary' : 'secondary'"
+           :icon="notifLikes ? 'pi pi-check' : 'pi pi-times'"
+           @click="notifLikes = !notifLikes"
+         />
+       </div>
 
-      <div class="align-items-stretch flex">
-        <p class="w-10">Comment Notification</p>
-        <Button
-          class="block m-2 flex"
-          :label="notifComments ? 'Enabled' : 'Disabled'"
-          :severity="notifComments ? 'primary' : 'secondary'"
-          :icon="notifComments ? 'pi pi-check' : 'pi pi-times'"
-          @click="notifComments = !notifComments"
-        />
-      </div>
+       <div class="align-items-stretch flex">
+         <p class="w-10">Comment Notification</p>
+         <Button
+           class="block m-2 flex"
+           :label="notifComments ? '' : ''"
+           :severity="notifComments ? 'primary' : 'secondary'"
+           :icon="notifComments ? 'pi pi-check' : 'pi pi-times'"
+           @click="notifComments = !notifComments"
+         />
+       </div>
 
-      <div class="align-items-stretch flex">
-        <p class="w-10">Reply Notification</p>
-        <Button
-          class="block m-2 flex"
-          :label="notifReplies ? 'Enabled' : 'Disabled'"
-          :severity="notifReplies ? 'primary' : 'secondary'"
-          :icon="notifReplies ? 'pi pi-check' : 'pi pi-times'"
-          @click="notifReplies = !notifReplies"
-        />
-      </div>
+       <div class="align-items-stretch flex">
+         <p class="w-10">Reply Notification</p>
+         <Button
+           class="block m-2 flex"
+           :label="notifReplies ? '' : ''"
+           :severity="notifReplies ? 'primary' : 'secondary'"
+           :icon="notifReplies ? 'pi pi-check' : 'pi pi-times'"
+           @click="notifReplies = !notifReplies"
+         />
+       </div>
 
-      <!-- ✅ Save Button -->
-      <div class="flex justify-content-center mt-3">
-        <Button
-          label="Save Notification Settings"
-          icon="pi pi-save"
-          severity="success"
-          @click="saveNotifications"
-        />
-      </div>
-    </template>
-  </Card>
+       <!-- ✅ Save Button -->
+       <div class="flex justify-content-center mt-3">
+         <!-- save-notif-btn: styled, becomes full-width on small screens -->
+         <Button
+           class="save-notif-btn"
+           label="Save Notification Settings"
+           icon="pi pi-save"
+           severity="success"
+           @click="saveNotifications"
+         />
+       </div>
+     </template>
+   </Card>
+  </div>
 </div>
 
 
-      <div v-if="route.hash == '#created_art'">
+      <div>
       <div v-if="route.hash == '#created_art'" class="account-content">
         <h2>{{ createdArtHeading }}</h2>
         <!-- Desktop: grid of cards. Mobile (<=1000px): vertical scrolling feed like ImageViewer -->
@@ -551,12 +567,29 @@ const createdArtHeading = computed(() =>
   gap: 0.5rem;
 }
 
+/* Profile card nav buttons only:
+   Adjust the two variables below to change the min/max width of JUST these buttons */
+.profile-card :deep(.profile-nav-btn) {
+  --profile-nav-min-width: 12rem;  /* ← change min width here */
+  --profile-nav-max-width: 14rem;   /* ← change max width here */
+  min-width: var(--profile-nav-min-width) !important;
+  max-width: var(--profile-nav-max-width) !important;
+  width: auto;
+  align-self: center;               /* keep centered within the column */
+}
+
 /* Right column (page content area) */
 .account-content {
   flex: 1 1 60rem;             /* take remaining space */
   min-width: 0;
   max-width: 100%;
   overflow-x: hidden;          /* contain any internal overflow */
+
+  /* Horizontal padding for the main content area.
+     Adjust --account-hpad to increase/decrease side padding (default 1rem). */
+  padding-left: var(--account-hpad, 1rem);   /* <-- change this value as needed */
+  padding-right: var(--account-hpad, 1rem);  /* <-- change this value as needed */
+  box-sizing: border-box;
 }
 
 /* Optionally ensure other cards' content doesn't overflow and stays full width */
@@ -644,10 +677,9 @@ const createdArtHeading = computed(() =>
 /* Limit width of primary PrimeVue buttons in this view to prevent overly wide labels */
 .p-button {
   max-width: 13rem;
-  min-width: 13rem;
+  min-width: 10rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   margin: 0 auto; 
 
 }
@@ -694,6 +726,184 @@ const createdArtHeading = computed(() =>
     overflow-y: visible !important;
   }
 }
+
+/* CENTER notification card and improve button padding
+   - Adjust --notification-card-max-width to change card max width
+   - Adjust --notif-btn-vpad / --notif-btn-hpad to change button padding */
+.notification-card {
+  width: 100%;
+  --notification-card-max-width: 28rem; /* ← adjust this to change desktop card width */
+  max-width: var(--notification-card-max-width);
+  margin: 0.75rem auto; /* center the card horizontally and add vertical gap */
+  box-sizing: border-box;
+  display: block;
+}
+
+/* ensure PrimeVue card itself also centers inside wrapper */
+.notification-card :deep(.p-card) {
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* card content padding (adjust as needed) */
+.notification-card :deep(.p-card-content) {
+  padding: 1rem; /* ← change this to increase/decrease content padding */
+}
+
+/* Button padding / sizing variables (adjust to taste) */
+:root {
+  --notif-btn-vpad: 0.5rem;  /* vertical padding */
+  --notif-btn-hpad: 0.9rem;  /* horizontal padding */
+}
+
+/* Tighter, consistent button styling inside notification card */
+.notification-card :deep(.p-button) {
+  padding: var(--notif-btn-vpad) var(--notif-btn-hpad);
+  border-radius: 0.45rem;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem; /* space between icon and label */
+  box-sizing: border-box;
+}
+
+/* Make the save button slightly larger on desktop but keep centered */
+.save-notif-btn {
+  min-width: 10rem;
+  align-self: center;
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 1rem;
+}
+
+/* Mobile: center card and make controls easier to tap */
+@media (max-width: 1000px) {
+  .notification-card {
+    --notification-card-max-width: 22rem; /* <-- mobile max width */
+    margin: 0.5rem auto;
+  }
+  .notification-card :deep(.p-card-content) {
+    padding: 0.75rem;
+  }
+  .notification-card :deep(.p-button) {
+    width: 100%;
+    min-width: 0;
+    margin: 0.35rem 0;
+  }
+  .save-notif-btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Shared card styling for Account Settings and Notification Settings.
+   Adjust --settings-card-max-width to change desktop max width,
+   adjust padding and button vars below for spacing. */
+.settings-card {
+  width: 100%;
+  --settings-card-max-width: 28rem; /* ← adjust this to change desktop card width */
+  max-width: var(--settings-card-max-width);
+  margin: 0.75rem auto; /* center the card horizontally and add vertical gap */
+  box-sizing: border-box;
+  display: block;
+}
+
+/* ensure PrimeVue card itself also centers inside wrapper */
+.settings-card :deep(.p-card) {
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* card content padding (adjust as needed) */
+.settings-card :deep(.p-card-content) {
+  padding: 1rem; /* ← change this to increase/decrease content padding */
+}
+
+/* Button padding / sizing variables (adjust to taste) */
+:root {
+  --settings-btn-vpad: 0.5rem;  /* vertical padding */
+  --settings-btn-hpad: 0.9rem;  /* horizontal padding */
+}
+
+/* Consistent button styling inside settings cards */
+.settings-card :deep(.p-button) {
+  border-radius: 0.45rem;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Save button specific styling kept */
+.save-notif-btn {
+  min-width: 10rem;
+  align-self: center;
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+/* Mobile: center card and make controls easier to tap */
+@media (max-width: 1000px) {
+  .settings-card {
+    --settings-card-max-width: 22rem; /* <-- mobile max width */
+    margin: 0.5rem auto;
+  }
+  .settings-card :deep(.p-card-content) {
+    padding: 0.75rem;
+  }
+  .settings-card :deep(.p-button) {
+    min-width: 0;
+    margin: 0.35rem 0;
+  }
+  .save-notif-btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* settings-block: keeps the h2 and card aligned/centered */
+.settings-block {
+  max-width: var(--settings-card-max-width, 28rem); /* change this to adjust block width */
+  margin: 0  auto 0; /* center horizontally */
+  padding-left: 0.5rem;  /* small horizontal breathing room */
+  padding-right: 0.5rem; /* adjust as needed */
+  box-sizing: border-box;
+}
+
+/* input-row: keep input and edit buttons from overlapping, even on mobile */
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr auto; /* input grows, buttons keep natural width */
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 1rem;
+}
+.input-row .input-wrap { flex: 1 1 auto; min-width: 0; }
+
+/* edit action buttons (pencil or check/x) */
+.edit-actions { display: inline-flex; gap: 0.5rem; align-items: center; }
+.input-row .p-button { 
+  max-width: 2.5rem;
+  width: auto; 
+  margin: 0; 
+} /* prevent full-width buttons here */
+.edit-btn { flex: 0 0 auto; min-width: 40px; height: 40px; padding: 0.5rem 0.6rem; }
+
+/* Narrow screens: stack actions below the input instead of overlapping */
+@media (max-width: 480px) {
+  .input-row { grid-template-columns: 1fr; }
+  .edit-actions { justify-content: flex-end; }
+}
+
+/* Override mobile rule that makes all buttons 100% width inside settings cards */
+@media (max-width: 1000px) {
+  .settings-card .input-row .p-button { width: auto !important; display: inline-flex; }
+  .settings-card .input-row .p-button + .p-button { margin-left: 0.5rem; }
+}
 </style>
 
-<!-- 12 -->
+<!-- 19 -->
