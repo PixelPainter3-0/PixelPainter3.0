@@ -67,6 +67,18 @@
           :maxSelectedLabels="4"
           @filter="onTagFilter"
         />
+        <MultiSelect
+          class="location-multiselect"
+          v-model="selectedLocationIds"
+          :options="displayedLocations"
+          optionLabel="name"
+          optionValue="id"
+          display="chip"
+          filter
+          placeholder="Filter by location(s)"
+          :maxSelectedLabels="4"
+          @location="onTagFilter"
+        />
         <ToggleButton
           class="ml-2"
           v-model="matchAll"
@@ -136,7 +148,9 @@ import { useRoute } from "vue-router";
 import router from "@/router"; // add this
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import Art from "@/entities/Art";
+import Point from "@/entities/Point";
 import ArtAccessService from "@/services/ArtAccessService";
+import MapAccessService from "../services/MapAccessService";
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
 import ToggleButton from "primevue/togglebutton";
@@ -192,7 +206,9 @@ watch(perPage, () => {
 
 // NEW: tag data for multi-select
 const allTags = ref<any[]>([]);
+const allLocations = ref<any[]>([]);
 const selectedTagIds = ref<number[]>([]);
+const selectedLocationIds = ref<number[]>([]);
 const filterQuery = ref<string>("");
 const matchAll = ref<boolean>(false);
 const matchLabel = computed(() => (matchAll.value ? "Match All" : "Match Any"));
@@ -221,6 +237,30 @@ const displayedTags = computed(() => {
     .map(x => x.ref);
 });
 
+const displayedLocations = computed(() => {
+  const src = allLocations.value || [];
+  const q = filterQuery.value.trim().toLowerCase();
+
+  if (!q) return [...src].sort((a, b) => a.title.localeCompare(b.title));
+
+  const scored = src.map(t => {
+      const title = t.title?.toLowerCase() || "";
+    let score = 0;
+      if (title === q) score = 5;
+      else if (title.startsWith(q)) score = 4;
+      else if (title.includes(q)) score = 3;
+    else {
+          const overlap = [...new Set(q)].filter(ch => title.includes(ch)).length;
+      if (overlap) score = 1;
+    }
+    return { ref: t, score };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score || a.ref.title.localeCompare(b.ref.title))
+    .map(x => x.ref);
+});
+
 function onTagFilter(e: any) {
   filterQuery.value = e.value || "";
 }
@@ -236,6 +276,7 @@ function goToBaseGallery(): void {
 
 function clearSelectedTags(): void {
   selectedTagIds.value = [];
+  selectedLocationIds.value = [];
   goToBaseGallery();
   changePage(1);
   updateDisplay();
@@ -247,6 +288,17 @@ const selectedTagNames = computed(() => {
     (allTags.value || []).map(t => [Number(t.id), String(t.name)])
   );
   return selectedTagIds.value
+    .map(id => map.get(Number(id)))
+    .filter((n): n is string => !!n);
+});
+
+// Names of selected locations for the banner
+const selectedLocationNames = computed(() => {
+  const map = new Map<number, string>(
+    (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
+  );
+  console.log(map);
+  return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
 });
@@ -303,12 +355,25 @@ function updateDisplay(): void {
 }
 
 onMounted(async () => {
+
+  //console.log('MapAccessService:', MapAccessService);  
+
   // Load tags for the multi-select
   try {
     allTags.value = await TagService.getAllTags();
     allTags.value = (allTags.value || []).map(t => ({ ...t, id: Number(t.id) }));
   } catch {
     allTags.value = [];
+  }
+
+  // Load locations for the multi-select
+  try {
+    allLocations.value = await MapAccessService.getAllPoints();
+    allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
+    console.log('allLocations:', allLocations.value);
+  } catch (err) {
+    console.error('Error loading locations:', err);
+    allLocations.value = [];
   }
 
   // If we arrived via /tag/:tag, reflect that in the multi-select when possible
