@@ -856,14 +856,18 @@ function pasteSelection(){
         let endW = Math.min(layerStore.grids[layerStore.layer].width, endPix.value.x + copiedSelection.value.length);
         let endH = Math.min(layerStore.grids[layerStore.layer].height, endPix.value.y + copiedSelection.value[0].length);
 
+        let offsetW = Math.max(w - endW, 0);
+        let offsetH = Math.max(h - endH, 0);
+
         for (let i = startW; i < endW; i++) {
             for (let j = startH; j < endH; j++) {
                 console.log("Now attempting to place " + copiedSelection.value[i - startW][j - startH] + " at x:" + i + " y:" + j);
 
                 layerStore.grids[layerStore.layer].grid[i][j]
-                    = copiedSelection.value[i - startW][j - startH];
+                    = copiedSelection.value[i - startW + offsetW][j - startH + offsetH];
+//If desired, we can make this check if it's an empty pixel and only paste it if it isn't empty. But I think it's more useful if we don't
                 canvas.value?.updateCell(layerStore.layer, i, j,
-                    copiedSelection.value[i - startW][j - startH]);
+                    copiedSelection.value[i - startW + offsetW][j - startH + offsetH]);
             }
         }
     }
