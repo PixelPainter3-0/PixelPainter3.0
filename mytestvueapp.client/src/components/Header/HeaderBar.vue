@@ -49,6 +49,9 @@
             <RouterLink to="/map" class="mobile-link">
               <Button label="Map" icon="pi pi-map" @click="menuOpen = false" />
             </RouterLink>
+            <RouterLink to="/notifications" v-if="isLoggedIn" class="mobile-link">
+              <Button label="Notifications" icon="pi pi-bell" @click="menuOpen = false" />
+            </RouterLink>
           </div>
         </Transition>
       </template>
