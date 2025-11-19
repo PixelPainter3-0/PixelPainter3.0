@@ -166,9 +166,7 @@ import router from "@/router"; // add this
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import Art from "@/entities/Art";
 import Point from "@/entities/Point";
-import Point from "@/entities/Point";
 import ArtAccessService from "@/services/ArtAccessService";
-import MapAccessService from "../services/MapAccessService";
 import MapAccessService from "../services/MapAccessService";
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
@@ -281,30 +279,6 @@ const displayedLocations = computed(() => {
     .map(x => x.ref);
 });
 
-const displayedLocations = computed(() => {
-  const src = allLocations.value || [];
-  const q = filterQuery.value.trim().toLowerCase();
-
-  if (!q) return [...src].sort((a, b) => a.title.localeCompare(b.title));
-
-  const scored = src.map(t => {
-      const title = t.title?.toLowerCase() || "";
-    let score = 0;
-      if (title === q) score = 5;
-      else if (title.startsWith(q)) score = 4;
-      else if (title.includes(q)) score = 3;
-    else {
-          const overlap = [...new Set(q)].filter(ch => title.includes(ch)).length;
-      if (overlap) score = 1;
-    }
-    return { ref: t, score };
-  });
-
-  return scored
-    .sort((a, b) => b.score - a.score || a.ref.title.localeCompare(b.ref.title))
-    .map(x => x.ref);
-});
-
 function onTagFilter(e: any) {
   filterQuery.value = e.value || "";
 }
@@ -343,17 +317,6 @@ const selectedLocationNames = computed(() => {
     (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
   );
   console.log("locationMap", map);
-  return selectedLocationIds.value
-    .map(id => map.get(Number(id)))
-    .filter((n): n is string => !!n);
-});
-
-// Names of selected locations for the banner
-const selectedLocationNames = computed(() => {
-  const map = new Map<number, string>(
-    (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
-  );
-  console.log(map);
   return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
