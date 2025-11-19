@@ -473,6 +473,10 @@ async function upload(): Promise<void> {
       newArt.artistId = props.art.artistId;
       newArt.artistName = props.art.artistName;
       newArt.gifFps = props.fps;
+      newArt.pointId = 0;
+      newArt.pointTitle = "";
+      newArt.artspaceId = 0;
+      newArt.artspaceTitle = "";
       return newArt;
     });
 
@@ -494,6 +498,10 @@ async function upload(): Promise<void> {
     newArt.pixelGrid.encodedGrid = flattenArtEncode();
     newArt.artistId = props.art.artistId;
     newArt.artistName = props.art.artistName;
+    newArt.pointId = 0;
+    newArt.pointTitle = "";
+    newArt.artspaceId = 0;
+    newArt.artspaceTitle = "";
 
     try {
       const saved = await ArtAccessService.saveArt(newArt);
