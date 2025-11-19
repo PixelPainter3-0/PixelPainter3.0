@@ -278,7 +278,7 @@ const selectedTagNames = computed(() => {
   const map = new Map<number, string>(
     (allTags.value || []).map(t => [Number(t.id), String(t.name)])
   );
-  console.log(map);
+  console.log("tagMap", map);
   return selectedTagIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -289,7 +289,7 @@ const selectedLocationNames = computed(() => {
   const map = new Map<number, string>(
     (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
   );
-  console.log(map);
+  console.log("locationMap", map);
   return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -350,7 +350,7 @@ function updateDisplay(): void {
     );
   }
 
-  console.log(list);
+  console.log("list", list);
   displayArt.value = list.slice();
   isModified.value = true;
 
@@ -388,8 +388,15 @@ onMounted(async () => {
     if (found) selectedTagIds.value = [Number(found.id)];
   }
 
-  console.log('tag: ', activeTag.value);
-  console.log('location: ', activeLocation);
+  if (activeLocation && allLocations.value.length) {
+      const found = allLocations.value.find(
+        t => Number(t.id) === activeLocation!
+    );
+    if (found) selectedLocationIds.value = [Number(found.id)];
+  }
+
+  console.log('activeTag: ', activeTag.value);
+  console.log('activeLocation: ', activeLocation);
 
   // Load and show art
   ArtAccessService.getAllArt()
