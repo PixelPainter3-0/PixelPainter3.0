@@ -48,7 +48,19 @@
                     } else {
                         console.log(`Art found for point ${point.id}:`, pointArt);
 
-                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(`<a href='https://pixelpainter.app/art/${pointArt[0].id}' target="_blank">${pointArt[0].title}</a>`);
+                        let popupContent = `<b>${point.title}</b>`
+
+                        pointArt.slice(0, 3).forEach(taggedArt => {
+                            popupContent += `<br><a href='http://pixelpainter.app/art/${taggedArt.id}' target="_blank">${taggedArt.title}</a>`;
+                        });
+
+
+                        if (pointArt.length > 3) {
+                            popupContent += `<br><i> <a href='http://pixelpainter.app/gallery' target="_blank">... ${pointArt.length - 3} more</a></i>`;
+                        }
+
+
+                        L.marker([point.latitude, point.longitude]).addTo(map).bindPopup(popupContent);
 
                     }
                 } catch (error) {

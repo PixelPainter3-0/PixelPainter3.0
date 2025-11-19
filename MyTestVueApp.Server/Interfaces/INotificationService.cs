@@ -9,5 +9,6 @@ namespace MyTestVueApp.Server.Interfaces
         public Task<bool> MarkLike(int artId, int artistId);
 
         public Task<bool> MarkDislike(int artId, int artistId);
+        Task<bool> UpdateNotificationsEnabledAsync(int artistId, int notificationsEnabled);
     }
 }

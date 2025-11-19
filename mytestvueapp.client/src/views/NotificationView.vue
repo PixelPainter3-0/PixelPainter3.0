@@ -74,6 +74,8 @@ async function markViewed(notification: Notification): Promise<void> {
   }
 }
 
+
+
 async function markComment(commentId: number): Promise<boolean> {
   return await NotificationService.markCommentViewed(commentId);
 }
