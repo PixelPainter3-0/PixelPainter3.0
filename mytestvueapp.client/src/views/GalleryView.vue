@@ -67,18 +67,6 @@
           :maxSelectedLabels="4"
           @filter="onTagFilter"
         />
-        <MultiSelect
-          class="location-multiselect"
-          v-model="selectedLocationIds"
-          :options="displayedLocations"
-          optionLabel="name"
-          optionValue="id"
-          display="chip"
-          filter
-          placeholder="Filter by location(s)"
-          :maxSelectedLabels="4"
-          @location="onTagFilter"
-        />
         <ToggleButton
           class="ml-2"
           v-model="matchAll"
@@ -98,6 +86,23 @@
           severity="secondary"
           outlined
           @click="clearSelectedTags"
+        />
+      </div>
+
+      <!-- Location select: always placed below the Tags row -->
+      <div class="location-row">
+        <span class="mr-2 tags-label">Locations</span>
+        <MultiSelect
+          class="location-multiselect"
+          v-model="selectedLocationIds"
+          :options="displayedLocations"
+          optionLabel="title"
+          optionValue="id"
+          display="chip"
+          filter
+          placeholder="Filter by location(s)"
+          :maxSelectedLabels="4"
+          @filter="onTagFilter"
         />
       </div>
 
@@ -565,10 +570,28 @@ function sortGallery(): void {
   .feed-item { width: 100%; }
 }
 
+/* ensure location row sits below tags and wraps nicely */
+.location-row {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: .5rem; /* adjust vertical spacing as needed */
+}
+
+/* keep the multiselect sizing behavior consistent with tags */
+:deep(.location-multiselect.p-multiselect) { width: auto; min-width: 20rem; max-width: 48rem; }
+
+/* On very small screens make both selects full width */
+@media (max-width: 780px) {
+  :deep(.tag-multiselect.p-multiselect),
+  :deep(.location-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
+}
+
 /* Larger screens can breathe more */
 @media (min-width: 1024px) {
   .page-title { font-size: 1.8rem; }
 }
 </style>
 
-<!-- 5 -->
+<!-- 6 -->
