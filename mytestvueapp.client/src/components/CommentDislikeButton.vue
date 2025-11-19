@@ -63,7 +63,7 @@ async function dislikedClicked(): Promise<void> {
     toast.add({
       severity: "error",
       summary: "Warning",
-      detail: "User must be logged in to dislike art!",
+      detail: "User must be logged in to dislike a comment!",
       life: 3000
     });
     return;

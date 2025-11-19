@@ -138,5 +138,49 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 }
             }
         }
+
+
+        /// <summary>
+        /// Gets all dislikes a comment has
+        /// </summary>
+        /// <param name="commentId">Id of the comment being referenced</param>
+        /// <returns>A list of CommentDislike objects</returns>
+        public async Task<IEnumerable<CommentDislike>> GetDislikesByComment(int commentId)
+        {
+            var commentDislikes = new List<CommentDislike>();
+            var connectionString = AppConfig.Value.ConnectionString;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                //Need to Append Created On to query when added to database
+                string commentdislikedQuery =
+                    $@"
+                        SELECT Artist.Name, CommentDislikes.CommentId, CommentDislikes.ArtistId, CommentDislikes.Viewed 
+                        FROM CommentDislikes
+                        LEFT JOIN Comment ON Comment.ID = CommentDislikes.CommentID 
+                        LEFT JOIN Artist on Artist.Id = CommentDislikes.ArtistId
+                        WHERE CommentDislikes.CommentId = @commentId";
+                using (SqlCommand command = new SqlCommand(commentdislikedQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@commentId", commentId);
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            var commentDislike = new CommentDislike
+                            {
+                                Artist = reader.GetString(0),
+                                CommentId = reader.GetInt32(1),
+                                ArtistId = reader.GetInt32(2),
+                                Viewed = reader.GetInt32(4) == 1 ? true : false,
+                            };
+                            commentDislikes.Add(commentDislike);
+                        }
+                    }
+                }
+            }
+            return commentDislikes;
+        }
     }
 }
