@@ -119,6 +119,17 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Friends')
+BEGIN
+    CREATE TABLE Friends (
+        Friend1Id INT,
+        Friend2Id INT,
+        FriendsOnDate DATETIME DEFAULT GETDATE(),
+        PRIMARY KEY (Friend1Id, Friend2Id),
+    );
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'GIF')
 BEGIN
     CREATE TABLE GIF (
