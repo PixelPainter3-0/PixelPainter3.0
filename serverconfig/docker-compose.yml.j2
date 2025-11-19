@@ -7,6 +7,7 @@ services:
     restart: always
     ports:
       - "{{env['PIXEL_PORT']}}:{{env['PIXEL_PORT']}}"
+      - "7154:7154"
     networks:
       - pixel_network
 

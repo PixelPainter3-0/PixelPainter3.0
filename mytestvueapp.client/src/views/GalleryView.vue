@@ -1,32 +1,38 @@
 <template>
-  <div class="w-10 mx-auto my-0">
-    <header>
-      <h1 class="flex align-items-center justify-center gap-3">
-        Search for Art
+  <div class="gallery-container mx-auto my-0">
+    <header class="gallery-header">
+      <h1 class="page-title">Search for Art</h1>
+
+      <!-- Top search row: title + artist side by side -->
+      <div class="search-row">
         <InputText
-          class="mt-2"
           v-model.trim="search"
           type="text"
           placeholder="Search title..."
+          class="input"
         />
         <InputText
-          class="mt-2 w-2"
           v-model.trim="filter"
           type="text"
           placeholder="Search artists..."
+          class="input"
         />
+      </div>
+
+      <!-- Sort and order controls (visible, wrapping when needed) -->
+      <div class="controls-row">
         <Dropdown
-          class="pl mt-2 text-base w-1.5 font-normal"
+          class="control"
           v-model="sortType"
           :options="sortBy"
           optionLabel="sort"
           optionValue="code"
           placeholder="Sort by"
         />
+
         <ToggleButton
           v-if="isSortedByDate"
-          id="toggle"
-          class="mt-2 text-base w-0 font-normal"
+          class="control"
           v-model="checkAscending"
           onLabel="Oldest First"
           onIcon="pi pi-arrow-up"
@@ -36,8 +42,7 @@
         />
         <ToggleButton
           v-else
-          id="toggle"
-          class="mt-2 text-base w-0 font-normal"
+          class="control"
           v-model="checkAscending"
           onLabel="Ascending"
           onIcon="pi pi-arrow-up"
@@ -45,9 +50,9 @@
           offIcon="pi pi-arrow-down"
           @click="sortGallery()"
         />
-      </h1>
+      </div>
 
-      <!-- New: tag multi-select row -->
+      <!-- Tag multi-select row (kept visible, wraps nicely on mobile) -->
       <div class="tag-filter-row">
         <span class="mr-2 tags-label">Tags</span>
         <MultiSelect
@@ -96,32 +101,54 @@
         />
       </div>
 
+      <!-- Location select: always placed below the Tags row -->
+      <div class="location-row">
+        <span class="mr-2 tags-label">Locations</span>
+        <MultiSelect
+          class="location-multiselect"
+          v-model="selectedLocationIds"
+          :options="displayedLocations"
+          optionLabel="title"
+          optionValue="id"
+          display="chip"
+          filter
+          placeholder="Filter by location(s)"
+          :maxSelectedLabels="4"
+          @filter="onTagFilter"
+        />
+      </div>
+
       <!-- Centered banner -->
       <div v-if="bannerText" class="tag-banner">
         Showing {{ bannerText }} Art
       </div>
 
-      <div style="display: inline-flex">
-        <p>Art per page: &nbsp;</p>
+      <div class="density-row">
+        <label class="density-label">Art per page:</label>
         <Dropdown
-          class="pl my-2 text-base w-1.5 font-normal"
+          class="control"
           v-model="perPage"
           :options="paginationOptions"
         />
       </div>
     </header>
 
-    <div class="shrink-limit flex flex-wrap" v-if="!loading && displayArt.length > 0">
-      <ArtCard
+    <!-- Feed: single column on mobile, multi on larger screens -->
+    <div class="gallery-feed" v-if="!loading && displayArt.length > 0">
+      <div
         v-for="index in displayAmount"
         :key="index"
-        :art="displayArt[index + offset]"
-        :size="10"
-        :position="index"
-      />
+        class="feed-item"
+      >
+        <ArtCard
+          :art="displayArt[index + offset]"
+          :size="10"
+          :position="index"
+        />
+      </div>
     </div>
 
-    <!-- No results message -->
+    <!-- No results -->
     <div v-if="!loading && displayArt.length === 0" class="no-results">
       <i class="pi pi-search" aria-hidden="true"></i>
       <p>No art found for the current filters.</p>
@@ -139,7 +166,9 @@ import router from "@/router"; // add this
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import Art from "@/entities/Art";
 import Point from "@/entities/Point";
+import Point from "@/entities/Point";
 import ArtAccessService from "@/services/ArtAccessService";
+import MapAccessService from "../services/MapAccessService";
 import MapAccessService from "../services/MapAccessService";
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
@@ -252,6 +281,30 @@ const displayedLocations = computed(() => {
     .map(x => x.ref);
 });
 
+const displayedLocations = computed(() => {
+  const src = allLocations.value || [];
+  const q = filterQuery.value.trim().toLowerCase();
+
+  if (!q) return [...src].sort((a, b) => a.title.localeCompare(b.title));
+
+  const scored = src.map(t => {
+      const title = t.title?.toLowerCase() || "";
+    let score = 0;
+      if (title === q) score = 5;
+      else if (title.startsWith(q)) score = 4;
+      else if (title.includes(q)) score = 3;
+    else {
+          const overlap = [...new Set(q)].filter(ch => title.includes(ch)).length;
+      if (overlap) score = 1;
+    }
+    return { ref: t, score };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score || a.ref.title.localeCompare(b.ref.title))
+    .map(x => x.ref);
+});
+
 function onTagFilter(e: any) {
   filterQuery.value = e.value || "";
 }
@@ -290,6 +343,17 @@ const selectedLocationNames = computed(() => {
     (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
   );
   console.log("locationMap", map);
+  return selectedLocationIds.value
+    .map(id => map.get(Number(id)))
+    .filter((n): n is string => !!n);
+});
+
+// Names of selected locations for the banner
+const selectedLocationNames = computed(() => {
+  const map = new Map<number, string>(
+    (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
+  );
+  console.log(map);
   return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -362,12 +426,25 @@ onMounted(async () => {
 
   //console.log('MapAccessService:', MapAccessService);  
 
+
+  //console.log('MapAccessService:', MapAccessService);  
+
   // Load tags for the multi-select
   try {
     allTags.value = await TagService.getAllTags();
     allTags.value = (allTags.value || []).map(t => ({ ...t, id: Number(t.id) }));
   } catch {
     allTags.value = [];
+  }
+
+  // Load locations for the multi-select
+  try {
+    allLocations.value = await MapAccessService.getAllPoints();
+    allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
+    console.log('allLocations:', allLocations.value);
+  } catch (err) {
+    console.error('Error loading locations:', err);
+    allLocations.value = [];
   }
 
   // Load locations for the multi-select
@@ -523,21 +600,6 @@ function sortGallery(): void {
   gap: .25rem;
 }
 
-/* Input grows to fit selected chips (up to a max) */
-:deep(.location-multiselect.p-multiselect) {
-  width: auto;           /* grow with content */
-  min-width: 20rem;      /* keep a sensible base width */
-  max-width: 48rem;      /* prevent overgrowing the row */
-}
-
-/* Allow selected chips to wrap to multiple lines inside the control */
-:deep(.location-multiselect .p-multiselect-label) {
-  white-space: normal;
-  display: flex;
-  flex-wrap: wrap;
-  gap: .25rem;
-}
-
 /* Make the dropdown panel taller so more tag options are visible */
 :deep(.p-multiselect-panel .p-multiselect-items) {
   max-height: 60vh;      /* show many tags, still constrained to viewport */
@@ -546,40 +608,112 @@ function sortGallery(): void {
 
 .tag-banner {
   width: 100%;
-  text-align: center;
-  margin-top: 0.25rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.15rem;
-  font-weight: 700;
+  max-width: 1200px;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  overflow-x: hidden; /* no horizontal scroll */
 }
 
-/* Square with rounded corners, icon-only sizing */
-.clear-tags-btn {
-  border-radius: 0.5rem;    /* square with rounded corners */
-  padding: 0.5rem 0.75rem;  /* comfortable spacing with label */
+/* Header */
+.gallery-header { display: block; margin-bottom: .75rem; }
+.page-title { font-size: 1.4rem; font-weight: 800; margin: .25rem 0 .5rem; padding-top: 10px;}
+
+/* Top search row (side-by-side on mobile) */
+.search-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+  align-items: center;
+  margin-bottom: .5rem;
 }
+.search-row .input { width: 100%; min-width: 0; }
 
-/* remove icon-only sizing since we now show a label */
-/* .clear-tags-btn.p-button.p-button-icon-only { ... }  // deleted */
+/* Sort + order controls (wrap when needed) */
+.controls-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+.controls-row .control { min-width: 10rem; }
 
+/* Tag row (already wraps) */
+.tag-filter-row { display: flex; align-items: center; gap: .5rem; margin-top: .25rem; flex-wrap: wrap; }
+
+:deep(.tag-multiselect.p-multiselect) { width: auto; min-width: 20rem; max-width: 48rem; }
+:deep(.tag-multiselect .p-multiselect-label) { white-space: normal; display: flex; flex-wrap: wrap; gap: .25rem; }
+:deep(.p-multiselect-panel .p-multiselect-items) { max-height: 60vh; overflow: auto; }
+
+.tag-banner { width: 100%; text-align: center; margin-top: .25rem; margin-bottom: .5rem; font-size: 1.15rem; font-weight: 700; }
+
+/* Per-page density row */
+.density-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin: .25rem 0 .75rem; }
+.density-label { font-weight: 600; }
+
+/* make the "Tags" label bold */
 .tags-label {
   font-weight: 700;
-  font-size: 1.05rem;
 }
 
-.no-results {
+/* FEED LAYOUT (matches AccountPage art-grid behavior) */
+.gallery-feed {
+  --art-card-min: 260px;             /* adjust min card width here */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
+  grid-auto-rows: auto;
+  gap: 1rem;
   width: 100%;
-  text-align: center;
-  padding: 2rem 0;
-  color: #cbd5e1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .5rem;
+  max-width: 1200px;                 /* keep in sync with AccountPage */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;                /* no horizontal scroll */
 }
-.no-results .pi {
-  font-size: 1.5rem;
-  color: #94a3b8;
+.feed-item { min-width: 0; }
+
+/* Force exactly 4 columns on desktop to avoid 4→5 jump near ~1202px */
+@media (min-width: 1001px) {
+  .gallery-feed {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-flow: row;
+  }
 }
 
+/* Tablet: slightly smaller fixed card width if needed */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .gallery-feed { --art-card-min: 220px; gap: 0.9rem; }
+}
+
+/* Mobile: full-width single column feed */
+@media (max-width: 780px) {
+   :deep(.tag-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
+
+  .gallery-feed {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 100%;
+  }
+  .feed-item { width: 100%; }
+}
+
+/* ensure location row sits below tags and wraps nicely */
+.location-row {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: .5rem; /* adjust vertical spacing as needed */
+}
+
+/* keep the multiselect sizing behavior consistent with tags */
+:deep(.location-multiselect.p-multiselect) { width: auto; min-width: 20rem; max-width: 48rem; }
+
+/* On very small screens make both selects full width */
+@media (max-width: 780px) {
+  :deep(.tag-multiselect.p-multiselect),
+  :deep(.location-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
+}
+
+/* Larger screens can breathe more */
+@media (min-width: 1024px) {
+  .page-title { font-size: 1.8rem; }
+}
 </style>
+
+<!-- 6 -->
