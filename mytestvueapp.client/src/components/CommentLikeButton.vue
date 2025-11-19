@@ -1,5 +1,6 @@
 <template>
   <Button
+    class="comment-vote-like"
     rounded
     :severity="liked ? 'primary' : 'secondary'"
     :icon="liked ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"
@@ -63,7 +64,7 @@ async function likedClicked(): Promise<void> {
     toast.add({
       severity: "error",
       summary: "Warning",
-      detail: "User must be logged in to dislike art!",
+      detail: "User must be logged in to like a comment!",
       life: 3000
     });
     return;

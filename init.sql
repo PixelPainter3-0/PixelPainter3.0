@@ -21,7 +21,7 @@ BEGIN
         IsAdmin BIT DEFAULT 0, -- this is a bool, 0 = 0 1 = 1
         CreationDate DATETIME DEFAULT GETDATE(),
         PrivateProfile BIT DEFAULT 0,
-        NotificationsEnabled INT DEFAULT 7,
+        NotificationsEnabled INT DEFAULT 63, -- all notifications enabled by default
         PRIMARY KEY (Id)
     );
 END
