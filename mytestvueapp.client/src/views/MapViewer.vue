@@ -13,6 +13,7 @@
   import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 
   import MapAccessService from "../services/MapAccessService";
+  import { useRoute } from "vue-router";
 
   const defaultIcon = L.icon({
     iconUrl: markerIconUrl,
@@ -24,6 +25,8 @@
   })
 
   L.Marker.prototype.options.icon = defaultIcon 
+  const router = useRoute();
+
 
   let map: L.Map
   let circle: L.Circle
@@ -51,12 +54,15 @@
                         let popupContent = `<b>${point.title}</b>`
 
                         pointArt.slice(0, 3).forEach(taggedArt => {
-                            popupContent += `<br><a href='http://pixelpainter.app/art/${taggedArt.id}' target="_blank">${taggedArt.title}</a>`;
+                            popupContent += `<br><a href='http://localhost:5173/art/${taggedArt.id}' target="_blank">${taggedArt.title}</a>`;
                         });
 
 
                         if (pointArt.length > 3) {
-                            popupContent += `<br><i> <a href='http://pixelpainter.app/gallery' target="_blank">... ${pointArt.length - 3} more</a></i>`;
+                            popupContent += `<br><i> <a href=# onclick="handleViewByLocation(${point.id})">+${pointArt.length - 3} more</a></i>`;
+                        }
+                        else {
+                            popupContent += `<br><br><i> <a href=# onclick="handleViewByLocation(${point.id})">View Location In Gallery</a></i>`;
                         }
 
 
@@ -132,6 +138,14 @@
 
         return inside;
     }
+
+    async function handleViewByLocation(pointId: number) {
+        console.log("Function ran before redirect " + pointId);
+        //router.push(`/gallery/${pointId}`)
+        window.location.href = "http://localhost:5173/gallery/location/" + pointId;
+    }
+
+    (window as any).handleViewByLocation = handleViewByLocation;
 
   function outMapClick(e: L.LeafletMouseEvent) {
       if (isPointInPolygon(e.latlng, artspacePolygon)) {

@@ -66,13 +66,13 @@
           class="location-multiselect"
           v-model="selectedLocationIds"
           :options="displayedLocations"
-          optionLabel="name"
+          optionLabel="title"
           optionValue="id"
           display="chip"
           filter
           placeholder="Filter by location(s)"
           :maxSelectedLabels="4"
-          @location="onTagFilter"
+          @filter="onTagFilter"
         />
         <ToggleButton
           class="ml-2"
@@ -158,6 +158,7 @@ const loading = ref<boolean>(true);
 // Route tag (used to seed the multi-select)
 const route = useRoute();
 const activeTag = ref<string | null>((route.params.tag as string) || null);
+const activeLocation = Number(route.params.location);
 
 // Sorting / paging
 interface sortFilter {
@@ -277,6 +278,7 @@ const selectedTagNames = computed(() => {
   const map = new Map<number, string>(
     (allTags.value || []).map(t => [Number(t.id), String(t.name)])
   );
+  console.log(map);
   return selectedTagIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -300,23 +302,39 @@ const bannerText = computed(() => {
   if (activeTag.value) {
     return `'${activeTag.value}'`;
   }
+  if (selectedLocationNames.value.length) {
+    return `'${selectedLocationNames.value.join("', '")}'`;
+  }
   return "";
 });
 
 // Helper: recompute displayArt based on tags, search, and artist filter
 function updateDisplay(): void {
   let list = publicArt.value;
-
   // Tag filtering (MultiSelect takes precedence; fallback to route tag)
   if (selectedTagIds.value.length > 0) {
     const wanted = selectedTagIds.value.map(Number);
     const requireAll = matchAll.value;
+
+    console.log(`[Tags] Filtering by selected IDs: [${wanted.join(', ')}]`)
+
     list = list.filter(a => {
       const ids = (a.tags || []).map(t => Number(t.id)).filter(Number.isFinite);
       if (!ids.length) return false;
       return requireAll
         ? wanted.every(id => ids.includes(id))
         : wanted.some(id => ids.includes(id));
+    });
+  } else if (selectedLocationIds.value.length > 0) {
+    const wanted = selectedLocationIds.value.map(Number);
+    const requireAll = matchAll.value;
+
+    console.log(`[Locations] Filtering by selected IDs: [${wanted.join(', ')}]`)
+    
+    list = list.filter(a => {
+      const locId = Number(a.pointId);
+      if (!Number.isFinite(locId)) return false;
+      return wanted.includes(locId);
     });
   } else if (activeTag.value) {
     const tagLower = activeTag.value.toLowerCase();
@@ -325,18 +343,14 @@ function updateDisplay(): void {
     );
   }
 
+  // Artist name
   if (filter.value) {
     list = list.filter(a =>
       a.artistName.toString().toLowerCase().includes(filter.value.toLowerCase())
     );
   }
 
-  if (search.value) {
-    list = list.filter(a =>
-      a.title.toLowerCase().includes(search.value.toLowerCase())
-    );
-  }
-
+  console.log(list);
   displayArt.value = list.slice();
   isModified.value = true;
 
@@ -373,6 +387,9 @@ onMounted(async () => {
     );
     if (found) selectedTagIds.value = [Number(found.id)];
   }
+
+  console.log('tag: ', activeTag.value);
+  console.log('location: ', activeLocation);
 
   // Load and show art
   ArtAccessService.getAllArt()
@@ -415,6 +432,15 @@ watch(sortType, () => { sortGallery(); });
 
 // When tags or match mode change, clear the route tag if empty selection
 watch([selectedTagIds, matchAll], ([ids]) => {
+  if (!ids || (Array.isArray(ids) && ids.length === 0)) {
+    goToBaseGallery();
+  }
+  changePage(1);
+  updateDisplay();
+});
+
+// When location or match mode change, clear the route tag if empty selection
+watch([selectedLocationIds, matchAll], ([ids]) => {
   if (!ids || (Array.isArray(ids) && ids.length === 0)) {
     goToBaseGallery();
   }

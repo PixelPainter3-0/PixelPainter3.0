@@ -138,7 +138,7 @@
         />
       </div>
 
-      <!-- ✅ Save Button -->
+      <!-- Save Button -->
       <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
