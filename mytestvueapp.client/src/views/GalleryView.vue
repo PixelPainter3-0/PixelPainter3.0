@@ -67,6 +67,18 @@
           :maxSelectedLabels="4"
           @filter="onTagFilter"
         />
+        <MultiSelect
+          class="location-multiselect"
+          v-model="selectedLocationIds"
+          :options="displayedLocations"
+          optionLabel="title"
+          optionValue="id"
+          display="chip"
+          filter
+          placeholder="Filter by location(s)"
+          :maxSelectedLabels="4"
+          @filter="onTagFilter"
+        />
         <ToggleButton
           class="ml-2"
           v-model="matchAll"
@@ -173,6 +185,7 @@ const loading = ref<boolean>(true);
 // Route tag (used to seed the multi-select)
 const route = useRoute();
 const activeTag = ref<string | null>((route.params.tag as string) || null);
+const activeLocation = Number(route.params.location);
 
 // Sorting / paging
 interface sortFilter {
@@ -292,6 +305,7 @@ const selectedTagNames = computed(() => {
   const map = new Map<number, string>(
     (allTags.value || []).map(t => [Number(t.id), String(t.name)])
   );
+  console.log("tagMap", map);
   return selectedTagIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -302,7 +316,7 @@ const selectedLocationNames = computed(() => {
   const map = new Map<number, string>(
     (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
   );
-  console.log(map);
+  console.log("locationMap", map);
   return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -315,23 +329,39 @@ const bannerText = computed(() => {
   if (activeTag.value) {
     return `'${activeTag.value}'`;
   }
+  if (selectedLocationNames.value.length) {
+    return `'${selectedLocationNames.value.join("', '")}'`;
+  }
   return "";
 });
 
 // Helper: recompute displayArt based on tags, search, and artist filter
 function updateDisplay(): void {
   let list = publicArt.value;
-
   // Tag filtering (MultiSelect takes precedence; fallback to route tag)
   if (selectedTagIds.value.length > 0) {
     const wanted = selectedTagIds.value.map(Number);
     const requireAll = matchAll.value;
+
+    console.log(`[Tags] Filtering by selected IDs: [${wanted.join(', ')}]`)
+
     list = list.filter(a => {
       const ids = (a.tags || []).map(t => Number(t.id)).filter(Number.isFinite);
       if (!ids.length) return false;
       return requireAll
         ? wanted.every(id => ids.includes(id))
         : wanted.some(id => ids.includes(id));
+    });
+  } else if (selectedLocationIds.value.length > 0) {
+    const wanted = selectedLocationIds.value.map(Number);
+    const requireAll = matchAll.value;
+
+    console.log(`[Locations] Filtering by selected IDs: [${wanted.join(', ')}]`)
+    
+    list = list.filter(a => {
+      const locId = Number(a.pointId);
+      if (!Number.isFinite(locId)) return false;
+      return wanted.includes(locId);
     });
   } else if (activeTag.value) {
     const tagLower = activeTag.value.toLowerCase();
@@ -340,18 +370,14 @@ function updateDisplay(): void {
     );
   }
 
+  // Artist name
   if (filter.value) {
     list = list.filter(a =>
       a.artistName.toString().toLowerCase().includes(filter.value.toLowerCase())
     );
   }
 
-  if (search.value) {
-    list = list.filter(a =>
-      a.title.toLowerCase().includes(search.value.toLowerCase())
-    );
-  }
-
+  console.log("list", list);
   displayArt.value = list.slice();
   isModified.value = true;
 
@@ -360,6 +386,9 @@ function updateDisplay(): void {
 }
 
 onMounted(async () => {
+
+  //console.log('MapAccessService:', MapAccessService);  
+
 
   //console.log('MapAccessService:', MapAccessService);  
 
@@ -381,6 +410,16 @@ onMounted(async () => {
     allLocations.value = [];
   }
 
+  // Load locations for the multi-select
+  try {
+    allLocations.value = await MapAccessService.getAllPoints();
+    allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
+    console.log('allLocations:', allLocations.value);
+  } catch (err) {
+    console.error('Error loading locations:', err);
+    allLocations.value = [];
+  }
+
   // If we arrived via /tag/:tag, reflect that in the multi-select when possible
   if (activeTag.value && allTags.value.length) {
     const found = allTags.value.find(
@@ -388,6 +427,16 @@ onMounted(async () => {
     );
     if (found) selectedTagIds.value = [Number(found.id)];
   }
+
+  if (activeLocation && allLocations.value.length) {
+      const found = allLocations.value.find(
+        t => Number(t.id) === activeLocation!
+    );
+    if (found) selectedLocationIds.value = [Number(found.id)];
+  }
+
+  console.log('activeTag: ', activeTag.value);
+  console.log('activeLocation: ', activeLocation);
 
   // Load and show art
   ArtAccessService.getAllArt()
@@ -430,6 +479,15 @@ watch(sortType, () => { sortGallery(); });
 
 // When tags or match mode change, clear the route tag if empty selection
 watch([selectedTagIds, matchAll], ([ids]) => {
+  if (!ids || (Array.isArray(ids) && ids.length === 0)) {
+    goToBaseGallery();
+  }
+  changePage(1);
+  updateDisplay();
+});
+
+// When location or match mode change, clear the route tag if empty selection
+watch([selectedLocationIds, matchAll], ([ids]) => {
   if (!ids || (Array.isArray(ids) && ids.length === 0)) {
     goToBaseGallery();
   }
@@ -482,9 +540,36 @@ function sortGallery(): void {
 </script>
 
 <style scoped>
-/* Global fixes for smooth scrolling and no accidental horizontal scroll */
-:global(html) { scroll-behavior: smooth; }
-.gallery-container {
+.tag-filter-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .25rem;
+  flex-wrap: wrap; /* allow row to wrap on small screens */
+}
+
+/* Input grows to fit selected chips (up to a max) */
+:deep(.tag-multiselect.p-multiselect) {
+  width: auto;           /* grow with content */
+  min-width: 20rem;      /* keep a sensible base width */
+  max-width: 48rem;      /* prevent overgrowing the row */
+}
+
+/* Allow selected chips to wrap to multiple lines inside the control */
+:deep(.tag-multiselect .p-multiselect-label) {
+  white-space: normal;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+}
+
+/* Make the dropdown panel taller so more tag options are visible */
+:deep(.p-multiselect-panel .p-multiselect-items) {
+  max-height: 60vh;      /* show many tags, still constrained to viewport */
+  overflow: auto;
+}
+
+.tag-banner {
   width: 100%;
   max-width: 1200px;
   padding: 0 1rem;
