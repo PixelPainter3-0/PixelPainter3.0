@@ -3,24 +3,32 @@
     <header class="gallery-header">
       <h1 class="page-title">Search for Art</h1>
 
-      <!-- Top row (medium+ screens): Title | Artist | Order Toggle | Date/Sort dropdown -->
-      <div class="search-row">
+      <!-- ROW 1 Desktop: Title | Artist | Date | Newest First -->
+      <!-- Smoothly condenses: inputs grow, controls keep min width, wrap gracefully -->
+      <div class="row row-top">
         <InputText
           v-model.trim="search"
           type="text"
           placeholder="Search title..."
-          class="input title-input"
+          class="grow input title-input"
         />
         <InputText
           v-model.trim="filter"
           type="text"
           placeholder="Search artists..."
-          class="input artist-input"
+          class="grow input artist-input"
         />
-        <!-- Moved order toggle into top row (left of dropdown) -->
+        <Dropdown
+          class="control date-dropdown"
+          v-model="sortType"
+          :options="sortBy"
+          optionLabel="sort"
+          optionValue="code"
+          placeholder="Date"
+        />
         <ToggleButton
           v-if="isSortedByDate"
-          class="order-toggle"
+          class="control newest-toggle"
           v-model="checkAscending"
           onLabel="Oldest First"
           onIcon="pi pi-arrow-up"
@@ -30,7 +38,7 @@
         />
         <ToggleButton
           v-else
-          class="order-toggle"
+          class="control newest-toggle"
           v-model="checkAscending"
           onLabel="Ascending"
           onIcon="pi pi-arrow-up"
@@ -38,88 +46,86 @@
           offIcon="pi pi-arrow-down"
           @click="sortGallery()"
         />
-        <Dropdown
-          class="input sort-dropdown"
-          v-model="sortType"
-          :options="sortBy"
-          optionLabel="sort"
-          optionValue="code"
-          placeholder="Date / Sort"
-        />
       </div>
 
-      <!-- Row 2 now only: per page selector -->
-      <div class="controls-row">
-        <div class="per-page-group">
-          <label class="density-label" for="perPageSelect">Art per page:</label>
+      <!-- ROW 2 Desktop: Tags | Match/Clear | Locations | Art per page -->
+      <div class="row row-filters">
+        <!-- Tags group -->
+        <div class="filter-group filter-tags">
+          <label class="group-label" for="tagsSelect">Tags</label>
+          <MultiSelect
+            id="tagsSelect"
+            class="tag-multiselect filter-select"
+            v-model="selectedTagIds"
+            :options="displayedTags"
+            optionLabel="name"
+            optionValue="id"
+            display="chip"
+            filter
+            placeholder="Filter by tag(s)"
+            :maxSelectedLabels="4"
+            @filter="onTagFilter"
+          />
+        </div>
+        <!-- Match/Clear inline controls -->
+        <div class="filter-inline">
+          <ToggleButton
+            class="control match-toggle"
+            v-model="matchAll"
+            :title="matchLabel"
+            :aria-label="matchLabel"
+            onLabel="Match All"
+            offLabel="Match Any"
+            onIcon="pi pi-check-circle"
+            offIcon="pi pi-circle"
+          />
+          <Button
+            class="control clear-tags-btn"
+            icon="pi pi-times"
+            label=""
+            title="Clear selected tags"
+            aria-label="Clear selected tags"
+            severity="secondary"
+            outlined
+            @click="clearSelectedTags"
+          />
+        </div>
+        <!-- Locations group -->
+        <div class="filter-group filter-locations">
+          <label class="group-label" for="locationsSelect">Locations</label>
+          <MultiSelect
+            id="locationsSelect"
+            class="location-multiselect filter-select"
+            v-model="selectedLocationIds"
+            :options="displayedLocations"
+            optionLabel="title"
+            optionValue="id"
+            display="chip"
+            filter
+            placeholder="Filter by location(s)"
+            :maxSelectedLabels="4"
+            @filter="onTagFilter"
+          />
+        </div>
+        <!-- Per-page group -->
+        <div class="filter-group filter-perpage">
+          <label class="group-label" for="perPageSelect">Art per page</label>
           <Dropdown
             id="perPageSelect"
-            class="control per-page-select"
+            class="per-page-select"
             v-model="perPage"
             :options="paginationOptions"
           />
         </div>
       </div>
 
-      <!-- Row 3: combined Tags + Locations (was two rows) -->
-      <div class="filter-row">
-        <span class="tags-label">Tags</span>
-        <MultiSelect
-          class="tag-multiselect"
-          v-model="selectedTagIds"
-          :options="displayedTags"
-          optionLabel="name"
-          optionValue="id"
-          display="chip"
-          filter
-          placeholder="Filter by tag(s)"
-          :maxSelectedLabels="4"
-          @filter="onTagFilter"
-        />
-        <ToggleButton
-          class="match-toggle"
-          v-model="matchAll"
-          :title="matchLabel"
-          :aria-label="matchLabel"
-          onLabel="Match All"
-          offLabel="Match Any"
-          onIcon="pi pi-check-circle"
-          offIcon="pi pi-circle"
-        />
-        <Button
-          class="clear-tags-btn"
-          icon="pi pi-times"
-          label="Clear Tags"
-          title="Clear selected tags"
-          aria-label="Clear selected tags"
-          severity="secondary"
-          outlined
-          @click="clearSelectedTags"
-        />
-
-        <!-- Locations immediately after tags -->
-        <span class="locations-label">Locations</span>
-        <MultiSelect
-          class="location-multiselect"
-          v-model="selectedLocationIds"
-          :options="displayedLocations"
-          optionLabel="title"
-          optionValue="id"
-          display="chip"
-          filter
-          placeholder="Filter by location(s)"
-          :maxSelectedLabels="4"
-          @filter="onTagFilter"
-        />
-      </div>
-
-      <!-- Centered banner -->
+      <!-- Banner (optional) -->
       <div v-if="bannerText" class="tag-banner">
         Showing {{ bannerText }} Art
       </div>
     </header>
 
-    <!-- Feed: single column on mobile, multi on larger screens -->
+    <!-- Art Grid / Feed -->
     <div class="gallery-feed" v-if="!loading && displayArt.length > 0">
       <div
         v-for="index in displayAmount"
@@ -134,7 +140,6 @@
       </div>
     </div>
 
-    <!-- No results -->
     <div v-if="!loading && displayArt.length === 0" class="no-results">
       <i class="pi pi-search" aria-hidden="true"></i>
       <p>No art found for the current filters.</p>
@@ -480,180 +485,196 @@ function sortGallery(): void {
 </script>
 
 <style scoped>
-/* Global fixes for smooth scrolling and no accidental horizontal scroll */
-:global(html) { scroll-behavior: smooth; }
+/* Container */
 .gallery-container {
   width: 100%;
   max-width: 1200px;
   padding: 0 1rem;
   box-sizing: border-box;
-  overflow-x: hidden; /* no horizontal scroll */
+  overflow-x: hidden;
+}
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0.7rem 0 0.2rem;
+  padding-top: 10px;
 }
 
-/* Header */
-.gallery-header { display: block; margin-bottom: .75rem; }
-.page-title { font-size: 1.4rem; font-weight: 800; margin: .25rem 0 .5rem; padding-top: 10px;}
-
-/* Top search row with toggle + dropdown */
-.search-row {
+/* Shared row base */
+.row {
   display: grid;
-  gap: .5rem;
-  margin-bottom: .6rem;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .65rem;
+}
+
+/* ROW 1 Layout (smoothly condenses) */
+.row-top {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-.order-toggle {
-  min-width: 140px;             /* adjust toggle width */
+.title-input,
+.artist-input {
+  min-width: 180px;
+}
+
+.date-dropdown {
+  min-width: 130px;
+  max-width: 180px;
   justify-self: start;
 }
 
-.sort-dropdown {
-  min-width: 160px;              /* adjust min width of date/sort dropdown */
-  max-width: 220px;
-  justify-self: end;
+.newest-toggle {
+  min-width: 150px;
+  max-width: 180px;
+  justify-self: start;
 }
 
-.title-input,
-.artist-input { min-width: 180px; }
-
-/* Medium+ screens: fixed 4-column layout (Title | Artist | Toggle | Dropdown) */
-@media (min-width: 900px) {
-  .search-row {
+/* Fixed 4-column alignment at wider screens */
+@media (min-width: 1100px) {
+  .row-top {
     grid-template-columns:
-      minmax(220px, 1fr)
-      minmax(220px, 1fr)
-      minmax(140px, 180px)
-      minmax(130px, 100px);
+      minmax(260px, 1fr)
+      minmax(260px, 1fr)
+      minmax(140px, 160px)
+      minmax(150px, 170px);
   }
 }
 
-/* Mobile: stack; toggle precedes dropdown */
-@media (max-width: 899px) {
-  .search-row { grid-template-columns: 1fr; }
-  .order-toggle,
-  .sort-dropdown { justify-self: stretch; }
-  .sort-dropdown { max-width: 100%; }
+/* ROW 2 Layout */
+.row-filters {
+  --filter-wide-min: 280px;      /* ← change to widen Tags / Locations min width */
+  --filter-mid-min: 180px;       /* ← change for match/clear group min width */
+  --filter-perpage-min: 160px;   /* ← change for per-page group min width */
+  display: grid;
+  gap: .75rem;
+  align-items: start;
+  margin-bottom: .65rem;
+  grid-template-columns: repeat(auto-fit, minmax(var(--filter-mid-min), 1fr));
 }
 
-/* Removed toggle buttons from controls-row; adjust spacing */
-.controls-row {
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  min-width: var(--filter-mid-min);
+}
+
+.filter-tags,
+.filter-locations {
+  min-width: var(--filter-wide-min);
+}
+
+.filter-perpage {
+  min-width: var(--filter-perpage-min);
+}
+
+.group-label {
+  font-weight: 700;
+  font-size: .85rem;
+  line-height: 1;
+  padding-left: .15rem;
+  opacity: .95;
+  user-select: none;
+}
+
+.filter-select :deep(.p-multiselect),
+.filter-perpage :deep(.p-dropdown),
+.per-page-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: .75rem;
+  gap: .5rem;
   align-items: center;
-  margin-bottom: .6rem;
+  min-width: var(--filter-mid-min);
+  padding-top: 1.35rem; /* aligns with labels above other controls */
 }
 
-/* Small/mobile: stack everything (dropdown goes under inputs) */
-@media (max-width: 899px) {
-  .search-row {
+/* Wide screens: allocate explicit column widths for better balance */
+@media (min-width: 1100px) {
+  .row-filters {
+    grid-template-columns:
+      minmax(var(--filter-wide-min), 1fr)
+      minmax(var(--filter-mid-min), 220px)
+      minmax(var(--filter-wide-min), 1fr)
+      minmax(var(--filter-perpage-min), 190px);
+  }
+}
+
+/* Mid range keeps wide groups larger */
+@media (min-width: 800px) and (max-width: 1099px) {
+  .row-filters {
+    grid-template-columns:
+      minmax(var(--filter-wide-min), 1fr)
+      minmax(var(--filter-mid-min), 200px)
+      minmax(var(--filter-wide-min), 1fr)
+      minmax(var(--filter-perpage-min), 170px);
+  }
+}
+
+/* Mobile stacking */
+@media (max-width: 799px) {
+  .row-filters {
     grid-template-columns: 1fr;
   }
-  .sort-dropdown {
-    justify-self: stretch;
-    max-width: 100%;
+  .filter-inline {
+    padding-top: .35rem;
   }
-}
-
-/* Sort + order controls (wrap when needed) */
-.controls-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .75rem;
-  align-items: center;
-  margin-bottom: .6rem;
-}
-.controls-row .control { min-width: 10rem; }
-
-.per-page-group {
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-  flex-wrap: wrap;
-}
-.per-page-select { min-width: 6.5rem; }
-
-/* Combined filter row (Tags + Locations) */
-/* COMMENT: adjust gap / margin-bottom to tune spacing between filter row and feed */
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .6rem;
-  margin-bottom: .5rem; /* ← adjust vertical space below combined row */
+  .filter-group,
+  .filter-tags,
+  .filter-locations,
+  .filter-perpage {
+    min-width: 0;
+  }
 }
 
 .tags-label,
-.locations-label {
-  font-weight: 700;
-  margin-right: .25rem;
+.locations-label { display: none; }
+
+/* Banner */
+.tag-banner {
+  margin: .4rem 0 .9rem;
+  font-size: .9rem;
+  font-weight: 600;
+  opacity: .85;
+  text-align: center;
 }
 
-.match-toggle { margin-left: .25rem; }
-
-:deep(.tag-multiselect.p-multiselect),
-:deep(.location-multiselect.p-multiselect) {
-  width: auto;
-  min-width: 16rem; /* ← adjust min width of selects */
-  max-width: 40rem; /* ← adjust max width of selects */
-}
-
-@media (max-width: 900px) {
-  .filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .match-toggle,
-  .clear-tags-btn {
-    align-self: flex-start;
-  }
-  :deep(.tag-multiselect.p-multiselect),
-  :deep(.location-multiselect.p-multiselect) {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-  }
-}
-
-/* Remove old individual row styles (tag-filter-row, location-row, density-row) now unused */
-.tag-filter-row,
-.location-row,
-.density-row { display: none !important; }
-
-/* ART LAYOUT: rows/columns on medium–large screens, feed only on small mobile */
+/* Art grid (unchanged) */
 .gallery-feed {
-  --art-card-min: 260px;         /* adjust min card width if needed */
+  --art-card-min: 260px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
   gap: 1rem;
   width: 100%;
-  max-width: 1200px;             /* center the grid like Account page */
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 1200px;
+  margin: 0 auto 2rem;
   box-sizing: border-box;
   overflow-x: hidden;
+  padding-top: 10px;
 }
 .feed-item { min-width: 0; }
 
-/* Force exactly 4 columns on desktop to avoid 4→5 jump jitter */
 @media (min-width: 1001px) {
   .gallery-feed {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
 
-/* Mobile: single-column scrolling feed */
 @media (max-width: 1000px) {
   .gallery-feed {
     display: flex !important;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: .75rem;
     max-width: 100%;
   }
   .feed-item { width: 100%; }
 }
 
-/* keep media responsive inside cards */
 .gallery-feed :deep(img),
 .gallery-feed :deep(canvas),
 .gallery-feed :deep(video) {
@@ -661,6 +682,200 @@ function sortGallery(): void {
   height: auto;
   display: block;
 }
+
+/* No results */
+.no-results {
+  text-align: center;
+  opacity: .8;
+  margin: 2rem 0;
+}
+.no-results i { font-size: 2rem; margin-bottom: .5rem; }
+
+/* (keep all existing desktop / tablet styles above unchanged) */
+
+/* ===== MOBILE REWORK TO IMITATE LEGACY VERSION (≤799px) ===
+   - Row 1: Title + Artist (2 columns)
+   - Row 2: Date + Newest First (2 columns)
+   - Filters split into stacked groups: Tags (+ Match/Clear inline), Locations, Art per page
+   - Wider multiselects become full width
+*/
+@media (max-width: 799px) {
+  /* Search + sort rows */
+  .row-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: auto;
+    gap: .55rem;
+  }
+  /* Row 1 */
+  .row-top .title-input { grid-column: 1; grid-row: 1; width: 100%; }
+  .row-top .artist-input { grid-column: 2; grid-row: 1; width: 100%; }
+  /* Row 2 */
+  .row-top .date-dropdown { grid-column: 1; grid-row: 2; width: 100%; }
+  .row-top .newest-toggle { grid-column: 2; grid-row: 2; width: 100%; }
+
+  .row-top :deep(.p-dropdown),
+  .row-top :deep(.p-inputtext),
+  .row-top :deep(.p-togglebutton) { width: 100%; }
+
+  /* Replace complex grid filters with stacked legacy style */
+  .row-filters {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+
+  .filter-group,
+  .filter-tags,
+  .filter-locations,
+  .filter-perpage {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Tags group first */
+  .filter-tags { order: 1; }
+  .filter-tags :deep(.p-multiselect) { width: 100%; }
+
+  /* Match/Clear inline directly under tags */
+  .filter-inline {
+    order: 2;
+    display: flex;
+    flex-direction: row;
+    gap: .6rem;
+    padding-top: .15rem;
+    width: 100%;
+  }
+  .filter-inline .match-toggle,
+  .filter-inline .clear-tags-btn { flex: 1 1 0; min-width: 0; }
+
+  /* Locations group */
+  .filter-locations { order: 3; }
+  .filter-locations :deep(.p-multiselect) { width: 100%; }
+
+  /* Art per page group */
+  .filter-perpage { order: 4; }
+  .filter-perpage :deep(.p-dropdown) { width: 100%; }
+
+  /* Labels tighten */
+  .group-label {
+    font-size: .8rem;
+    margin-bottom: .2rem;
+    padding-left: .05rem;
+  }
+}
+
+/* Extra-small devices: allow buttons wrap */
+@media (max-width: 360px) {
+  .filter-inline { flex-wrap: wrap; }
+  .filter-inline .match-toggle,
+  .filter-inline .clear-tags-btn { flex: 1 1 48%; }
+}
+
+/* ===== Mobile refinement: keep desktop exactly as-is.
+   Put Tags select + Match toggle + Clear button on the SAME ROW.
+   Give Tags and Locations separate responsive behavior. */
+@media (max-width: 799px) {
+  /* Build a 3-col grid just for the filters row on mobile */
+  .row.row-filters {
+    display: grid !important;                   /* override earlier mobile flex */
+    grid-template-columns: 1fr auto auto;       /* tags grows | match | clear */
+    grid-auto-rows: auto;
+    gap: .6rem;
+    align-items: end;                            /* line up bottoms neatly */
+  }
+
+  /* TAGS group: turn wrapper into pass-through so label/select can be placed in the grid */
+  .filter-tags { display: contents; }
+
+  /* Label spans full width above the row */
+  .filter-tags > .group-label {
+    grid-column: 1 / -1;
+    margin-bottom: .15rem;
+  }
+
+  /* Tag multiselect occupies the flexible first column */
+  .tag-multiselect {
+    grid-column: 1;
+    min-width: 0;
+    width: 100%;
+  }
+  /* Tag dropdown sizing (independent from Locations) */
+  .tag-multiselect :deep(.p-multiselect) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Place Match Any/All and Clear in columns 2 and 3 */
+  .filter-inline { display: contents; }         /* let its children be grid items */
+  .match-toggle { grid-column: 2; }
+  .clear-tags-btn { grid-column: 3; }
+
+  /* Make the two buttons visually align with the multiselect */
+  .match-toggle :deep(.p-togglebutton),
+  .clear-tags-btn :deep(.p-button) {
+    height: 2.5rem;
+    padding: .5rem .9rem;
+  }
+
+  /* LOCATIONS group: stays stacked under Tags row and spans full width */
+  .filter-locations { grid-column: 1 / -1; }
+  .location-multiselect {
+    width: 100%;
+    min-width: 0;
+  }
+  /* Location dropdown can behave differently from tags if needed */
+  .location-multiselect :deep(.p-multiselect) {
+    width: 100%;
+    min-width: 0;
+    /* Example: limit panel height for locations only */
+    /* -- you can tweak/remove next line independently of tags */
+    /* max-width: none; */
+  }
+
+  /* ART PER PAGE: full width under locations */
+  .filter-perpage { grid-column: 1 / -1; }
+  .filter-perpage :deep(.p-dropdown) { width: 100%; }
+
+  /* Tighten mobile labels a bit */
+  .group-label { font-size: .8rem; }
+}
+
+/* Narrow safety: if the three items cannot fit, gracefully stack toggle/clear below */
+@media (max-width: 370px) {
+  .row.row-filters { grid-template-columns: 1fr; }
+  .filter-inline { display: flex; gap: .5rem; }
+  .match-toggle, .clear-tags-btn { flex: 1 1 0; }
+}
+
+/* Add override so on mobile the Locations and Art per page share one row */
+@media (max-width: 799px) {
+  /* Keep existing 3-column grid: 1fr auto auto.
+     Put Locations in column 1; Art per page spans columns 2–3. */
+  .row.row-filters {
+    grid-template-columns: 1fr auto auto;
+  }
+  .filter-locations {
+    grid-column: 1;
+    margin-top: .25rem;
+  }
+  .filter-perpage {
+    grid-column: 2 / 4;
+    margin-top: .25rem;
+    align-self: end;
+  }
+  .filter-perpage :deep(.p-dropdown) {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Ultra narrow: stack again (already present, keep behavior) */
+@media (max-width: 370px) {
+  .row.row-filters { grid-template-columns: 1fr; }
+  .filter-locations,
+  .filter-perpage { grid-column: 1 / -1; }
+}
 </style>
 
-<!-- 10 -->
+<!-- 18 -->
