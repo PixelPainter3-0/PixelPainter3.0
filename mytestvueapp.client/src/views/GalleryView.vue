@@ -3,36 +3,24 @@
     <header class="gallery-header">
       <h1 class="page-title">Search for Art</h1>
 
-      <!-- Top search row: title + artist side by side -->
+      <!-- Top row (medium+ screens): Title | Artist | Order Toggle | Date/Sort dropdown -->
       <div class="search-row">
         <InputText
           v-model.trim="search"
           type="text"
           placeholder="Search title..."
-          class="input"
+          class="input title-input"
         />
         <InputText
           v-model.trim="filter"
           type="text"
           placeholder="Search artists..."
-          class="input"
+          class="input artist-input"
         />
-      </div>
-
-      <!-- Sort and order controls (visible, wrapping when needed) -->
-      <div class="controls-row">
-        <Dropdown
-          class="control"
-          v-model="sortType"
-          :options="sortBy"
-          optionLabel="sort"
-          optionValue="code"
-          placeholder="Sort by"
-        />
-
+        <!-- Moved order toggle into top row (left of dropdown) -->
         <ToggleButton
           v-if="isSortedByDate"
-          class="control"
+          class="order-toggle"
           v-model="checkAscending"
           onLabel="Oldest First"
           onIcon="pi pi-arrow-up"
@@ -42,7 +30,7 @@
         />
         <ToggleButton
           v-else
-          class="control"
+          class="order-toggle"
           v-model="checkAscending"
           onLabel="Ascending"
           onIcon="pi pi-arrow-up"
@@ -50,11 +38,32 @@
           offIcon="pi pi-arrow-down"
           @click="sortGallery()"
         />
+        <Dropdown
+          class="input sort-dropdown"
+          v-model="sortType"
+          :options="sortBy"
+          optionLabel="sort"
+          optionValue="code"
+          placeholder="Date / Sort"
+        />
       </div>
 
-      <!-- Tag multi-select row (kept visible, wraps nicely on mobile) -->
-      <div class="tag-filter-row">
-        <span class="mr-2 tags-label">Tags</span>
+      <!-- Row 2 now only: per page selector -->
+      <div class="controls-row">
+        <div class="per-page-group">
+          <label class="density-label" for="perPageSelect">Art per page:</label>
+          <Dropdown
+            id="perPageSelect"
+            class="control per-page-select"
+            v-model="perPage"
+            :options="paginationOptions"
+          />
+        </div>
+      </div>
+
+      <!-- Row 3: combined Tags + Locations (was two rows) -->
+      <div class="filter-row">
+        <span class="tags-label">Tags</span>
         <MultiSelect
           class="tag-multiselect"
           v-model="selectedTagIds"
@@ -68,7 +77,7 @@
           @filter="onTagFilter"
         />
         <ToggleButton
-          class="ml-2"
+          class="match-toggle"
           v-model="matchAll"
           :title="matchLabel"
           :aria-label="matchLabel"
@@ -78,7 +87,7 @@
           offIcon="pi pi-circle"
         />
         <Button
-          class="ml-2 clear-tags-btn"
+          class="clear-tags-btn"
           icon="pi pi-times"
           label="Clear Tags"
           title="Clear selected tags"
@@ -87,11 +96,9 @@
           outlined
           @click="clearSelectedTags"
         />
-      </div>
 
-      <!-- Location select: always placed below the Tags row -->
-      <div class="location-row">
-        <span class="mr-2 tags-label">Locations</span>
+        <!-- Locations immediately after tags -->
+        <span class="locations-label">Locations</span>
         <MultiSelect
           class="location-multiselect"
           v-model="selectedLocationIds"
@@ -109,15 +116,6 @@
       <!-- Centered banner -->
       <div v-if="bannerText" class="tag-banner">
         Showing {{ bannerText }} Art
-      </div>
-
-      <div class="density-row">
-        <label class="density-label">Art per page:</label>
-        <Dropdown
-          class="control"
-          v-model="perPage"
-          :options="paginationOptions"
-        />
       </div>
     </header>
 
@@ -496,102 +494,173 @@ function sortGallery(): void {
 .gallery-header { display: block; margin-bottom: .75rem; }
 .page-title { font-size: 1.4rem; font-weight: 800; margin: .25rem 0 .5rem; padding-top: 10px;}
 
-/* Top search row (side-by-side on mobile) */
+/* Top search row with toggle + dropdown */
 .search-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: .5rem;
-  align-items: center;
-  margin-bottom: .5rem;
-}
-.search-row .input { width: 100%; min-width: 0; }
-
-/* Sort + order controls (wrap when needed) */
-.controls-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .5rem; }
-.controls-row .control { min-width: 10rem; }
-
-/* Tag row (already wraps) */
-.tag-filter-row { display: flex; align-items: center; gap: .5rem; margin-top: .25rem; flex-wrap: wrap; }
-
-:deep(.tag-multiselect.p-multiselect) { width: auto; min-width: 20rem; max-width: 48rem; }
-:deep(.tag-multiselect .p-multiselect-label) { white-space: normal; display: flex; flex-wrap: wrap; gap: .25rem; }
-:deep(.p-multiselect-panel .p-multiselect-items) { max-height: 60vh; overflow: auto; }
-
-.tag-banner { width: 100%; text-align: center; margin-top: .25rem; margin-bottom: .5rem; font-size: 1.15rem; font-weight: 700; }
-
-/* Per-page density row */
-.density-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin: .25rem 0 .75rem; }
-.density-label { font-weight: 600; }
-
-/* make the "Tags" label bold */
-.tags-label {
-  font-weight: 700;
+  margin-bottom: .6rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-/* FEED LAYOUT (matches AccountPage art-grid behavior) */
-.gallery-feed {
-  --art-card-min: 260px;             /* adjust min card width here */
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
-  grid-auto-rows: auto;
-  gap: 1rem;
-  width: 100%;
-  max-width: 1200px;                 /* keep in sync with AccountPage */
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-  overflow-x: hidden;                /* no horizontal scroll */
+.order-toggle {
+  min-width: 140px;             /* adjust toggle width */
+  justify-self: start;
 }
-.feed-item { min-width: 0; }
 
-/* Force exactly 4 columns on desktop to avoid 4→5 jump near ~1202px */
-@media (min-width: 1001px) {
-  .gallery-feed {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    grid-auto-flow: row;
+.sort-dropdown {
+  min-width: 160px;              /* adjust min width of date/sort dropdown */
+  max-width: 220px;
+  justify-self: end;
+}
+
+.title-input,
+.artist-input { min-width: 180px; }
+
+/* Medium+ screens: fixed 4-column layout (Title | Artist | Toggle | Dropdown) */
+@media (min-width: 900px) {
+  .search-row {
+    grid-template-columns:
+      minmax(220px, 1fr)
+      minmax(220px, 1fr)
+      minmax(140px, 180px)
+      minmax(130px, 100px);
   }
 }
 
-/* Tablet: slightly smaller fixed card width if needed */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .gallery-feed { --art-card-min: 220px; gap: 0.9rem; }
+/* Mobile: stack; toggle precedes dropdown */
+@media (max-width: 899px) {
+  .search-row { grid-template-columns: 1fr; }
+  .order-toggle,
+  .sort-dropdown { justify-self: stretch; }
+  .sort-dropdown { max-width: 100%; }
 }
 
-/* Mobile: full-width single column feed */
-@media (max-width: 780px) {
-   :deep(.tag-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
+/* Removed toggle buttons from controls-row; adjust spacing */
+.controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+  margin-bottom: .6rem;
+}
 
+/* Small/mobile: stack everything (dropdown goes under inputs) */
+@media (max-width: 899px) {
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+  .sort-dropdown {
+    justify-self: stretch;
+    max-width: 100%;
+  }
+}
+
+/* Sort + order controls (wrap when needed) */
+.controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+  margin-bottom: .6rem;
+}
+.controls-row .control { min-width: 10rem; }
+
+.per-page-group {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+}
+.per-page-select { min-width: 6.5rem; }
+
+/* Combined filter row (Tags + Locations) */
+/* COMMENT: adjust gap / margin-bottom to tune spacing between filter row and feed */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .5rem; /* ← adjust vertical space below combined row */
+}
+
+.tags-label,
+.locations-label {
+  font-weight: 700;
+  margin-right: .25rem;
+}
+
+.match-toggle { margin-left: .25rem; }
+
+:deep(.tag-multiselect.p-multiselect),
+:deep(.location-multiselect.p-multiselect) {
+  width: auto;
+  min-width: 16rem; /* ← adjust min width of selects */
+  max-width: 40rem; /* ← adjust max width of selects */
+}
+
+@media (max-width: 900px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .match-toggle,
+  .clear-tags-btn {
+    align-self: flex-start;
+  }
+  :deep(.tag-multiselect.p-multiselect),
+  :deep(.location-multiselect.p-multiselect) {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+/* Remove old individual row styles (tag-filter-row, location-row, density-row) now unused */
+.tag-filter-row,
+.location-row,
+.density-row { display: none !important; }
+
+/* ART LAYOUT: rows/columns on medium–large screens, feed only on small mobile */
+.gallery-feed {
+  --art-card-min: 260px;         /* adjust min card width if needed */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 1200px;             /* center the grid like Account page */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.feed-item { min-width: 0; }
+
+/* Force exactly 4 columns on desktop to avoid 4→5 jump jitter */
+@media (min-width: 1001px) {
+  .gallery-feed {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Mobile: single-column scrolling feed */
+@media (max-width: 1000px) {
   .gallery-feed {
     display: flex !important;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
     max-width: 100%;
   }
   .feed-item { width: 100%; }
 }
 
-/* ensure location row sits below tags and wraps nicely */
-.location-row {
-  display: flex;
-  gap: .5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: .5rem; /* adjust vertical spacing as needed */
-}
-
-/* keep the multiselect sizing behavior consistent with tags */
-:deep(.location-multiselect.p-multiselect) { width: auto; min-width: 20rem; max-width: 48rem; }
-
-/* On very small screens make both selects full width */
-@media (max-width: 780px) {
-  :deep(.tag-multiselect.p-multiselect),
-  :deep(.location-multiselect.p-multiselect) { width: 100%; min-width: 0; max-width: none; }
-}
-
-/* Larger screens can breathe more */
-@media (min-width: 1024px) {
-  .page-title { font-size: 1.8rem; }
+/* keep media responsive inside cards */
+.gallery-feed :deep(img),
+.gallery-feed :deep(canvas),
+.gallery-feed :deep(video) {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>
 
-<!-- 6 -->
+<!-- 10 -->

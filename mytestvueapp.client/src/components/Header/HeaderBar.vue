@@ -49,19 +49,19 @@
             <RouterLink to="/map" class="mobile-link">
               <Button label="Map" icon="pi pi-map" @click="menuOpen = false" />
             </RouterLink>
-            <RouterLink to="/notifications" v-if="isLoggedIn" class="mobile-link">
-              <Button label="Notifications" icon="pi pi-bell" @click="menuOpen = false" />
-            </RouterLink>
           </div>
         </Transition>
       </template>
 
       <template #end>
-        <RouterLink class="mr-2" to="/notifications" v-if="isLoggedIn">
+        <RouterLink class="mr-2" to="/notifications" >
           <Notification />
         </RouterLink>
         <DarkModeSwitcher class="mr-2" />
-        <GoogleLogin />
+        <!-- wrap GoogleLogin so we can target its internal button label for mobile -->
+        <div class="google-login-wrapper">
+          <GoogleLogin />
+        </div>
       </template>
     </Toolbar>
   </header>
@@ -261,7 +261,7 @@ watch(
 }
 
 /* Mobile-specific rules */
-@media (max-width: 1000px) {
+@media (max-width: 1022px) {
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
@@ -359,6 +359,35 @@ watch(
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Google Login: hide label on mobile (icon-only), show label on desktop.
+   Adjust the breakpoint and paddings below to taste. */
+@media (max-width: 1000px) {
+  /* hide the PrimeVue button label inside GoogleLogin */
+  .google-login-wrapper :deep(.p-button .p-button-label) {
+    display: none !important;
+  }
+  /* make the button compact / square-like when label is hidden */
+  .google-login-wrapper :deep(.p-button) {
+    padding-left: 0.32rem !important;
+    padding-right: 0.32rem !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+}
+
+/* Desktop: ensure the label shows and normal padding applies */
+@media (min-width: 1001px) {
+  .google-login-wrapper :deep(.p-button .p-button-label) {
+    display: inline-block !important;
+  }
+  .google-login-wrapper :deep(.p-button) {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    height: auto !important;
+    min-width: auto !important;
+  }
+}
 </style>
 
-<!-- 5  -->
+<!-- 6  -->
