@@ -24,5 +24,6 @@ namespace MyTestVueApp.Server.Interfaces
         public GridGroup GetGrid();
         public bool GridPaint(int memberId, string color, Coordinate coord);
         public void RemoveUserFromGrid(string connectionId, Artist artist);
+        public IEnumerable<DateTime> TimeOuts(int artistId);
     }
 }

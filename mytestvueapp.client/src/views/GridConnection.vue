@@ -10,7 +10,7 @@
           rounded
           label="Connect"
           icon="pi pi-wifi"
-          :disabled="!loggedIn"
+          :disabled="loggedIn"
           @click="goToGrid()"
         ></Button>
       </template>
@@ -27,11 +27,14 @@ import LoginService from "@/services/LoginService";
 const loggedIn = ref<boolean>(false);
 
 function goToGrid(): void {
-  router.push("/thegrid");
+  window.location.replace("/login/Login");
 }
 
 onMounted(async () => {
   loggedIn.value = await LoginService.isLoggedIn();
+  if(loggedIn.value){
+    router.push("/thegrid");
+  }
 });
 
 </script>

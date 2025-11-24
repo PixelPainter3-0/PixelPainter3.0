@@ -1,25 +1,30 @@
 <template>
-  <DrawingCanvas
-    ref="canvas"
-    :style="{ cursor: cursor.selectedTool.cursor }"
-    :grid="gridCanvas"
-    :showLayers="showLayers"
-    :greyscale="greyscale"
-    :isGrid="true"
-    v-model="cursor"
-    @mousedown="handleClickDraw()"
-    @contextmenu.prevent
-  />
+  <div class="grid-view-root">
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <div>Loading grid…</div>
+      </div>
+    </div>
+    <DrawingCanvas
+      ref="canvas"
+      :style="{ cursor: cursor.selectedTool.cursor }"
+      :grid="gridCanvas"
+      :showLayers="showLayers"
+      :greyscale="greyscale"
+      :isGrid="true"
+      v-model="cursor"
+      @mousedown="handleClickDraw()"
+      @contextmenu.prevent
+    />
+  </div>
   <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
     <template #start>
       <UploadButton
         v-if="artist.isAdmin"
         :art="art"
         :fps="fps"
-        :connection="connection"
-        :connected="connected"
-        :group-name="groupName"
-        @disconnect="disconnect"
+        
         @OpenModal="toggleKeybinds"
       />
       <SaveImageToFile
@@ -32,6 +37,14 @@
         :gif-from-viewer="['']"
       >
       </SaveImageToFile>
+      <div class="ml-2">
+        <div v-if="timeOuts.length < 5">
+          Pixels Allowed: {{  (5-timeOuts.length) }}
+        </div>
+        <div v-else>
+          Time till next Pixel: {{ countdown }}
+        </div>
+      </div>
     </template>
     <template #center>
       <ColorSelection
@@ -94,7 +107,7 @@ import Artist from "@/entities/Artist";
 import LoginService from "@/services/LoginService";
 
 //vue
-import { ref, watch, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted, nextTick, onBeforeUnmount } from "vue";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
@@ -107,6 +120,8 @@ import Art from "@/entities/Art";
 import * as SignalR from "@microsoft/signalr";
 import { useArtistStore } from "@/store/ArtistStore";
 import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
+import { useSignalStore } from "@/store/GridConnectStore";
+import { bus } from '@/bus/GridBus';
 
 //variables
 const route = useRoute();
@@ -114,7 +129,7 @@ const canvas = ref<any>();
 const toast = useToast();
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
-const resolution = ref<number>(16);
+const resolution = ref<number>(200);
 const backgroundColor = ref<string>("ffffff");
 const isImage = ref<boolean>(true);
 const gridCanvas = ref(
@@ -126,9 +141,15 @@ const gridCanvas = ref(
   )
 );
 const artistStore = useArtistStore();
+const gridConnection = useSignalStore();
 const showLayers = ref<boolean>(true);
 const greyscale = ref<boolean>(false);
 const loggedIn = ref<boolean>(false);
+const timeOuts = ref<Date[]>([]);
+const countdown = ref<string>("0:00");
+const timeLeft = ref<number>(0);
+let countdownInterval: number | undefined = undefined;
+const loading = ref<boolean>(true);
 const audioFiles = [
   "/src/music/In-the-hall-of-the-mountain-king.mp3",
   "/src/music/flight-of-the-bumblebee.mp3",
@@ -181,119 +202,6 @@ watch(volume, (newVal) => {
   }
 });
 
-// Connection Information
-const connected = ref<boolean>(false);
-const groupName = ref<string>("");
-let connection = new SignalR.HubConnectionBuilder()
-  .withUrl("http://localhost:7154/signalhub", {
-    skipNegotiation: true,
-    transport: SignalR.HttpTransportType.WebSockets
-  })
-  .build();
-
-connection.on("Send", (user: string, msg: string) => {
-  console.log("Received Message", user + " " + msg);
-});
-
-connection.onclose((error) => {
-  if (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "You have disconnected!",
-      life: 3000
-    });
-    connected.value = false;
-  }
-});
-
-connection.on(
-  "ReceivePixel",
-  (layer: number, color: string, coord: Vector2) => {
-    console.log("Received Pixel");
-    drawPixels(layer, color, [coord]);
-  }
-);
-
-connection.on(
-  "GridConfig",
-  async (canvasSize: number, backgroundColor: string, pixels: Pixel[][]) => {
-    console.log("Received Group Config:", canvasSize, backgroundColor, pixels);
-    art.value.pixelGrid.width = canvasSize;
-    art.value.pixelGrid.height = canvasSize;
-    art.value.pixelGrid.backgroundColor = backgroundColor;
-    art.value.pixelGrid.grid = art.value.pixelGrid.createGrid(
-      canvasSize,
-      canvasSize
-    );
-    console.log("Canvas Size Set:", art.value.pixelGrid.width);
-    await replaceCanvas(pixels);
-    console.log("Canvas Replaced");
-    //canvas.value?.drawLayers(0);
-    //canvas.value?.recenter();
-  }
-);
-
-connection.on("BackgroundColor", (backgroundColor: string) => {
-  art.value.pixelGrid.backgroundColor = backgroundColor;
-});
-
-const joinGrid = () => {
-  connection
-    .invoke("JoinGrid", artist.value)
-    .then(() => {
-      connected.value = !connected.value;
-      console.log("Connected");
-    })
-    .catch((err) => {
-      toast.add({
-        severity: "error",
-        summary: "Error",
-        detail: err.toString().slice(err.toString().indexOf("HubException:")),
-        life: 4000
-      });
-      connection.stop();
-    });
-};
-
-const connect = () => {
-  console.log("Connecting to Hub...");
-  if (!loggedIn.value) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Please log in before collaborating!",
-      life: 3000
-    });
-    return;
-  }
-
-  connection
-    .start()
-    .then(() => {
-      joinGrid();
-      console.log("Connected to Hub");
-    })
-    .catch((err) => console.error("Error connecting to Hub:", err));
-};
-
-const disconnect = () => {
-  if (connected.value) {
-    connection
-      .invoke("LeaveGrid", artist.value)
-      .then(() => {
-        connection
-          .stop()
-          .then(() => {
-            connected.value = !connected.value;
-          })
-          .catch((err) => console.error("Error Disconnecting:", err));
-      })
-      .catch((err) => console.error("Error Leaving Group:", err));
-  }
-};
-
-//End of Connection Information
 const cursor = ref<Cursor>(
   new Cursor(new Vector2(-1, -1), PainterTool.getDefaults()[1], 1, "000000")
 );
@@ -331,75 +239,61 @@ onMounted(async () => {
   window.addEventListener("beforeunload", handleBeforeUnload);
 
   //Get the current user
+  loading.value = true;
   loggedIn.value = await LoginService.isLoggedIn();
 
   if (loggedIn.value) {
     LoginService.getCurrentUser().then((user: Artist) => {
       artist.value = user;
+
+      console.log("Artist Info:", artist.value);
+      gridConnection.start(artist.value);
     });
   } else {
     artist.value.id = 0;
     artist.value.name = "Guest";
     cursor.value.selectedTool = PainterTool.getDefaults()[0];
   }
-  console.log("Is logged in?", loggedIn.value);
+  //connect();
+  bus.on('timeouts', (dates: unknown) => {
+    timeOuts.value = ((dates as Date[]) || []).map(d => new Date(d));
+    if (timeOuts.value.length >= 1) {
+      setTimeLeft();
+    }
+  });
 
-  if (route.params.id) {
-    const id: number = parseInt(route.params.id as string);
-    ArtAccessService.getArtById(id)
-      .then((data) => {
-        if (!data.artistId.includes(artist.value.id)) {
-          console.log(artist.value);
-          router.go(-1);
-          toast.add({
-            severity: "error",
-            summary: "Forbid",
-            detail: "Don't do that.",
-            life: 3000
-          });
-        }
-        art.value.id = data.id;
-        art.value.title = data.title;
-        art.value.isPublic = data.isPublic;
-        art.value.pixelGrid.isGif = data.isGif;
-        art.value.isGif = data.isGif;
+  bus.on('receivePixel', (data: unknown) => {
+    const payload = data as { layer: number; color: string; coord: Vector2 };
+    drawPixels(payload.layer, payload.color, [payload.coord]);
+  });
 
-        canvas.value?.recenter();
-        art.value.pixelGrid.backgroundColor = gridCanvas.value.backgroundColor;
-        cursor.value.color = '#000000';
-
-      })
-      .catch(() => {
-        toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "You cannot edit this art",
-          life: 3000
-        });
-        router.push("/new");
-      });
-  } else {
-    canvas.value?.recenter();
-    art.value.isGif = gridCanvas.value.isGif;
-    art.value.pixelGrid.isGif = gridCanvas.value.isGif;
-    art.value.pixelGrid.backgroundColor = gridCanvas.value.backgroundColor;
-    cursor.value.color = '#000000';
-    art.value.pixelGrid.width = gridCanvas.value.width;
-    art.value.pixelGrid.height = gridCanvas.value.height;
-    tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
-    art.value.artistId = artistStore.artists.map((artist) => artist.id);
-    art.value.artistName = artistStore.artists.map((artist) => artist.name);
-  }
-  connect();
+  bus.on('gridConfig', async (data: unknown) => {
+    const payload = data as {canvasSize: number, backgroundColor: string, pixels: Pixel[][]};
+    art.value.pixelGrid.width = payload.canvasSize;
+    art.value.pixelGrid.height = payload.canvasSize;
+    art.value.pixelGrid.backgroundColor = payload.backgroundColor;
+    art.value.pixelGrid.grid = art.value.pixelGrid.createGrid(
+      payload.canvasSize,
+      payload.canvasSize
+    );
+    await replaceCanvas(payload.pixels);
+    loading.value = false;
+  });
+  
 });
 
 onUnmounted(() => {
-  disconnect();
   document.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("beforeunload", handleBeforeUnload);
+  timeOuts.value = [];
+  stop();
 });
 
 function handleBeforeUnload(event: BeforeUnloadEvent) {
+  if (gridConnection.connection) {
+    gridConnection.stop(artist.value);
+    //connection.stop()
+  }
   artistStore.save();
 }
 
@@ -411,19 +305,52 @@ function toggleKeybinds(disable: boolean) {
   }
 }
 
-// Removed continuous-draw watchers so grid only draws on explicit clicks
-
-watch(
-  () => art.value.pixelGrid.backgroundColor,
-  (next) => {
-    changeBackgroundColor(next);
-  }
-);
-
 //functions
+function formatMs(ms: number) {
+  if (ms <= 0) {
+    timeOuts.value.shift();
+    return "0:00";
+  }
+  const minutes = Math.floor(ms / 60).toString().padStart(1, "0");
+  const seconds = (ms % 60).toString().padStart(2, "00");
+  return `${minutes}:${seconds}`;
+}
+
+const startCountdown = () => {
+  if (countdownInterval) {
+    return
+  }
+  countdown.value = formatMs(timeLeft.value);
+
+  countdownInterval = window.setInterval(() => {
+    if (timeLeft.value > 0) {
+      timeLeft.value--;
+      countdown.value = formatMs(timeLeft.value);
+    } else {
+      countdown.value = "0:00";
+      stop()
+    }
+  }, 1000)
+}
+
+function setTimeLeft(){
+  timeOuts.value = (timeOuts.value || []).map(d => new Date(d));
+  const firstTs = timeOuts.value[0].getTime();
+  const elapsedSec = Math.floor((Date.now() - firstTs) / 1000);
+  const fiveMinutes = 5 * 60;
+  timeLeft.value = Math.max(0, fiveMinutes - elapsedSec);
+  startCountdown();
+}
+
+const stop = () => {
+  clearInterval(countdownInterval);
+  countdownInterval = undefined;
+  if(timeOuts.value.length > 0){
+    setTimeLeft();
+  }
+}
 
 async function waitForCanvas(retries = 30, delay = 50) {
-  console.log("Await Canvas");
   for (let i = 0; i < retries; i++) {
     if (canvas.value) return true;
     // give Vue / child component time to mount
@@ -433,22 +360,18 @@ async function waitForCanvas(retries = 30, delay = 50) {
 }
 
 async function replaceCanvas(pixels: Pixel[][]) {
-  console.log("Replace Canvas");
-  console.log("Pixels:", pixels)
   gridCanvas.value = new PixelGrid(
     art.value.pixelGrid.width,
     art.value.pixelGrid.height,
     art.value.pixelGrid.backgroundColor,
     false
   );
-  console.log("Grid Canvas Updated");
   for(let a = 0; a < pixels.length; a++){
     for (let p = 0; p < pixels.length; p++) {
       gridCanvas.value.grid[pixels[a][p].x][pixels[a][p].y] =
         pixels[a][p].color;
     }
   }
-  console.log("Grid Value", gridCanvas.value);
   // keep tempGrid in sync so other logic sees the new state
   tempGrid = JSON.parse(JSON.stringify(gridCanvas.value.grid));
   
@@ -468,16 +391,8 @@ function drawPixels(layer: number, color: string, coords: Vector2[]) {
 }
 
 function sendPixels(color: string, coords: Vector2[]) {
-  console.log("Attempting to send pixels...", coords[0], connected.value);
-  if (connected.value) {
-    console.log("Sending Pixels:", color, coords, artist.value.id);
-    connection.invoke("SendGridPixels", color, coords[0], artist.value.id);
-  }
-}
-
-function changeBackgroundColor(color: string) {
-  if (connected.value) {
-    connection.invoke("ChangeBackgroundColor", groupName.value, color);
+  if( gridConnection.connected) {
+    gridConnection.sendPixels(color, coords[0], artist.value.id);
   }
 }
 
@@ -498,13 +413,6 @@ function drawAtCoords(coords: Vector2[]) {
     coord.y >= gridCanvas.value.height
   )
     return;
-
-  // Set the grid and update the canvas for a single pixel
-  // gridCanvas.value.grid[coord.x][coord.y] = cursor.value.color;
-  // if (!gridCanvas.value.isGif) {
-  //   canvas.value?.updateCell(0, coord.x, coord.y, cursor.value.color);
-  // }
-  // Send the single pixel
   sendPixels(cursor.value.color, [coord]);
 }
 
@@ -641,11 +549,41 @@ function handleKeyDown(event: KeyboardEvent) {
       //@ts-ignore
       cursor.value.color = currentPallet.value._value[11];
     } else if (event.ctrlKey && event.key === "d") {
-      console.log("Ctrl+d was pressed.");
       event.preventDefault();
-      console.log(art.value);
       saveToFile();
     }
   }
 }
 </script>
+<style scoped>
+/* simple overlay spinner — adjust styling to your app theme */
+.grid-view-root { position: relative; min-height: 200px; }
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+}
+.loading-box {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  padding:14px 18px;
+  border-radius:8px;
+  background: rgba(255,255,255,0.95);
+  color:#222;
+}
+.spinner {
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:4px solid rgba(0,0,0,0.1);
+  border-top-color: #333;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>

@@ -177,14 +177,59 @@ namespace MyTestVueApp.Server.ServiceImplementations
         public void AddGridMember(string connectionId, Artist artist)
         {
             Grid.AddMember(artist);
-            if (Records.ContainsKey(artist.Id))
+            if (ArtistLookup.TryGetValue(connectionId, out var artistConnected))
             {
-                Records[artist.Id].Connections.Add(new(connectionId, Grid.GroupName));
+                return;
             }
             else
             {
-                Records.Add(artist.Id, new(connectionId, artist.Id, Grid.GroupName));
+                ArtistLookup.Add(connectionId, artist);
+                if (Records.ContainsKey(artist.Id))
+                {
+                    Records[artist.Id].Connections.Add(new(connectionId, Grid.GroupName));
+                }
+                else
+                {
+                    Records.Add(artist.Id, new(connectionId, artist.Id, Grid.GroupName));
+                }
             }
+            /*Grid.AddMember(artist);
+            if (ArtistLookup.TryGetValue(connectionId, out var artistConnected))
+            {
+                return;
+            }
+            else
+            {
+                ArtistLookup.Add(connectionId, artist);
+            }
+            if (!Records.TryGetValue(artist.Id, out var record))
+            {
+                // First time this artist joins anything
+                Records[artist.Id] = new MembershipRecord(connectionId, artist.Id, Grid.GroupName);
+                return;
+            }
+            var existingGridBindings = record.Connections.Where(c => c.groupName == Grid.GroupName).ToList();
+
+            if (existingGridBindings.Count() == 0)
+            {
+                // Add only if it's new
+                record.Connections.Add(new(connectionId, Grid.GroupName));
+                return;
+            }
+
+            // Overwrite strategy: remove old connection mappings for this grid and add the new one.
+            foreach (var b in existingGridBindings)
+            {
+                // Remove old connection -> artist lookup if present
+                if (ArtistLookup.ContainsKey(b.connectionId))
+                {
+                    ArtistLookup.Remove(b.connectionId);
+                }
+            }
+
+            record.Connections.RemoveAll(c => c.groupName == Grid.GroupName);
+            record.Connections.Add(new(connectionId, Grid.GroupName));
+            ArtistLookup[connectionId] = artist;*/
         }
         public GridGroup GetGrid()
         {
@@ -240,6 +285,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 Records.Remove(artist.Id);
             }
         }
-
+        public IEnumerable<DateTime> TimeOuts(int artistId)
+        {
+            return Grid.TimeOuts(artistId);
+        }
     }
 }

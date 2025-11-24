@@ -1,7 +1,9 @@
 ﻿
 using Microsoft.AspNetCore.SignalR;
-using MyTestVueApp.Server.Interfaces;
 using MyTestVueApp.Server.Entities;
+using MyTestVueApp.Server.Interfaces;
+using System;
+using System.Threading;
 
 namespace MyTestVueApp.Server.Hubs
 {
@@ -119,13 +121,15 @@ namespace MyTestVueApp.Server.Hubs
         {
             if (!Manager.GridExists())
             {
-                Manager.AddGrid(16);
+                Manager.AddGrid(200);
             }
             Manager.AddGridMember(Context.ConnectionId, artist);
             await Groups.AddToGroupAsync(Context.ConnectionId, GridName);
 
             var Grid = Manager.GetGrid();
+            var TimeOuts = Manager.TimeOuts(artist.Id);
             await Clients.Client(Context.ConnectionId).SendAsync("GridConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList());
+            await Clients.Client(Context.ConnectionId).SendAsync("TimeOuts", TimeOuts);
 
             await Clients.Group(GridName).SendAsync("NewMember", artist);
         }
@@ -142,7 +146,9 @@ namespace MyTestVueApp.Server.Hubs
             }
             if (allowed)
             {
+                var TimeOuts = Manager.TimeOuts(artistId);
                 await Clients.Group(GridName).SendAsync("ReceivePixel", 0, color, coord);
+                await Clients.Client(Context.ConnectionId).SendAsync("TimeOuts", TimeOuts);
             }
             return allowed;
         }
