@@ -69,8 +69,8 @@
         </div>
         <!-- Match/Clear grouped to stay together -->
         <div class="filter-inline">
-          <div class="filter-actions">
-            <ToggleButton
+        <div>
+        <ToggleButton
               class="control match-toggle"
               v-model="matchAll"
               :title="matchLabel"
@@ -178,6 +178,7 @@ const loading = ref<boolean>(true);
 // Route tag (used to seed the multi-select)
 const route = useRoute();
 const activeTag = ref<string | null>((route.params.tag as string) || null);
+const activeLocation = Number(route.params.location);
 
 // Sorting / paging
 interface sortFilter {
@@ -297,6 +298,7 @@ const selectedTagNames = computed(() => {
   const map = new Map<number, string>(
     (allTags.value || []).map(t => [Number(t.id), String(t.name)])
   );
+  console.log("tagMap", map);
   return selectedTagIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -307,7 +309,7 @@ const selectedLocationNames = computed(() => {
   const map = new Map<number, string>(
     (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
   );
-  console.log(map);
+  console.log("locationMap", map);
   return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
@@ -320,23 +322,39 @@ const bannerText = computed(() => {
   if (activeTag.value) {
     return `'${activeTag.value}'`;
   }
+  if (selectedLocationNames.value.length) {
+    return `'${selectedLocationNames.value.join("', '")}'`;
+  }
   return "";
 });
 
 // Helper: recompute displayArt based on tags, search, and artist filter
 function updateDisplay(): void {
   let list = publicArt.value;
-
   // Tag filtering (MultiSelect takes precedence; fallback to route tag)
   if (selectedTagIds.value.length > 0) {
     const wanted = selectedTagIds.value.map(Number);
     const requireAll = matchAll.value;
+
+    console.log(`[Tags] Filtering by selected IDs: [${wanted.join(', ')}]`)
+
     list = list.filter(a => {
       const ids = (a.tags || []).map(t => Number(t.id)).filter(Number.isFinite);
       if (!ids.length) return false;
       return requireAll
         ? wanted.every(id => ids.includes(id))
         : wanted.some(id => ids.includes(id));
+    });
+  } else if (selectedLocationIds.value.length > 0) {
+    const wanted = selectedLocationIds.value.map(Number);
+    const requireAll = matchAll.value;
+
+    console.log(`[Locations] Filtering by selected IDs: [${wanted.join(', ')}]`)
+    
+    list = list.filter(a => {
+      const locId = Number(a.pointId);
+      if (!Number.isFinite(locId)) return false;
+      return wanted.includes(locId);
     });
   } else if (activeTag.value) {
     const tagLower = activeTag.value.toLowerCase();
@@ -345,18 +363,14 @@ function updateDisplay(): void {
     );
   }
 
+  // Artist name
   if (filter.value) {
     list = list.filter(a =>
       a.artistName.toString().toLowerCase().includes(filter.value.toLowerCase())
     );
   }
 
-  if (search.value) {
-    list = list.filter(a =>
-      a.title.toLowerCase().includes(search.value.toLowerCase())
-    );
-  }
-
+  console.log("list", list);
   displayArt.value = list.slice();
   isModified.value = true;
 
@@ -365,6 +379,9 @@ function updateDisplay(): void {
 }
 
 onMounted(async () => {
+
+  //console.log('MapAccessService:', MapAccessService);  
+
 
   //console.log('MapAccessService:', MapAccessService);  
 
@@ -386,6 +403,16 @@ onMounted(async () => {
     allLocations.value = [];
   }
 
+  // Load locations for the multi-select
+  try {
+    allLocations.value = await MapAccessService.getAllPoints();
+    allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
+    console.log('allLocations:', allLocations.value);
+  } catch (err) {
+    console.error('Error loading locations:', err);
+    allLocations.value = [];
+  }
+
   // If we arrived via /tag/:tag, reflect that in the multi-select when possible
   if (activeTag.value && allTags.value.length) {
     const found = allTags.value.find(
@@ -393,6 +420,16 @@ onMounted(async () => {
     );
     if (found) selectedTagIds.value = [Number(found.id)];
   }
+
+  if (activeLocation && allLocations.value.length) {
+      const found = allLocations.value.find(
+        t => Number(t.id) === activeLocation!
+    );
+    if (found) selectedLocationIds.value = [Number(found.id)];
+  }
+
+  console.log('activeTag: ', activeTag.value);
+  console.log('activeLocation: ', activeLocation);
 
   // Load and show art
   ArtAccessService.getAllArt()
@@ -435,6 +472,15 @@ watch(sortType, () => { sortGallery(); });
 
 // When tags or match mode change, clear the route tag if empty selection
 watch([selectedTagIds, matchAll], ([ids]) => {
+  if (!ids || (Array.isArray(ids) && ids.length === 0)) {
+    goToBaseGallery();
+  }
+  changePage(1);
+  updateDisplay();
+});
+
+// When location or match mode change, clear the route tag if empty selection
+watch([selectedLocationIds, matchAll], ([ids]) => {
   if (!ids || (Array.isArray(ids) && ids.length === 0)) {
     goToBaseGallery();
   }

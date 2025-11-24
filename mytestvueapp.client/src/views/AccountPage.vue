@@ -11,12 +11,14 @@
               class="profile-nav-btn"
               :disabled="!canEdit"
               label="Account Settings"
+              v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#settings' ? 'primary' : 'secondary'"
               @click="changeHash('#settings')"
             />
             <Button
               class="profile-nav-btn"
               label="Notification Settings"
+               v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#notification_settings' ? 'primary' : 'secondary'"
               @click="changeHash('#notification_settings')"
             />
@@ -178,7 +180,7 @@
         />
       </div>
 
-      <!-- ✅ Save Button -->
+      <!--Save Button -->
       <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
@@ -364,8 +366,7 @@ onMounted(async () => {
     }
   } catch {
     // ignore, treat as anonymous
-  }
-
+    }
   await loadArtistData(String(route.params.artist ?? ""));
   updateNotifications();
 });
@@ -936,6 +937,13 @@ const createdArtHeading = computed(() =>
   .settings-card .input-row .p-button { width: auto !important; display: inline-flex; }
   .settings-card .input-row .p-button + .p-button { margin-left: 0.5rem; }
 }
+
+
+.hidden {
+  display: none !important;
+}
+
+
 </style>
 
 <!-- 19 -->
