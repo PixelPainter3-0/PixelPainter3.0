@@ -67,28 +67,30 @@
             @filter="onTagFilter"
           />
         </div>
-        <!-- Match/Clear inline controls -->
+        <!-- Match/Clear grouped to stay together -->
         <div class="filter-inline">
-          <ToggleButton
-            class="control match-toggle"
-            v-model="matchAll"
-            :title="matchLabel"
-            :aria-label="matchLabel"
-            onLabel="Match All"
-            offLabel="Match Any"
-            onIcon="pi pi-check-circle"
-            offIcon="pi pi-circle"
-          />
-          <Button
-            class="control clear-tags-btn"
-            icon="pi pi-times"
-            label=""
-            title="Clear selected tags"
-            aria-label="Clear selected tags"
-            severity="secondary"
-            outlined
-            @click="clearSelectedTags"
-          />
+          <div class="filter-actions">
+            <ToggleButton
+              class="control match-toggle"
+              v-model="matchAll"
+              :title="matchLabel"
+              :aria-label="matchLabel"
+              onLabel="Match All"
+              offLabel="Match Any"
+              onIcon="pi pi-check-circle"
+              offIcon="pi pi-circle"
+            />
+            <Button
+              class="control clear-tags-btn"
+              icon="pi pi-times"
+              label=""
+              title="Clear selected tags"
+              aria-label="Clear selected tags"
+              severity="secondary"
+              outlined
+              @click="clearSelectedTags"
+            />
+          </div>
         </div>
         <!-- Locations group -->
         <div class="filter-group filter-locations">
@@ -485,6 +487,10 @@ function sortGallery(): void {
 </script>
 
 <style scoped>
+:deep(.p-button.p-button-outlined) {
+  margin-left: 10px;
+}
+
 /* Container */
 .gallery-container {
   width: 100%;
@@ -528,6 +534,17 @@ function sortGallery(): void {
   min-width: 150px;
   max-width: 180px;
   justify-self: start;
+}
+
+/* smooth intermediate breakpoint so search inputs don't collapse just under 1100px */
+@media (min-width: 800px) and (max-width: 1099px) {
+  .row-top {
+    grid-template-columns:
+      minmax(220px, 1fr)   /* title */
+      minmax(220px, 1fr)   /* artist */
+      minmax(140px, 180px) /* date */
+      minmax(140px, 180px);/* newest toggle */
+  }
 }
 
 /* Fixed 4-column alignment at wider screens */
@@ -608,6 +625,10 @@ function sortGallery(): void {
 /* Mid range keeps wide groups larger */
 @media (min-width: 800px) and (max-width: 1099px) {
   .row-filters {
+    /* override wide min values to shrink */
+    --filter-wide-min: 200px;
+    --filter-mid-min: 160px;
+    /* keep same column structure, just narrower minima */
     grid-template-columns:
       minmax(var(--filter-wide-min), 1fr)
       minmax(var(--filter-mid-min), 200px)
@@ -617,7 +638,7 @@ function sortGallery(): void {
 }
 
 /* Mobile stacking */
-@media (max-width: 799px) {
+@media (max-width: 825px) {
   .row-filters {
     grid-template-columns: 1fr;
   }
@@ -693,13 +714,13 @@ function sortGallery(): void {
 
 /* (keep all existing desktop / tablet styles above unchanged) */
 
-/* ===== MOBILE REWORK TO IMITATE LEGACY VERSION (≤799px) ===
+/* ===== MOBILE REWORK TO IMITATE LEGACY VERSION (≤825px) ===
    - Row 1: Title + Artist (2 columns)
    - Row 2: Date + Newest First (2 columns)
    - Filters split into stacked groups: Tags (+ Match/Clear inline), Locations, Art per page
    - Wider multiselects become full width
 */
-@media (max-width: 799px) {
+@media (max-width: 825px) {
   /* Search + sort rows */
   .row-top {
     display: grid;
@@ -775,7 +796,7 @@ function sortGallery(): void {
 /* ===== Mobile refinement: keep desktop exactly as-is.
    Put Tags select + Match toggle + Clear button on the SAME ROW.
    Give Tags and Locations separate responsive behavior. */
-@media (max-width: 799px) {
+@media (max-width: 825px) {
   /* Build a 3-col grid just for the filters row on mobile */
   .row.row-filters {
     display: grid !important;                   /* override earlier mobile flex */
@@ -849,7 +870,7 @@ function sortGallery(): void {
 }
 
 /* Add override so on mobile the Locations and Art per page share one row */
-@media (max-width: 799px) {
+@media (max-width: 825px) {
   /* Keep existing 3-column grid: 1fr auto auto.
      Put Locations in column 1; Art per page spans columns 2–3. */
   .row.row-filters {
@@ -878,4 +899,4 @@ function sortGallery(): void {
 }
 </style>
 
-<!-- 18 -->
+<!-- 23 -->

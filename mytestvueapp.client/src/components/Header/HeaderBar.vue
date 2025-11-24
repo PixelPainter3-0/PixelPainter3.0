@@ -49,7 +49,7 @@
             <RouterLink to="/map" class="mobile-link">
               <Button label="Map" icon="pi pi-map" @click="menuOpen = false" />
             </RouterLink>
-            <RouterLink to="/notifications" class="notification-link" >
+            <RouterLink to="/notifications" v-if="isLoggedIn" class="notification-link" >
               <Button label="Notifications" icon="pi pi-bell" @click="menuOpen = false" />
             </RouterLink>
           </div>
@@ -58,7 +58,7 @@
 
       <template #end>
         <!-- Desktop-only notifications button (hidden on mobile; mobile version lives inside hamburger menu) -->
-        <RouterLink class="mr-2 notification-desktop" to="/notifications">
+        <RouterLink class="mr-2 notification-desktop" v-if="isLoggedIn" to="/notifications">
           <Notification />
         </RouterLink>
         <DarkModeSwitcher class="mr-2" />
