@@ -49,7 +49,7 @@
             <RouterLink to="/map" class="mobile-link">
               <Button label="Map" icon="pi pi-map" @click="menuOpen = false" />
             </RouterLink>
-            <RouterLink to="/notifications" v-if="isLoggedIn" class="mobile-link">
+            <RouterLink to="/notifications" v-if="isLoggedIn" class="notification-link" >
               <Button label="Notifications" icon="pi pi-bell" @click="menuOpen = false" />
             </RouterLink>
           </div>
@@ -57,11 +57,14 @@
       </template>
 
       <template #end>
-        <RouterLink class="mr-2" to="/notifications" v-if="isLoggedIn">
+        <!-- Desktop-only notifications button (hidden on mobile; mobile version lives inside hamburger menu) -->
+        <RouterLink class="mr-2 notification-desktop" v-if="isLoggedIn" to="/notifications">
           <Notification />
         </RouterLink>
         <DarkModeSwitcher class="mr-2" />
+        <!-- wrap GoogleLogin so we can target its internal button label for mobile -->
         <GoogleLogin />
+       
       </template>
     </Toolbar>
   </header>
@@ -261,7 +264,7 @@ watch(
 }
 
 /* Mobile-specific rules */
-@media (max-width: 1000px) {
+@media (max-width: 1022px) {
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
@@ -359,6 +362,27 @@ watch(
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Desktop: ensure the label shows and normal padding applies */
+@media (min-width: 1001px) {
+  .google-login-wrapper :deep(.p-button .p-button-label) {
+    display: inline-block !important;
+  }
+  .google-login-wrapper :deep(.p-button) {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    height: auto !important;
+    min-width: auto !important;
+  }
+}
+
+/* Hide desktop notifications shortcut on mobile; only show in hamburger */
+@media (max-width: 1022px) {
+  .notification-desktop { display: none; }
+}
+@media (min-width: 1023px) {
+  .notification-desktop { display: inline-flex; }
+}
 </style>
 
-<!-- 5  -->
+<!-- 7  -->
