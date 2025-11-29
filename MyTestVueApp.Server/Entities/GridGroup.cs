@@ -1,4 +1,6 @@
-﻿namespace MyTestVueApp.Server.Entities
+﻿using System.Drawing;
+
+namespace MyTestVueApp.Server.Entities
 {
     public class GridGroup
     {
@@ -15,10 +17,10 @@
             CanvasSize = canvasSize;
             Artists = new();
             Pixels = new string[canvasSize][];
-            for(int i=0; i<canvasSize; i++)
+            for (int i = 0; i < canvasSize; i++)
             {
                 string[] line = new string[canvasSize];
-                for(int j=0; j<canvasSize; j++)
+                for (int j = 0; j < canvasSize; j++)
                 {
                     line[j] = "empty";
                 }
@@ -47,11 +49,10 @@
                 }
                 else
                 {
-                    int index = -1;
                     DateTime now = DateTime.Now.AddMinutes(-5);
-                    for(int i=0; i<artist.Additions.Count(); i++)
+                    for (int i = 0; i < artist.Additions.Count(); i++)
                     {
-                        if(now > artist.Additions[i])
+                        if (now > artist.Additions[i])
                         {
                             artist.Additions[i] = DateTime.Now;
                             Pixels[coord.X][coord.Y] = color;
@@ -87,5 +88,19 @@
                 Artists.Remove(artist.Id);
             }
         }
+
+        public IEnumerable<DateTime> TimeOuts(int artistId)
+        {
+            if (!Artists.TryGetValue(artistId, out var gridArtist))
+            {
+                return Enumerable.Empty<DateTime>();
+            }
+
+            DateTime cutoff = DateTime.Now.AddMinutes(-5);
+            var dates = gridArtist.Additions.Where(t => t > cutoff).ToList();
+            dates.Sort((d1, d2) => d1.CompareTo(d2));
+            return dates;
+        }
+
     }
 }

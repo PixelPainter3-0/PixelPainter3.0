@@ -1,7 +1,9 @@
 ﻿
 using Microsoft.AspNetCore.SignalR;
-using MyTestVueApp.Server.Interfaces;
 using MyTestVueApp.Server.Entities;
+using MyTestVueApp.Server.Interfaces;
+using System;
+using System.Threading;
 
 namespace MyTestVueApp.Server.Hubs
 {
@@ -125,14 +127,30 @@ namespace MyTestVueApp.Server.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, GridName);
 
             var Grid = Manager.GetGrid();
-            await Clients.Client(Context.ConnectionId).SendAsync("GroupConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList());
+            var TimeOuts = Manager.TimeOuts(artist.Id);
+            await Clients.Client(Context.ConnectionId).SendAsync("GridConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList());
+            await Clients.Client(Context.ConnectionId).SendAsync("TimeOuts", TimeOuts);
 
             await Clients.Group(GridName).SendAsync("NewMember", artist);
         }
-        public async Task SendGridPixels(string color, Coordinate coord, int artistId)
+        public async Task<bool> SendGridPixels(string color, Coordinate coord, int artistId)
         {
-            Manager.GridPaint(artistId, color, coord);
-            await Clients.Group(GridName).SendAsync("ReceivePixel", 0, color, coord);
+            bool allowed;
+            try
+            {
+                allowed = Manager.GridPaint(artistId, color, coord);
+            }
+            catch
+            {
+                allowed = false;
+            }
+            if (allowed)
+            {
+                var TimeOuts = Manager.TimeOuts(artistId);
+                await Clients.Group(GridName).SendAsync("ReceivePixel", 0, color, coord);
+                await Clients.Client(Context.ConnectionId).SendAsync("TimeOuts", TimeOuts);
+            }
+            return allowed;
         }
         public async Task LeaveGrid(Artist artist)
         {

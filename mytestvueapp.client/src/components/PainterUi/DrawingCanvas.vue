@@ -104,6 +104,7 @@ function init(): void {
 }
 
 function drawLayers(layer: number): void {
+  console.log("DrawLayer");
   let index = 0;
   if (!props.showLayers) {
     index = layer; //for showing only the selected layer
@@ -357,8 +358,9 @@ function recenter(): void {
 }
 
 watch(
-  () => props.grid.backgroundColor,
-  () => {
+  () => props.grid?.backgroundColor,
+  (newColor) => {
+    if (!newColor) return;
     const bg = viewport.children[1] as Sprite;
     if (bg.tint !== props.grid.backgroundColor) {
       bg.tint = props.grid.backgroundColor;

@@ -43,7 +43,9 @@
         />
         <SaveImageToFile
           :art="art"
+          :grid="art.pixelGrid"
           :fps="fps"
+          :isGrid="false"
           :filtered="false"
           :filtered-art="''"
           :gif-from-viewer="['']"
@@ -60,6 +62,7 @@
 
     <template #center>
       <ColorSelection
+        v-if="cursor.color"
         v-model:color="cursor.color"
         v-model:size="cursor.size"
         :isBackground="false"
@@ -174,7 +177,7 @@ import LoginService from "@/services/LoginService";
 import GIFCreationService from "@/services/GIFCreationService";
 
 //vue
-import { ref, watch, computed, onMounted, onUnmounted } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from "vue";
 import router from "@/router";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
@@ -470,6 +473,8 @@ const cursorPositionComputed = computed(
 );
 
 onMounted(async () => {
+  nextTick(async() => {
+  console.log("Canvas properties: ",layerStore.grids[0]);
   document.addEventListener("keydown", handleKeyDown);
   window.addEventListener("beforeunload", handleBeforeUnload);
 
@@ -536,7 +541,7 @@ onMounted(async () => {
     })
     .catch((err) => console.log(err));
 
-
+  });
 });
 
 
