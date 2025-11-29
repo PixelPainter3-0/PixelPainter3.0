@@ -54,14 +54,15 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         COUNT(distinct Dislikes.ArtistId) as Dislikes,
                         COUNT(distinct Comment.Id) as Comments,
                         Art.gifId,
-                        Art.gifFrameNum
+                        Art.gifFrameNum,
+                        Art.pointId
                     FROM ART  
                         LEFT JOIN Likes ON Art.ID = Likes.ArtID  
                         LEFT JOIN Dislikes ON Art.ID = Dislikes.ArtID
                         LEFT JOIN Comment ON Art.ID = Comment.ArtID
                     WHERE Art.gifFrameNum <= 1
                     GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, 
-                             Art.CreationDate, Art.isPublic, Art.IsGIF, Art.GifId, Art.gifFrameNum;";
+                             Art.CreationDate, Art.isPublic, Art.IsGIF, Art.GifId, Art.gifFrameNum, Art.pointId;";
                 using (var command = new SqlCommand(query1, connection))
                 {
                     using (var reader = await command.ExecuteReaderAsync())
@@ -86,6 +87,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 NumComments = reader.GetInt32(10),
                                 GifID = reader.GetInt32(11),
                                 GifFrameNum = reader.GetInt32(12),
+                                PointId = reader.GetInt32(13),
                                 PixelGrid = pixelGrid,
                             };
                             //painting.Tags = (conect to tag service, get all tags for art)
@@ -124,14 +126,20 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         Art.GifId,
                         COUNT(distinct Likes.ArtistId) as Likes, 
                         COUNT(distinct Dislikes.ArtistId) as Dislikes,
-                        Count(distinct Comment.Id) as Comments  
+                        Count(distinct Comment.Id) as Comments, 
+                        Art.PointId,
+                        ISNULL(Points.Title, '') as PointTitle,
+                        ISNULL(Points.ArtspaceId, 0),
+                        ISNULL(Artspace.Title, '')
                     FROM ART  
                     LEFT JOIN Likes ON Art.ID = Likes.ArtID  
                     LEFT JOIN Dislikes on Art.ID = Dislikes.ArtID
                     LEFT JOIN Comment ON Art.ID = Comment.ArtID  
                     LEFT JOIN ContributingArtists ON Art.Id = ContributingArtists.ArtId
+                    LEFT JOIN Points ON Art.pointId = Points.PointId
+                    LEFT JOIN Artspace ON Points.ArtspaceId = Artspace.ArtspaceId
                     WHERE Art.ID = @artId 
-                    GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic, Art.IsGIF, Art.gifId;
+                    GROUP BY Art.ID, Art.Title, Art.Width, Art.Height, Art.Encode, Art.CreationDate, Art.isPublic, Art.IsGIF, Art.gifId, Art.PointId, Points.Title, Points.ArtspaceId, Artspace.Title;
                     ";
                 
                 using (var command = new SqlCommand(query, connection))
@@ -159,7 +167,11 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 NumDislikes = reader.GetInt32(10),
                                 NumComments = reader.GetInt32(11),
                                 IsGif = reader.GetBoolean(7),
-                                GifID = reader.GetInt32(8)
+                                GifID = reader.GetInt32(8),
+                                PointId = reader.GetInt32(12),
+                                PointTitle = reader.GetString(13),
+                                ArtspaceId = reader.GetInt32(14),
+                                ArtspaceTitle = reader.GetString(15)
                             };
                             painting.SetArtists((await GetArtistsByArtId(painting.Id)).ToList());
                             // Add this line to fetch and assign tags

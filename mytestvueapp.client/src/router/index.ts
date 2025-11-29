@@ -29,6 +29,11 @@ const router = createRouter({
       component: () => import("../views/GalleryView.vue")
     },
     {
+      path: "/gallery/location/:location",
+      name: "Gallery View Location",
+      component: () => import("../views/GalleryView.vue")
+    },
+    {
       path: "/art/:id",
       name: "Image",
       component: () => import("../views/ImageViewerView.vue")
@@ -59,7 +64,7 @@ const router = createRouter({
       component: () => import("../views/AccountPage.vue")
     },
     {
-      path: "/tag/:tag",
+      path: "/gallery/tag/:tag",
       name: "TagGallery",
       component: () => import('@/views/GalleryView.vue'),
       props: true

@@ -10,11 +10,13 @@
             <Button
               :disabled="!canEdit"
               label="Account Settings"
+              v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#settings' ? 'primary' : 'secondary'"
               @click="changeHash('#settings')"
             />
             <Button
               label="Notification Settings"
+               v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#notification_settings' ? 'primary' : 'secondary'"
               @click="changeHash('#notification_settings')"
             />
@@ -115,7 +117,16 @@
           @click="notifLikes = !notifLikes"
         />
       </div>
-
+      <div class="align-items-stretch flex">
+        <p class="w-10">Art Disliked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifDislikes ? 'Enabled' : 'Disabled'"
+          :severity="notifDislikes ? 'primary' : 'secondary'"
+          :icon="notifDislikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifDislikes = !notifDislikes"
+        />
+      </div>
       <div class="align-items-stretch flex">
         <p class="w-10">Comment Notification</p>
         <Button
@@ -137,8 +148,28 @@
           @click="notifReplies = !notifReplies"
         />
       </div>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Comment Liked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifCommentLikes ? 'Enabled' : 'Disabled'"
+          :severity="notifCommentLikes ? 'primary' : 'secondary'"
+          :icon="notifCommentLikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifCommentLikes = !notifCommentLikes"
+        />
+      </div>
+        <div class="align-items-stretch flex">
+        <p class="w-10">Comment Disliked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifCommentDislikes ? 'Enabled' : 'Disabled'"
+          :severity="notifCommentDislikes ? 'primary' : 'secondary'"
+          :icon="notifCommentDislikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifCommentDislikes = !notifCommentDislikes"
+        />
+      </div>
 
-      <!-- ✅ Save Button -->
+      <!--Save Button -->
       <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
@@ -220,6 +251,9 @@ const newUsername = ref<string>("");
 const notifLikes = ref<boolean>(true);
 const notifComments = ref<boolean>(true);
 const notifReplies = ref<boolean>(true);
+const notifDislikes = ref<boolean>(true);
+const notifCommentLikes = ref<boolean>(true);
+const notifCommentDislikes = ref<boolean>(true);
 
 
 const myArt = ref<Art[]>([]);
@@ -319,8 +353,7 @@ onMounted(async () => {
     }
   } catch {
     // ignore, treat as anonymous
-  }
-
+    }
   await loadArtistData(String(route.params.artist ?? ""));
   updateNotifications();
 });
@@ -359,12 +392,18 @@ function updateNotifications(): void {
   notifLikes.value = (value & 1) !== 0;
   notifComments.value = (value & 2) !== 0;
   notifReplies.value = (value & 4) !== 0;
+  notifCommentLikes.value = (value & 8) !== 0;
+  notifCommentDislikes.value = (value & 16) !== 0;
+  notifDislikes.value = (value & 32) !==0;
 }
 function computeNotificationsEnabled(): number {
   let value = 0;
   if (notifLikes.value) value += 1;
   if (notifComments.value) value += 2;
   if (notifReplies.value) value += 4;
+  if (notifCommentLikes.value) value += 8;
+  if (notifCommentDislikes.value) value += 16;
+  if (notifDislikes.value) value +=   32;
   return value;
 }
 
@@ -485,4 +524,13 @@ const createdArtHeading = computed(() =>
     width: 100%;
   }
 }
-</style>  
+
+
+.hidden {
+  display: none !important;
+}
+
+
+</style>
+
+<!-- 19 -->

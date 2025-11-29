@@ -139,6 +139,48 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 }
             }
         }
+        /// <summary>
+        /// Gets all likes a comment has
+        /// </summary>
+        /// <param name="commentId">Id of the comment being referenced</param>
+        /// <returns>A list of Like objects</returns>
+        public async Task<IEnumerable<CommentLike>> GetLikesByComment(int commentId)
+        {
+            var commentLikes = new List<CommentLike>();
+            var connectionString = AppConfig.Value.ConnectionString;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                //Need to Append Created On to query when added to database
+                string commentlikedQuery =
+                    $@"
+                        SELECT Artist.Name, CommentLikes.CommentId, CommentLikes.ArtistId, CommentLikes.Viewed 
+                        FROM CommentLikes
+                        LEFT JOIN Comment ON Comment.ID = CommentLikes.CommentID 
+                        LEFT JOIN Artist on Artist.Id = CommentLikes.ArtistId
+                        WHERE CommentLikes.CommentId = @commentId";
+                using (SqlCommand command = new SqlCommand(commentlikedQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@commentId", commentId);
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            var commentLike = new CommentLike
+                            {   
+                                Artist = reader.GetString(0),
+                                CommentId = reader.GetInt32(1),
+                                ArtistId = reader.GetInt32(2),
+                                Viewed = reader.GetInt32(4) == 1 ? true : false,
+                            };
+                            commentLikes.Add(commentLike);
+                        }
+                    }
+                }
+            }
+            return commentLikes;
+        }
     }
 }
 

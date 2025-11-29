@@ -62,6 +62,18 @@
           :maxSelectedLabels="4"
           @filter="onTagFilter"
         />
+        <MultiSelect
+          class="location-multiselect"
+          v-model="selectedLocationIds"
+          :options="displayedLocations"
+          optionLabel="name"
+          optionValue="id"
+          display="chip"
+          filter
+          placeholder="Filter by location(s)"
+          :maxSelectedLabels="4"
+          @location="onTagFilter"
+        />
         <ToggleButton
           class="ml-2"
           v-model="matchAll"
@@ -126,7 +138,9 @@ import { useRoute } from "vue-router";
 import router from "@/router"; // add this
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import Art from "@/entities/Art";
+import Point from "@/entities/Point";
 import ArtAccessService from "@/services/ArtAccessService";
+import MapAccessService from "../services/MapAccessService";
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
 import ToggleButton from "primevue/togglebutton";
@@ -144,6 +158,7 @@ const loading = ref<boolean>(true);
 // Route tag (used to seed the multi-select)
 const route = useRoute();
 const activeTag = ref<string | null>((route.params.tag as string) || null);
+const activeLocation = Number(route.params.location);
 
 // Sorting / paging
 interface sortFilter {
@@ -182,7 +197,9 @@ watch(perPage, () => {
 
 // NEW: tag data for multi-select
 const allTags = ref<any[]>([]);
+const allLocations = ref<any[]>([]);
 const selectedTagIds = ref<number[]>([]);
+const selectedLocationIds = ref<number[]>([]);
 const filterQuery = ref<string>("");
 const matchAll = ref<boolean>(false);
 const matchLabel = computed(() => (matchAll.value ? "Match All" : "Match Any"));
@@ -211,6 +228,30 @@ const displayedTags = computed(() => {
     .map(x => x.ref);
 });
 
+const displayedLocations = computed(() => {
+  const src = allLocations.value || [];
+  const q = filterQuery.value.trim().toLowerCase();
+
+  if (!q) return [...src].sort((a, b) => a.title.localeCompare(b.title));
+
+  const scored = src.map(t => {
+      const title = t.title?.toLowerCase() || "";
+    let score = 0;
+      if (title === q) score = 5;
+      else if (title.startsWith(q)) score = 4;
+      else if (title.includes(q)) score = 3;
+    else {
+          const overlap = [...new Set(q)].filter(ch => title.includes(ch)).length;
+      if (overlap) score = 1;
+    }
+    return { ref: t, score };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score || a.ref.title.localeCompare(b.ref.title))
+    .map(x => x.ref);
+});
+
 function onTagFilter(e: any) {
   filterQuery.value = e.value || "";
 }
@@ -226,6 +267,7 @@ function goToBaseGallery(): void {
 
 function clearSelectedTags(): void {
   selectedTagIds.value = [];
+  selectedLocationIds.value = [];
   goToBaseGallery();
   changePage(1);
   updateDisplay();
@@ -236,7 +278,19 @@ const selectedTagNames = computed(() => {
   const map = new Map<number, string>(
     (allTags.value || []).map(t => [Number(t.id), String(t.name)])
   );
+  console.log("tagMap", map);
   return selectedTagIds.value
+    .map(id => map.get(Number(id)))
+    .filter((n): n is string => !!n);
+});
+
+// Names of selected locations for the banner
+const selectedLocationNames = computed(() => {
+  const map = new Map<number, string>(
+    (allLocations.value || []).map(t => [Number(t.id), String(t.title)])
+  );
+  console.log("locationMap", map);
+  return selectedLocationIds.value
     .map(id => map.get(Number(id)))
     .filter((n): n is string => !!n);
 });
@@ -248,23 +302,39 @@ const bannerText = computed(() => {
   if (activeTag.value) {
     return `'${activeTag.value}'`;
   }
+  if (selectedLocationNames.value.length) {
+    return `'${selectedLocationNames.value.join("', '")}'`;
+  }
   return "";
 });
 
 // Helper: recompute displayArt based on tags, search, and artist filter
 function updateDisplay(): void {
   let list = publicArt.value;
-
   // Tag filtering (MultiSelect takes precedence; fallback to route tag)
   if (selectedTagIds.value.length > 0) {
     const wanted = selectedTagIds.value.map(Number);
     const requireAll = matchAll.value;
+
+    console.log(`[Tags] Filtering by selected IDs: [${wanted.join(', ')}]`)
+
     list = list.filter(a => {
       const ids = (a.tags || []).map(t => Number(t.id)).filter(Number.isFinite);
       if (!ids.length) return false;
       return requireAll
         ? wanted.every(id => ids.includes(id))
         : wanted.some(id => ids.includes(id));
+    });
+  } else if (selectedLocationIds.value.length > 0) {
+    const wanted = selectedLocationIds.value.map(Number);
+    const requireAll = matchAll.value;
+
+    console.log(`[Locations] Filtering by selected IDs: [${wanted.join(', ')}]`)
+    
+    list = list.filter(a => {
+      const locId = Number(a.pointId);
+      if (!Number.isFinite(locId)) return false;
+      return wanted.includes(locId);
     });
   } else if (activeTag.value) {
     const tagLower = activeTag.value.toLowerCase();
@@ -273,18 +343,14 @@ function updateDisplay(): void {
     );
   }
 
+  // Artist name
   if (filter.value) {
     list = list.filter(a =>
       a.artistName.toString().toLowerCase().includes(filter.value.toLowerCase())
     );
   }
 
-  if (search.value) {
-    list = list.filter(a =>
-      a.title.toLowerCase().includes(search.value.toLowerCase())
-    );
-  }
-
+  console.log("list", list);
   displayArt.value = list.slice();
   isModified.value = true;
 
@@ -293,12 +359,38 @@ function updateDisplay(): void {
 }
 
 onMounted(async () => {
+
+  //console.log('MapAccessService:', MapAccessService);  
+
+
+  //console.log('MapAccessService:', MapAccessService);  
+
   // Load tags for the multi-select
   try {
     allTags.value = await TagService.getAllTags();
     allTags.value = (allTags.value || []).map(t => ({ ...t, id: Number(t.id) }));
   } catch {
     allTags.value = [];
+  }
+
+  // Load locations for the multi-select
+  try {
+    allLocations.value = await MapAccessService.getAllPoints();
+    allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
+    console.log('allLocations:', allLocations.value);
+  } catch (err) {
+    console.error('Error loading locations:', err);
+    allLocations.value = [];
+  }
+
+  // Load locations for the multi-select
+  try {
+    allLocations.value = await MapAccessService.getAllPoints();
+    allLocations.value = (allLocations.value || []).map(t => ({ ...t, id: Number(t.id) }));
+    console.log('allLocations:', allLocations.value);
+  } catch (err) {
+    console.error('Error loading locations:', err);
+    allLocations.value = [];
   }
 
   // If we arrived via /tag/:tag, reflect that in the multi-select when possible
@@ -308,6 +400,16 @@ onMounted(async () => {
     );
     if (found) selectedTagIds.value = [Number(found.id)];
   }
+
+  if (activeLocation && allLocations.value.length) {
+      const found = allLocations.value.find(
+        t => Number(t.id) === activeLocation!
+    );
+    if (found) selectedLocationIds.value = [Number(found.id)];
+  }
+
+  console.log('activeTag: ', activeTag.value);
+  console.log('activeLocation: ', activeLocation);
 
   // Load and show art
   ArtAccessService.getAllArt()
@@ -350,6 +452,15 @@ watch(sortType, () => { sortGallery(); });
 
 // When tags or match mode change, clear the route tag if empty selection
 watch([selectedTagIds, matchAll], ([ids]) => {
+  if (!ids || (Array.isArray(ids) && ids.length === 0)) {
+    goToBaseGallery();
+  }
+  changePage(1);
+  updateDisplay();
+});
+
+// When location or match mode change, clear the route tag if empty selection
+watch([selectedLocationIds, matchAll], ([ids]) => {
   if (!ids || (Array.isArray(ids) && ids.length === 0)) {
     goToBaseGallery();
   }
@@ -419,6 +530,21 @@ function sortGallery(): void {
 
 /* Allow selected chips to wrap to multiple lines inside the control */
 :deep(.tag-multiselect .p-multiselect-label) {
+  white-space: normal;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+}
+
+/* Input grows to fit selected chips (up to a max) */
+:deep(.location-multiselect.p-multiselect) {
+  width: auto;           /* grow with content */
+  min-width: 20rem;      /* keep a sensible base width */
+  max-width: 48rem;      /* prevent overgrowing the row */
+}
+
+/* Allow selected chips to wrap to multiple lines inside the control */
+:deep(.location-multiselect .p-multiselect-label) {
   white-space: normal;
   display: flex;
   flex-wrap: wrap;

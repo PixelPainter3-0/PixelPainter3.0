@@ -29,6 +29,9 @@ export default class Art {
   gifFps: number;
 
   pointId: number;
+  pointTitle: string;
+  artspaceId: number;
+  artspaceTitle: string;
 
 
   constructor() {
@@ -55,5 +58,8 @@ export default class Art {
     this.isDisliked = false;
 
     this.pointId = 0;
+    this.pointTitle = "";
+    this.artspaceId = 0;
+    this.artspaceTitle = "";
   }
 }
