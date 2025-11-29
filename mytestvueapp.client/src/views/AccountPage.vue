@@ -117,7 +117,16 @@
           @click="notifLikes = !notifLikes"
         />
       </div>
-
+      <div class="align-items-stretch flex">
+        <p class="w-10">Art Disliked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifDislikes ? 'Enabled' : 'Disabled'"
+          :severity="notifDislikes ? 'primary' : 'secondary'"
+          :icon="notifDislikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifDislikes = !notifDislikes"
+        />
+      </div>
       <div class="align-items-stretch flex">
         <p class="w-10">Comment Notification</p>
         <Button
@@ -137,6 +146,26 @@
           :severity="notifReplies ? 'primary' : 'secondary'"
           :icon="notifReplies ? 'pi pi-check' : 'pi pi-times'"
           @click="notifReplies = !notifReplies"
+        />
+      </div>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Comment Liked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifCommentLikes ? 'Enabled' : 'Disabled'"
+          :severity="notifCommentLikes ? 'primary' : 'secondary'"
+          :icon="notifCommentLikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifCommentLikes = !notifCommentLikes"
+        />
+      </div>
+        <div class="align-items-stretch flex">
+        <p class="w-10">Comment Disliked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifCommentDislikes ? 'Enabled' : 'Disabled'"
+          :severity="notifCommentDislikes ? 'primary' : 'secondary'"
+          :icon="notifCommentDislikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifCommentDislikes = !notifCommentDislikes"
         />
       </div>
 
