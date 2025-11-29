@@ -61,7 +61,7 @@ function updateCanvas(): void {
       canvas.value.height = 32 * props.pixelSize;
       ctx.value.scale(
         32 / props.art.pixelGrid.width,
-        32 / props.art.pixelGrid.width
+        32 / props.art.pixelGrid.height
       );
     }
   }

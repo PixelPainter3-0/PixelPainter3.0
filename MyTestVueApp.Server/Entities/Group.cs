@@ -8,20 +8,23 @@ namespace MyTestVueApp.Server.Entities
     public class Group(string groupName)
     {
         public string Name { get; set; } = groupName;
-        public int CanvasSize { get; set; } = 32;
+        public int CanvasWidth { get; set; } = 32;
+        public int CanvasHeight { get; set; } = 32;
+
         public string BackgroundColor { get; set; } = "#FFFFFF";
         public List<Artist> CurrentMembers { get; set; } = new();
         public List<Artist> MemberRecord { get; set; } = new();
         public List<string[][]> Pixels { get; set; } = new List<string[][]>();
 
         
-        public Group(string groupName, List<Artist> contributors, string[][][] canvas, int canvasSize, string backgroundColor): this(groupName)
+        public Group(string groupName, List<Artist> contributors, string[][][] canvas, int canvasWidth, int canvasHeight, string backgroundColor): this(groupName)
           {
             Name = groupName;
             foreach(string[][] grid in canvas){
               Pixels.Add(grid);
             }
-            CanvasSize = canvasSize;
+            CanvasWidth = canvasWidth;
+            CanvasHeight = canvasHeight;
             BackgroundColor = backgroundColor;
             CurrentMembers = new();
             MemberRecord = contributors;
@@ -55,8 +58,8 @@ namespace MyTestVueApp.Server.Entities
         {
             foreach (Coordinate coord in coords)
             {
-                if (coord.X >= 0 && coord.X < Pixels[0].GetLength(0) &&
-                    coord.Y >= 0 && coord.Y < Pixels[0].GetLength(0))
+                if (coord.X >= 0 && coord.X < CanvasWidth &&
+                    coord.Y >= 0 && coord.Y < CanvasHeight)
                 {
                     Pixels[layer][coord.X][coord.Y] = color;
                 }
@@ -69,9 +72,9 @@ namespace MyTestVueApp.Server.Entities
             for (int l = 0; l < Pixels.Count; l++) 
             {
                 List<Pixel> row = new();
-                for (int i = 0; i < CanvasSize; i++)
+                for (int i = 0; i < CanvasWidth; i++)
                 {
-                    for (int j = 0; j < CanvasSize; j++)
+                    for (int j = 0; j < CanvasHeight; j++)
                     {
                         string color = Pixels[l][i][j];
                         if (Pixels[l][i][j] != null)
