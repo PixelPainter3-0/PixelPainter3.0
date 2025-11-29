@@ -169,7 +169,7 @@
         />
       </div>
 
-      <!-- ✅ Save Button -->
+      <!--Save Button -->
       <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
@@ -524,4 +524,13 @@ const createdArtHeading = computed(() =>
     width: 100%;
   }
 }
-</style>  
+
+
+.hidden {
+  display: none !important;
+}
+
+
+</style>
+
+<!-- 19 -->
