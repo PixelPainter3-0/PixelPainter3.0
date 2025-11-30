@@ -57,7 +57,7 @@
       </template>
 
       <template #end>
-        <RouterLink class="mr-2" to="/notifications" v-if="isLoggedIn">
+        <RouterLink class="mr-2 hide-on-mobile" to="/notifications" v-if="isLoggedIn">
           <Notification />
         </RouterLink>
         <DarkModeSwitcher class="mr-2" />
@@ -261,7 +261,7 @@ watch(
 }
 
 /* Mobile-specific rules */
-@media (max-width: 1000px) {
+@media (max-width: 1025px) {
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
@@ -337,6 +337,10 @@ watch(
       transform: scale(0.92);
     }
   }
+    /* hide the header toolbar notification button on small screens */
+  .hide-on-mobile {
+    display: none !important;
+  }
 }
 
 /* Transition (Vue <Transition name="slide-down">) */
@@ -361,4 +365,4 @@ watch(
 }
 </style>
 
-<!-- 5  -->
+<!-- 6 -->
