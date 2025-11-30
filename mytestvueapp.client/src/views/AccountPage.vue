@@ -183,9 +183,11 @@
 </div>
 
 
+      <!-- Creator's Art -->
       <div v-if="route.hash == '#created_art'">
         <h2>{{ createdArtHeading }}</h2>
-        <div class="shrink-limit flex flex-wrap">
+        <!-- use art-grid so desktop = rows/columns, mobile = feed -->
+        <div class="art-grid">
           <ArtCard
             v-for="(art, idx) in myArt"
             :key="art.id"
@@ -196,9 +198,10 @@
         </div>
       </div>
 
+      <!-- Liked Art -->
       <div v-if="route.hash == '#liked_art'">
         <h2>Liked Art</h2>
-        <div class="shrink-limit flex flex-wrap">
+        <div class="art-grid">
           <ArtCard
             v-for="(art, idx) in likedArt"
             :key="art.id"
@@ -517,11 +520,13 @@ const createdArtHeading = computed(() =>
 <style scoped>
 .profile-card {
   min-width: 16rem;
+  max-width: 380px; 
 }
 
 @media (max-width: 640px) {
   .profile-card {
     width: 100%;
+    /* max-width still applies, but width:100% keeps it fluid on small screens */
   }
 }
 
@@ -531,6 +536,74 @@ const createdArtHeading = computed(() =>
 }
 
 
+/* Art grid: desktop rows/columns, mobile feed; matches Gallery behavior */
+/* COMMENT: adjust --art-card-min to widen/narrow desktop columns */
+.art-grid {
+  --art-card-min: 260px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
+  grid-auto-rows: auto;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1200px;    /* center grid on desktop */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.art-grid > * { min-width: 0; }
+
+/* Force exactly 4 columns on desktop (prevents 4→5 jitter near ~1202px) */
+@media (min-width: 1000px) {
+  .art-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-flow: row;
+  }
+}
+
+/* Tablet: slightly smaller columns if desired (optional tweak) */
+@media (min-width: 768px) and (max-width: 1000px) {
+  .art-grid { --art-card-min: 220px; gap: 0.9rem; }
+}
+
+/* Mobile: single-column scrolling feed */
+@media (max-width: 1000px) {
+  .art-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 100%;
+  }
+  .art-grid > * { width: 100%; }
+}
+
+/* Mobile layout: place the profile card ABOVE the art/sections */
+@media (max-width: 1000px) {
+  /* Stack the main row instead of side-by-side */
+  .flex.gap-4.justify-content-center {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Ensure the profile card renders first */
+  .profile-card {
+    order: 0;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* All content panels (settings, notifications, created/liked art) after the profile */
+  /* If you later wrap these in a common container, apply order:1 to that wrapper */
+  [v-if] {
+    order: 1;
+  }
+
+  /* Art grids remain full width on mobile (already set) */
+  .art-grid {
+    max-width: 100%;
+  }
+}
+
 </style>
 
-<!-- 19 -->
+<!-- 2 -->
