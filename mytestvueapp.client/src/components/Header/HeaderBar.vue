@@ -26,7 +26,7 @@
           <RouterLink class="p-2" to="/new">
             <Button rounded label="Painter" icon="pi pi-pencil" />
           </RouterLink>
-          <RouterLink class="p-2" to="/thegrid">
+          <RouterLink class="p-2" to="/connect">
             <Button rounded label="The Grid" icon="pi pi-globe" />
           </RouterLink>
           <RouterLink class="p-2" to="/map">
