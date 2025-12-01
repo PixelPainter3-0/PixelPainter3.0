@@ -125,6 +125,7 @@
             class="download-only-icon"
             title="Download image"
             :art="art"
+            :grid="art.pixelGrid"
             :fps="art.gifFps"
             :gifFromViewer="urls"
             :filtered="filtered"
