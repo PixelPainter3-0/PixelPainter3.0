@@ -22,6 +22,12 @@
             />
             <Button
               class="profile-nav-btn"
+              label="Friends"
+              :severity="route.hash == '#friends' ? 'primary' : 'secondary'"
+              @click="changeHash('#friends')"
+            />
+            <Button
+              class="profile-nav-btn"
               label="Creator's Art"
               :severity="route.hash == '#created_art' ? 'primary' : 'secondary'"
               @click="changeHash('#created_art')"
@@ -178,7 +184,6 @@
         />
       </div>
 
-      <!-- ✅ Save Button -->
       <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
@@ -190,7 +195,10 @@
     </template>
   </Card>
 </div>
+<div v-if="route.hash == '#friends'" class="account-content">
+  <h2>Friends</h2>
 
+</div>
 
       <div>
       <div v-if="route.hash == '#created_art'" class="account-content">
@@ -351,7 +359,7 @@ async function loadArtistData(artistName: string): Promise<void> {
 
 onMounted(async () => {
   // Default tab if none/invalid
-  if (!["#settings", "notifications_settings", "#created_art", "#liked_art"].includes(route.hash)) {
+  if (!["#settings", "notifications_settings", "#friends", "#created_art", "#liked_art"].includes(route.hash)) {
     changeHash("#settings");
   }
 
