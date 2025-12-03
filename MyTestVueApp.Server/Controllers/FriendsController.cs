@@ -18,11 +18,13 @@ namespace MyTestVueApp.Server.Controllers
         private readonly IFriendsService FriendsService;
         private readonly ILoginService LoginService;
 
-        public FriendsController(IOptions<ApplicationConfiguration> appConfig, ILogger<FriendsController> logger, IFriendsService friendsService)
+        public FriendsController(IOptions<ApplicationConfiguration> appConfig, ILogger<FriendsController> logger, IFriendsService friendsService, ILoginService loginService)
         {
             AppConfig = appConfig;
             Logger = logger;
             FriendsService = friendsService;
+            LoginService = loginService;
+            
 
 
         }
@@ -159,6 +161,10 @@ namespace MyTestVueApp.Server.Controllers
                 {
                     throw new AuthenticationException("User is not logged in!");
                 }
+            }
+            catch (NullReferenceException ex)
+            {
+                return Problem(ex.Message);
             }
             catch (AuthenticationException ex)
             {

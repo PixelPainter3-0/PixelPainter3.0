@@ -114,21 +114,16 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 {
                     connection.Open();
                     var query = @$"
-                   SELECT 
-                        Friends.Friends1Id,
-                        Friends.Friends2Id,
-                        Friends.FriendsOnDate,
-                        Artist.Id, 
-                        Artist.[Name], 
-                    FROM Friends 
-                    JOIN Artist ON Artist.id = Friends.Friends2Id
-                    WHERE Friends.Friend1Id = @id
-                    GROUP BY 
-                        Friends.Friend1Id, 
-                        Friends.Friend2Id, 
-                        Artist.[Name],
-                        Friends.FriendsOnDate, 
-                    ORDER BY Friends.FriendsOnDate DESC";
+                        SELECT 
+                            Friends.Friend1Id,
+                            Friends.Friend2Id,
+                            Friends.FriendsOnDate,
+                            Artist.Id, 
+                            Artist.[Name]
+                        FROM Friends 
+                        JOIN Artist ON Artist.Id = Friends.Friend2Id
+                        WHERE Friends.Friend1Id = @id
+                        ORDER BY Friends.FriendsOnDate DESC;";
 
                     using (var command = new SqlCommand(query, connection))
                     {
@@ -141,7 +136,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 { 
                                     Friend1Id = reader.GetInt32(0),
                                     Friend2Id = reader.GetInt32(1),
-                                    FriendsOnDate = reader.GetDateTime(3),
+                                    FriendsOnDate = reader.GetDateTime(2),
                                 };
                                 friends.Add(friend);
                             }
