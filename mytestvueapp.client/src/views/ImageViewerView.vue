@@ -58,7 +58,9 @@
         </div>
 
         <!-- 2) Upload date -->
-        <div v-if="art.pointId" class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+        <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+
+         <!-- 3) Location name -->
         <div v-if="art.pointId" class="placed-at">Placed at {{pointTitle}} in {{artspaceTitle}}</div>
         
 
