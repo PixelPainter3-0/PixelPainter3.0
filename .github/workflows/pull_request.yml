@@ -73,4 +73,5 @@ jobs:
     - run: sudo apt-get install xvfb
 
     - name: Run Nightwatch tests
-      run: xvfb-run --auto-servernum npm test --
+      working-directory: ./mytestvueapp.client
+      run: xvfb-run --auto-servernum npm test
