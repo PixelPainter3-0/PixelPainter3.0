@@ -78,8 +78,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     checkDupCommand.Parameters.AddWithValue("@Friend1Id", artist1.Id);
                     checkDupCommand.Parameters.AddWithValue("@Friend2Id", artist2.Id);
 
-                    int count = (int)await checkDupCommand.ExecuteScalarAsync();
-                    if (count > 0)
+                    var result = await checkDupCommand.ExecuteScalarAsync();
+                    int count = (result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+                    if (count == 0)
                     {
                         Console.WriteLine("These users are not friends!");
                         return 0;

@@ -17,13 +17,15 @@ namespace MyTestVueApp.Server.Controllers
         private readonly ILogger<FriendsController> Logger;
         private readonly IFriendsService FriendsService;
         private readonly ILoginService LoginService;
+        private readonly IArtistService ArtistService;
 
-        public FriendsController(IOptions<ApplicationConfiguration> appConfig, ILogger<FriendsController> logger, IFriendsService friendsService, ILoginService loginService)
+        public FriendsController(IOptions<ApplicationConfiguration> appConfig, ILogger<FriendsController> logger, IFriendsService friendsService, ILoginService loginService, IArtistService artistService)
         {
             AppConfig = appConfig;
             Logger = logger;
             FriendsService = friendsService;
             LoginService = loginService;
+            ArtistService = artistService;
             
 
 
@@ -95,7 +97,7 @@ namespace MyTestVueApp.Server.Controllers
                 if (Request.Cookies.TryGetValue("GoogleOAuth", out var userId))
                 {
                     var artist = await LoginService.GetUserBySubId(userId);
-                    var artist2 = await LoginService.GetArtistById(artistId);
+                    var artist2 = await ArtistService.GetArtistById(artistId);
                     if (artist != null)
                     {
                         // You can add additional checks here if needed
