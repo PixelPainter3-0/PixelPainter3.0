@@ -69,7 +69,7 @@ jobs:
 
     - name: npm-install
       working-directory: ./mytestvueapp.client
-      run: npm ci
+      run: npm ci --legacy-peer-deps
     - run: sudo apt-get install xvfb
 
     - name: Run Nightwatch tests
