@@ -149,5 +149,45 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 return rows > 0;
             }
         }
+
+        public async Task<bool> DeleteTag(int tagId)
+        {
+            using (var conn = new SqlConnection(_appConfig.Value.ConnectionString))
+            {
+                await conn.OpenAsync();
+                using (var tran = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // Check existence
+                        var existsCmd = new SqlCommand("SELECT COUNT(1) FROM Tag WHERE Id = @Id", conn, tran);
+                        existsCmd.Parameters.AddWithValue("@Id", tagId);
+                        var exists = (int)await existsCmd.ExecuteScalarAsync() > 0;
+                        if (!exists)
+                        {
+                            tran.Rollback();
+                            return false;
+                        }
+
+                        // Remove relationships, then delete tag
+                        var delLinks = new SqlCommand("DELETE FROM ArtTags WHERE TagId = @Id", conn, tran);
+                        delLinks.Parameters.AddWithValue("@Id", tagId);
+                        await delLinks.ExecuteNonQueryAsync();
+
+                        var delTag = new SqlCommand("DELETE FROM Tag WHERE Id = @Id", conn, tran);
+                        delTag.Parameters.AddWithValue("@Id", tagId);
+                        var affected = await delTag.ExecuteNonQueryAsync();
+
+                        tran.Commit();
+                        return affected > 0;
+                    }
+                    catch
+                    {
+                        tran.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
     }
 }

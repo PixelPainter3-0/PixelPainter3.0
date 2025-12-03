@@ -12,6 +12,7 @@ import PrimeVue from "primevue/config";
 import "primeicons/primeicons.css";
 import Aura from "@primevue/themes/aura";
 import ToastService from "primevue/toastservice";
+import ConfirmationService from "primevue/confirmationservice";
 
 //PrimeFlex
 import "primeflex/primeflex.css";
@@ -31,6 +32,7 @@ createApp(App)
   })
   .use(router)
   .use(ToastService)
+  .use(ConfirmationService)
   .use(pinia)
   .directive('tooltip', Tooltip)
   .mount("#app");

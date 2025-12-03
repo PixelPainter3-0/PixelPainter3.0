@@ -35,6 +35,9 @@
           <RouterLink class="p-2" to="/gallery">
             <Button rounded label="Gallery" icon="pi pi-image" />
           </RouterLink>
+          <RouterLink class="p-2" to="/admin" v-if="isAdmin">
+            <Button rounded label="Admin" icon="pi pi-shield" />
+          </RouterLink>
         </div>
 
         <!-- Mobile stacked menu with smooth slide animation -->
@@ -51,6 +54,9 @@
             </RouterLink>
             <RouterLink to="/notifications" v-if="isLoggedIn" class="mobile-link">
               <Button label="Notifications" icon="pi pi-bell" @click="menuOpen = false" />
+            </RouterLink>
+            <RouterLink to="/admin" v-if="isAdmin" class="mobile-link">
+              <Button label="Admin" icon="pi pi-shield" @click="menuOpen = false" />
             </RouterLink>
           </div>
         </Transition>
@@ -87,6 +93,7 @@ const layerStore = useLayerStore();
 const artistStore = useArtistStore();
 
 const isLoggedIn = ref<boolean>(false);
+const isAdmin = ref<boolean>(false);
 
 const resolution = ref<number>(200);
 const backgroundColor = ref<string>("ffffff");
@@ -169,6 +176,10 @@ onMounted(async () => {
   LoginService.isLoggedIn().then((result) => {
     isLoggedIn.value = result;
   });
+
+  LoginService.getIsAdmin()
+    .then((v) => { isAdmin.value = !!v; })
+    .catch(() => { isAdmin.value = false; });
 
   document.addEventListener("click", onDocumentClick);
   document.addEventListener("keyup", onKeyUp);
@@ -261,7 +272,7 @@ watch(
 }
 
 /* Mobile-specific rules */
-@media (max-width: 1025px) {
+@media (max-width: 1170px) {
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
