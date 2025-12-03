@@ -19,9 +19,9 @@ export default class FriendService {
   }
 
   // Add a new friend (artistId2 is other user ID)
-  public static async insertFriends(artistId: number, artist2Id: number): Promise<boolean> {
+  public static async insertFriends(artistId: number): Promise<boolean> {
     try {
-      const response = await fetch(`/friends/InsertFriends?artistId=${artistId}, artist2Id=${artist2Id}`, {
+      const response = await fetch(`/friends/InsertFriends?artistId=${artistId}`, {
         method: "POST",
       });
 
@@ -35,7 +35,7 @@ export default class FriendService {
   // Remove a friend
   public static async removeFriends(artistId: number, artist2Id: number): Promise<boolean> {
     try {
-      const response = await fetch(`/friends/RemoveFriends?artistId=${artistId}, artistId2=${artist2Id}`, {
+      const response = await fetch(`/friends/RemoveFriends?artistId=${artistId}`, {
         method: "DELETE",
       });
 
