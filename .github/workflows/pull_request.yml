@@ -57,7 +57,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18.x' # Use the Node.js version compatible with your project
-        cache: 'npm'
 
     - name: Install npm dependencies
       working-directory: ./mytestvueapp.client
