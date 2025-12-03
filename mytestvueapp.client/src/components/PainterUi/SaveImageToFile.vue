@@ -11,6 +11,7 @@
 </template>
 <script setup lang="ts">
 import Art from "@/entities/Art";
+import { PixelGrid } from "@/entities/PixelGrid";
 import { ref } from "vue";
 import Button from "primevue/button";
 import GIFCreationService from "@/services/GIFCreationService";
@@ -20,6 +21,8 @@ const layerStore = useLayerStore();
 const isHovered = ref<Boolean>(false);
 const props = defineProps<{
   art: Art;
+  grid: PixelGrid;
+  isGrid?: boolean
   fps: number;
   gifFromViewer?: string[];
   filtered?: boolean;
@@ -27,6 +30,10 @@ const props = defineProps<{
 }>();
 
 function handleClick(): void {
+  if(props.isGrid){
+    console.log("is in the Grid");
+    props.art.pixelGrid = props.grid;
+  }
   if (props.art.pixelGrid.isGif) {
     saveGIFFromPainter();
   } else if (props.filtered) {
@@ -39,19 +46,21 @@ function handleClick(): void {
 }
 
 function flattenArt(): string[][] {
-  let width = layerStore.grids[0].width;
-  let height = layerStore.grids[0].height;
-  let arr: string[][] = Array.from({ length: width }, () =>
-    Array(height).fill(layerStore.grids[0].backgroundColor.toLowerCase())
+  let width = props.art.pixelGrid.width;
+  let height = props.art.pixelGrid.height;
+  let arr: string[][] = Array.from({ length: height }, () =>
+    Array(width).fill(props.art.pixelGrid.backgroundColor.toLowerCase())
   );
 
-  for (let length = 0; length < layerStore.grids.length; length++) {
-    for (let i = 0; i < width; i++) {
-      for (let j = 0; j < height; j++) {
-        //only set empty cells to background color if its the first layer
-        //layers above the first will just replace cells if they have a value
-        if (layerStore.grids[length].grid[i][j] !== "empty") {
-          arr[i][j] = layerStore.grids[length].grid[i][j];
+  if(!props.isGrid){
+    for (let length = 0; length < layerStore.grids.length; length++) {
+      for (let i = 0; i < width; i++) {
+        for (let j = 0; j < height; j++) {
+          //only set empty cells to background color if its the first layer
+          //layers above the first will just replace cells if they have a value
+          if (layerStore.grids[length].grid[i][j] !== "empty") {
+            arr[i][j] = layerStore.grids[length].grid[i][j];
+          }
         }
       }
     }

@@ -9,5 +9,6 @@
         public string User { get; set; }
         public bool Viewed { get; set; }
         public string ArtName { get; set; }
+
     }
 }

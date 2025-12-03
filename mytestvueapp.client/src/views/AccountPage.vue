@@ -10,8 +10,15 @@
             <Button
               :disabled="!canEdit"
               label="Account Settings"
+              v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#settings' ? 'primary' : 'secondary'"
               @click="changeHash('#settings')"
+            />
+            <Button
+              label="Notification Settings"
+               v-if="curArtist.id === curUser.id"
+              :severity="route.hash == '#notification_settings' ? 'primary' : 'secondary'"
+              @click="changeHash('#notification_settings')"
             />
             <Button
               label="Creator's Art"
@@ -95,9 +102,92 @@
         </Card>
       </div>
 
+  <div v-if="route.hash == '#notification_settings'">
+  <h2>Notification Settings</h2>
+  <Card>
+    <template #content>
+      <h3>Enable or Disable Notification Types</h3>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Art Liked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifLikes ? 'Enabled' : 'Disabled'"
+          :severity="notifLikes ? 'primary' : 'secondary'"
+          :icon="notifLikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifLikes = !notifLikes"
+        />
+      </div>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Art Disliked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifDislikes ? 'Enabled' : 'Disabled'"
+          :severity="notifDislikes ? 'primary' : 'secondary'"
+          :icon="notifDislikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifDislikes = !notifDislikes"
+        />
+      </div>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Comment Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifComments ? 'Enabled' : 'Disabled'"
+          :severity="notifComments ? 'primary' : 'secondary'"
+          :icon="notifComments ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifComments = !notifComments"
+        />
+      </div>
+
+      <div class="align-items-stretch flex">
+        <p class="w-10">Reply Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifReplies ? 'Enabled' : 'Disabled'"
+          :severity="notifReplies ? 'primary' : 'secondary'"
+          :icon="notifReplies ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifReplies = !notifReplies"
+        />
+      </div>
+      <div class="align-items-stretch flex">
+        <p class="w-10">Comment Liked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifCommentLikes ? 'Enabled' : 'Disabled'"
+          :severity="notifCommentLikes ? 'primary' : 'secondary'"
+          :icon="notifCommentLikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifCommentLikes = !notifCommentLikes"
+        />
+      </div>
+        <div class="align-items-stretch flex">
+        <p class="w-10">Comment Disliked Notification</p>
+        <Button
+          class="block m-2 flex"
+          :label="notifCommentDislikes ? 'Enabled' : 'Disabled'"
+          :severity="notifCommentDislikes ? 'primary' : 'secondary'"
+          :icon="notifCommentDislikes ? 'pi pi-check' : 'pi pi-times'"
+          @click="notifCommentDislikes = !notifCommentDislikes"
+        />
+      </div>
+
+      <!--Save Button -->
+      <div class="flex justify-content-center mt-3">
+        <Button
+          label="Save Notification Settings"
+          icon="pi pi-save"
+          severity="success"
+          @click="saveNotifications"
+        />
+      </div>
+    </template>
+  </Card>
+</div>
+
+
+      <!-- Creator's Art -->
       <div v-if="route.hash == '#created_art'">
         <h2>{{ createdArtHeading }}</h2>
-        <div class="shrink-limit flex flex-wrap">
+        <!-- use art-grid so desktop = rows/columns, mobile = feed -->
+        <div class="art-grid">
           <ArtCard
             v-for="(art, idx) in myArt"
             :key="art.id"
@@ -108,9 +198,10 @@
         </div>
       </div>
 
+      <!-- Liked Art -->
       <div v-if="route.hash == '#liked_art'">
         <h2>Liked Art</h2>
-        <div class="shrink-limit flex flex-wrap">
+        <div class="art-grid">
           <ArtCard
             v-for="(art, idx) in likedArt"
             :key="art.id"
@@ -131,11 +222,13 @@ import { useToast } from "primevue/usetoast";
 
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
+import NotificationService from "@/services/NotificationService";
 
 import type Art from "@/entities/Art";
 import Artist from "@/entities/Artist";
 
 // PrimeVue components used in template
+//import router from "@/router";
 import Card from "primevue/card";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
@@ -143,6 +236,7 @@ import Avatar from "primevue/avatar";
 import Message from "primevue/message";
 // Child component
 import ArtCard from "@/components/Gallery/ArtCard.vue";
+//import { createBuilderStatusReporter } from "typescript";
 
 const toast = useToast();
 const route = useRoute();
@@ -154,6 +248,16 @@ const pageStatus = ref<string>("");
 
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
+
+
+
+const notifLikes = ref<boolean>(true);
+const notifComments = ref<boolean>(true);
+const notifReplies = ref<boolean>(true);
+const notifDislikes = ref<boolean>(true);
+const notifCommentLikes = ref<boolean>(true);
+const notifCommentDislikes = ref<boolean>(true);
+
 
 const myArt = ref<Art[]>([]);
 const likedArt = ref<Art[]>([]);
@@ -184,6 +288,7 @@ async function loadArtistData(artistName: string): Promise<void> {
 
   try {
     const artistInfo = await LoginService.GetArtistByName(artistName);
+    console.log(artistInfo);
     curArtist.value = artistInfo;
     newUsername.value = artistInfo.name ?? "";
 
@@ -238,8 +343,8 @@ async function loadArtistData(artistName: string): Promise<void> {
 
 onMounted(async () => {
   // Default tab if none/invalid
-  if (!["#settings", "#created_art", "#liked_art"].includes(route.hash)) {
-    changeHash("#created_art");
+  if (!["#settings", "notifications_settings", "#created_art", "#liked_art"].includes(route.hash)) {
+    changeHash("#settings");
   }
 
   // Try to get current user, but allow anonymous
@@ -251,10 +356,12 @@ onMounted(async () => {
     }
   } catch {
     // ignore, treat as anonymous
-  }
-
+    }
   await loadArtistData(String(route.params.artist ?? ""));
+  updateNotifications();
 });
+
+
 
 watch(
   () => route.params.artist,
@@ -276,10 +383,55 @@ function changeHash(hash: string): void {
   window.location.hash = hash;
 }
 
+
 function cancelEdit(): void {
   isEditing.value = false;
   newUsername.value = curArtist.value.name ?? "";
 }
+
+function updateNotifications(): void {
+  console.log(curArtist.value);
+  const value = curArtist.value.notificationsEnabled ?? 0;
+  notifLikes.value = (value & 1) !== 0;
+  notifComments.value = (value & 2) !== 0;
+  notifReplies.value = (value & 4) !== 0;
+  notifCommentLikes.value = (value & 8) !== 0;
+  notifCommentDislikes.value = (value & 16) !== 0;
+  notifDislikes.value = (value & 32) !==0;
+}
+function computeNotificationsEnabled(): number {
+  let value = 0;
+  if (notifLikes.value) value += 1;
+  if (notifComments.value) value += 2;
+  if (notifReplies.value) value += 4;
+  if (notifCommentLikes.value) value += 8;
+  if (notifCommentDislikes.value) value += 16;
+  if (notifDislikes.value) value +=   32;
+  return value;
+}
+
+async function saveNotifications(): Promise<void> {
+  const newValue = computeNotificationsEnabled(); 
+  const success = await NotificationService.updateNotificationsEnabled(curArtist.value.id, newValue);
+  if (success) {
+    curArtist.value.notificationsEnabled = newValue;
+    toast.add({
+      severity: "success",
+      summary: "Success",
+      detail: "Notification settings updated",
+      life: 2000
+    });
+  } else {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Failed to update notifications",
+      life: 2000
+    });
+  }
+}
+
+
 
 const errorMessage = computed<string>(() => {
   if (newUsername.value.length > 16) {
@@ -368,11 +520,90 @@ const createdArtHeading = computed(() =>
 <style scoped>
 .profile-card {
   min-width: 16rem;
+  max-width: 380px; 
 }
 
 @media (max-width: 640px) {
   .profile-card {
     width: 100%;
+    /* max-width still applies, but width:100% keeps it fluid on small screens */
   }
 }
+
+
+.hidden {
+  display: none !important;
+}
+
+
+/* Art grid: desktop rows/columns, mobile feed; matches Gallery behavior */
+/* COMMENT: adjust --art-card-min to widen/narrow desktop columns */
+.art-grid {
+  --art-card-min: 260px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--art-card-min), 1fr));
+  grid-auto-rows: auto;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1200px;    /* center grid on desktop */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.art-grid > * { min-width: 0; }
+
+/* Force exactly 4 columns on desktop (prevents 4→5 jitter near ~1202px) */
+@media (min-width: 1000px) {
+  .art-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-flow: row;
+  }
+}
+
+/* Tablet: slightly smaller columns if desired (optional tweak) */
+@media (min-width: 768px) and (max-width: 1000px) {
+  .art-grid { --art-card-min: 220px; gap: 0.9rem; }
+}
+
+/* Mobile: single-column scrolling feed */
+@media (max-width: 1000px) {
+  .art-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 100%;
+  }
+  .art-grid > * { width: 100%; }
+}
+
+/* Mobile layout: place the profile card ABOVE the art/sections */
+@media (max-width: 1000px) {
+  /* Stack the main row instead of side-by-side */
+  .flex.gap-4.justify-content-center {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Ensure the profile card renders first */
+  .profile-card {
+    order: 0;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* All content panels (settings, notifications, created/liked art) after the profile */
+  /* If you later wrap these in a common container, apply order:1 to that wrapper */
+  [v-if] {
+    order: 1;
+  }
+
+  /* Art grids remain full width on mobile (already set) */
+  .art-grid {
+    max-width: 100%;
+  }
+}
+
 </style>
+
+<!-- 2 -->
