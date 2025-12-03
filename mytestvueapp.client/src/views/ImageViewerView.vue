@@ -7,41 +7,53 @@
       {{ art.title }}
     </h2>
   </div>
-  <div class="justify-content-center flex w-full h-full align-items-center viewer-main">
-    <div v-if="!art.isGif && art" class="border-2">
+  <div class="viewer-main justify-content-center flex w-full h-full align-items-center">
+    <div v-if="!art.isGif && art" class="media-wrap">
       <MyCanvas
         v-model="squareColor"
         v-if="!art.isGif && art"
         :key="art.id"
         :art="art"
-        :pixelSize="pixelSize"
+        :pixelSize="pixelSize"  
         :canvas-number="1"
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-35rem ml-5 viewer-info-card">
+    <Card class="info-card w-35rem ml-5">
       <template #content>
         <!-- 1) Artist -->
         <div class="artist-block">
           <div class="py-1 artist-line">
             <span class="by-label">By:</span>
-            <template v-for="(artistName, index) in art.artistName" :key="index">
-              <span
-                class="font-semibold artist-name"
-                :class="{ primary: index === 0, coartist: index > 0 }"
-                :style="{
-                  textDecoration: hoverIndex === index ? 'underline' : 'none',
-                  cursor: 'pointer'
-                }"
-                title="View artist profile"
-                @click="router.push(`/accountpage/${artistName}`)"
-                @mouseover="hoverIndex = index"
-                @mouseleave="hoverIndex = null"
-              >
-                {{ artistName }}
-              </span>
-              <span v-if="index < art.artistName.length - 1">, </span>
-            </template>
+            <span
+              class="font-semibold artist-name primary"
+              :style="{
+                textDecoration: hoverIndex === 'main' ? 'underline' : 'none',
+                cursor: 'pointer'
+              }"
+              title="View artist profile"
+              @click="router.push(`/accountpage/${encodeURIComponent(art.artistName[0])}#created_art`)"
+              @mouseover="hoverIndex = 'main'"
+              @mouseleave="hoverIndex = null"
+            >
+              {{ art.artistName[0] }}
+            </span>
+          </div>
+
+          <div
+            v-for="(artist, index) in art.artistName.slice(1)"
+            :key="index"
+            class="py-1 artist-name coartist"
+            :style="{
+              textDecoration: hoverIndex === index ? 'underline' : 'none',
+              cursor: hoverIndex === index ? 'pointer' : 'default'
+            }"
+            title="View artist profile"
+            @click="router.push(`/accountpage/${encodeURIComponent(artist)}#created_art`);"
+            @mouseover="hoverIndex = index"
+            @mouseleave="hoverIndex = null"
+          >
+            {{ artist }}
           </div>
         </div>
 
@@ -113,6 +125,7 @@
             class="download-only-icon"
             title="Download image"
             :art="art"
+            :grid="art.pixelGrid"
             :fps="art.gifFps"
             :gifFromViewer="urls"
             :filtered="filtered"
@@ -273,18 +286,7 @@ const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
-const pixelSize = ref<number>(20); // responsive pixel size, capped at 20
-
-function calculatePixelSize(): void {
-  const MAX = 20;
-  const MIN = 4;
-  const width = window.innerWidth;
-  // scale factor: adjust divisor to tune responsiveness
-  let size = Math.floor(width / 34);
-  if (size > MAX) size = MAX;
-  if (size < MIN) size = MIN;
-  pixelSize.value = size;
-}
+const pixelSize = ref<number>(20);
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {
@@ -323,12 +325,24 @@ onMounted(async () => {
     });
   updateComments();
   getIsAdmin();
-  calculatePixelSize();
-  window.addEventListener("resize", calculatePixelSize);
+});
+
+function updatePixelSize() {
+  const w = window.innerWidth;
+  pixelSize.value =
+    w >= 1200 ? 20 :
+    w >= 1000 ? 16 :
+    w >= 768  ? 12 :
+                 10; // floor size on small phones
+}
+
+onMounted(() => {
+  updatePixelSize();
+  window.addEventListener("resize", updatePixelSize, { passive: true });
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("resize", calculatePixelSize);
+  window.removeEventListener("resize", updatePixelSize);
 });
 
 async function editArt(): Promise<void> {
@@ -965,134 +979,6 @@ async function gifDisplay(): Promise<void> {
 </script>
 
 <style scoped>
-/* Viewer layout: place info card to the right on wide screens, below the art on small screens */
-.viewer-main {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  justify-content: center;
-  /* allow wrapping so items can stack or shrink instead of forcing horizontal scroll */
-  flex-wrap: wrap;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0 1rem;
-  /* prevent page horizontal scroll caused by the viewer section */
-  overflow-x: hidden;
-}
-
-/* Ensure the card behaves responsively */
-.viewer-info-card {
-  /* keep existing desktop max width */
-  max-width: 35rem;
-  width: 35rem;
-  /* allow the card to shrink inside a flex container (prevents overflow) */
-  flex-shrink: 1;
-  min-width: 0;
-  box-sizing: border-box;
-  padding: 1rem;
-}
-
-/* Tablet: reduce card width so it can sit alongside the art without forcing horizontal scroll */
-@media (max-width: 1300px) {
-  .viewer-info-card {
-    max-width: 28rem;
-    width: auto;
-    flex: 0 0 38%; /* try to occupy ~38% of the row */
-    margin-left: 0.5rem !important;
-  }
-  
-}
-
-/* Small tablets / large phones: tighten further */
-@media (max-width: 992px) {
-  .viewer-info-card {
-    max-width: 22rem;
-    flex: 0 0 45%;
-    margin-left: 0.5rem !important;
-  }
-  .viewer-main > .border-2 {
-    flex: 1 1 50%;
-  }
-}
-
-/* Mobile: stack and use full width (already present, kept for clarity) */
-@media (max-width: 940px) {
-  .viewer-main {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .viewer-info-card {
-    width: 100% !important;
-    max-width: 100%;
-    margin-left: 0 !important;
-  }
-  .viewer-main > .border-2 {
-    margin: 0 auto;
-    max-width: 100%;
-  }
-}
-
-/* Make the art/canvas container flexible and prevent it from forcing overflow */
-.viewer-main > .border-2 {
-  max-width: 100%;
-  box-sizing: border-box;
-  /* allow the element to shrink in flex layouts */
-  min-width: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-/* ---- Responsive layout overrides to match HeaderBar mobile breakpoint (<=1000px) ---- */
-/* Keep items side-by-side until 1000px, then stack. Prevent premature wrapping. */
-.viewer-main {
-  /* force single row until the explicit mobile breakpoint */
-  flex-wrap: nowrap;
-}
-
-
-/* Info card: fixed max width on desktop, no hard width to avoid overflow */
-.viewer-info-card {
-  flex: 0 1 auto;       /* prefers 35rem but can shrink */
-  max-width: min(35rem, 100%);
-  width: auto;
-  min-width: 0;
-  margin-left: 1rem;     /* replaces ml-5 on tight screens */
-  box-sizing: border-box;
-}
-
-/* Match HeaderBar mobile breakpoint */
-@media (max-width: 1000px) {
-  .viewer-main {
-    flex-direction: column;   /* stack canvas above card */
-    align-items: stretch;
-  }
-  .viewer-info-card {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-  }
-  .viewer-main > .border-2 {
-    margin: 0 auto;
-    max-width: 100%;
-  }
-}
-
-/* Ensure media scales and never causes horizontal scroll */
-.viewer-main img,
-.viewer-main canvas {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  image-rendering: pixelated;
-}
-
-/* Keep horizontal scroll disabled within the viewer area */
-.viewer-main {
-  overflow-x: hidden;
-}
-
 /* Artist line: only the name underlines on hover */
 .artist-line { display: inline-flex; align-items: center; gap: .35rem; }
 .by-label { color: inherit; text-decoration: none !important; }
@@ -1134,9 +1020,55 @@ async function gifDisplay(): Promise<void> {
 /* Filters block */
 .filters-panel { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #32363d; }
 
-@media (max-width: 840px) {
-  .viewer-actions.row.end { justify-content:flex-start; }
+/* Keep the two-panel layout side-by-side on desktop */
+.viewer-main {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Canvas container: allow shrinking */
+.media-wrap {
+  max-width: 100%;
+  width: min(720px, 100%);
+}
+
+/* Ensure the canvas itself fills the container */
+:deep(.media-wrap canvas) {
+  width: 100% !important;
+  height: auto !important;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Info card can have a tunable max width */
+.info-card {
+  /* COMMENT: Adjust info card max width here */
+  max-width: 420px; /* tweak as needed */
+}
+
+/* Mobile/tablet: stack and put the info card below the art */
+@media (max-width: 1000px) {
+  .viewer-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .media-wrap {
+    width: 100%;
+  }
+  .info-card {
+    order: 2;       /* ensure card is under the art */
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
 }
 </style>
 
-<!-- 6 -->
+<!-- 1 -->

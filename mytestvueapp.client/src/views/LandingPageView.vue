@@ -22,7 +22,10 @@
 <script setup lang="ts">
 import Button from "primevue/button";
 import router from "@/router";
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const isSmallScreen = ref(false);
 let mq: MediaQueryList | null = null;
@@ -68,11 +71,53 @@ function onPrimaryClick() {
     router.push("/new");
   }
 }
+
+// Cache previous values so we restore exactly what was there
+let prevHtmlOverflowY: string | null = null;
+let prevBodyOverflowY: string | null = null;
+
+function restoreOverflow() {
+  if (prevHtmlOverflowY !== null) {
+    document.documentElement.style.overflowY = prevHtmlOverflowY;
+  } else {
+    document.documentElement.style.removeProperty("overflow-y");
+  }
+
+  if (prevBodyOverflowY !== null) {
+    document.body.style.overflowY = prevBodyOverflowY;
+  } else {
+    document.body.style.removeProperty("overflow-y");
+  }
+}
+
+onMounted(() => {
+  // Save current overflow settings
+  prevHtmlOverflowY = document.documentElement.style.overflowY || null;
+  prevBodyOverflowY = document.body.style.overflowY || null;
+
+  // Lock vertical scroll for landing only
+  document.documentElement.style.overflowY = "hidden";
+  document.body.style.overflowY = "hidden";
+});
+
+onBeforeUnmount(() => {
+  // Restore original overflow settings
+  restoreOverflow();
+});
+
+// Watch the reactive route (not the router instance). If we navigated away from the landing
+// route ensure overflow is restored. Use route.fullPath so the watcher triggers on route change.
+watch(
+  () => route.fullPath,
+  () => {
+    if ((route.name as string) !== "Landing") {
+      restoreOverflow();
+    }
+  }
+);
 </script>
 
 <style scoped>
-/* Keep the cat fixed on the bottom-right but constrain with viewport height,
-   and reduce its size on small screens so it doesn't cover content. */
 .pop-cat {
   position: fixed;
   bottom: 0;
@@ -89,6 +134,21 @@ function onPrimaryClick() {
   box-sizing: border-box;
   padding-bottom: 20vh;
   padding: 2rem; /* default mobile */
+}
+
+/* Header-aware landing height (works even if header is sticky) */
+:global(:root) {
+  --header-h: 64px; /* desktop header height; adjust if needed */
+}
+@media (max-width: 1000px) {
+  :global(:root) { --header-h: 56px; }
+}
+
+/* Constrain landing content below header; no internal scroll */
+.landing {
+  height: calc(100vh - var(--header-h));
+  overflow: hidden; /* prevent internal scroll */
+  box-sizing: border-box;
 }
 
 /* Mobile-specific tweaks */
@@ -126,11 +186,9 @@ function onPrimaryClick() {
   line-height: 1.2;
 }
 
-/* keep desktop unchanged; ensure note doesn't show on larger screens
-   (note is controlled by v-if but keep style defensive) */
 @media (min-width: 1001px) {
   .mobile-note { display: none !important; }
 }
 </style>
 
-<!-- 3 -->
+<!-- * -->

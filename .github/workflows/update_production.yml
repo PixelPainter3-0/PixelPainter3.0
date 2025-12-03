@@ -128,6 +128,13 @@ jobs:
           files: 'mytestvueapp.client/src/views/TheGridView.vue' # Specify the file(s) to modify
           search-text: 'http://localhost:7154/signalhub'
           replacement-text: 'https://pixelpainter.app:7155/signalhub'
+
+      - name: Update signalhub url GridConnectStore
+        uses: richardrigutins/replace-in-files@v2
+        with:
+          files: 'mytestvueapp.client/src/store/GridConnectStore.ts' # Specify the file(s) to modify
+          search-text: 'http://localhost:7154/signalhub'
+          replacement-text: 'https://pixelpainter.app:7155/signalhub'
           
       - name: Deploy App Files to Server
         run: scp -o StrictHostKeyChecking=no -r /home/runner/work/PixelPainter3.0/PixelPainter3.0/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.APP_DIR }}

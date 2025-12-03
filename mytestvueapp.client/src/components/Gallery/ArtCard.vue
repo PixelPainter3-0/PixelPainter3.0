@@ -121,8 +121,8 @@ const overflowTitle = computed(() =>
 );
 const title = computed(() => {
   const t = props.art.title ?? "";
-  if (t.length > 32) {
-    const tempTitle = t.substring(0, 32);
+  if (t.length > 25) {
+    const tempTitle = t.substring(0, 25);
     const ellipsis = "...";
     return tempTitle + ellipsis;
   } else {
@@ -144,7 +144,8 @@ const numComments = computed(() => {
 const artistNames = computed<string[]>(() => props.art.artistName ?? []);
 
 function goToArtist(name: string) {
-  router.push(`/accountpage/${encodeURIComponent(name)}`);
+  // Always land on the creator's art tab instead of account settings
+  router.push(`/accountpage/${encodeURIComponent(name)}#created_art`);
 }
 </script>
 
@@ -254,4 +255,4 @@ function goToArtist(name: string) {
 .tag-height { height: 24px !important; margin: 0 !important; }
 </style>
 
-<!-- 4 -->
+<!-- 6 -->
