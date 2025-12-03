@@ -58,20 +58,7 @@ export default class LoginService {
 
   public static async getCurrentUser(): Promise<Artist> {
     try {
-      const response = await fetch("/login/GetCurrentUser", {
-        credentials: "include",
-      });
-
-      if (response.status === 401) {
-        // Return an anonymous Artist instead of throwing
-        const anon = {} as Artist;
-        // @ts-ignore
-        anon.id = 0;
-        // optional defaults
-        // @ts-ignore
-        anon.name = "";
-        return anon;
-      }
+      const response = await fetch("/login/GetCurrentUser");
 
       if (!response.ok) {
         throw new Error("Error retrieving user");
@@ -79,16 +66,11 @@ export default class LoginService {
 
       const data = await response.json();
       const user: Artist = data;
+
       return user;
     } catch (error) {
       console.error(error);
-      // Fallback to anonymous on network errors too
-      const anon = {} as Artist;
-      // @ts-ignore
-      anon.id = 0;
-      // @ts-ignore
-      anon.name = "";
-      return anon;
+      throw error;
     }
   }
 
@@ -162,6 +144,18 @@ export default class LoginService {
     } catch (error) {
       console.error;
       throw error;
+    }
+  }
+  public static async updateNotificationsEnabled(artistId: number, notificationsEnabled: number): Promise<boolean> {
+    try {
+      const response = await fetch("/artist/UpdateNotifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artistId, notificationsEnabled })
+      });
+      return response.ok;
+    } catch {
+      return false;
     }
   }
 }
