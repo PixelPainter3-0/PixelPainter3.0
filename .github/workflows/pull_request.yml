@@ -72,6 +72,10 @@ jobs:
       run: npm ci --legacy-peer-deps
     - run: sudo apt-get install xvfb
 
+    - name: npm run dev
+      working-directory: ./mytestvueapp.client
+      run: nohup npm run dev &
+
     - name: Run Nightwatch tests
       working-directory: ./mytestvueapp.client
       run: xvfb-run --auto-servernum npm test
