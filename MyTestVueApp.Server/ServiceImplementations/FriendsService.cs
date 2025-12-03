@@ -30,7 +30,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 connection.Open();
 
                 //Check to make sure the users aren't already friends
-                var checkDupQuery = "SELECT Count(*) FROM Friends WHERE ((Friend1Id = @Friend1Id AND Friend2Id = @Friend2Id) OR (Friend1Id = @Friend2Id AND Friend2Id = @Friend1Id))";
+                var checkDupQuery = "SELECT Count(*) FROM Friends WHERE ((Friend1Id = @Friend1Id AND Friend2Id = @Friend2Id))";
                 using (SqlCommand checkDupCommand = new SqlCommand(checkDupQuery, connection))
                 {
                     checkDupCommand.Parameters.AddWithValue("@Friend1Id", artist1.Id);
@@ -71,7 +71,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 connection.Open();
 
                 //Check to make sure the users are friends
-                var checkDupQuery = "SELECT Count(*) FROM Friends WHERE ((Friend1Id = @Friend1Id AND Friend2Id = @Friend2Id) OR (Friend1Id = @Friend2Id AND Friend2Id = @Friend1Id))";
+                var checkDupQuery = "SELECT Count(*) FROM Friends WHERE ((Friend1Id = @Friend1Id AND Friend2Id = @Friend2Id))";
 
                 using (SqlCommand checkDupCommand = new SqlCommand(checkDupQuery, connection))
                 {
@@ -85,7 +85,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         return 0;
                     }
                 }
-                var query = "DELETE FROM Friends WHERE ((Friend1ID = @Friend1Id AND Friend2ID = @Friend2Id) OR (Friend1ID = @Friend2ID AND Friend2ID = @Friend1Id))";
+                var query = "DELETE FROM Friends WHERE ((Friend1ID = @Friend1Id AND Friend2ID = @Friend2Id))";
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Friend1Id", artist1.Id);

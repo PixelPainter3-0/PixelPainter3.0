@@ -3,7 +3,7 @@ import Friends from "../entities/Friends";
 export default class FriendService {
   
   // Get the logged-in user's friends
-  public static async getArtistFriends(): Promise<Friends[]> {
+  public static async getArtistFriends(artistId: number): Promise<Friends[]> {
     try {
       const response = await fetch(`/friends/GetArtistFriends`);
 
@@ -18,10 +18,10 @@ export default class FriendService {
     }
   }
 
-  // Add a new friend (other user ID)
-  public static async insertFriends(artistId: number): Promise<boolean> {
+  // Add a new friend (artistId2 is other user ID)
+  public static async insertFriends(artistId: number, artist2Id: number): Promise<boolean> {
     try {
-      const response = await fetch(`/friends/InsertFriends?artistId=${artistId}`, {
+      const response = await fetch(`/friends/InsertFriends?artistId=${artistId}, artist2Id=${artist2Id}`, {
         method: "POST",
       });
 
@@ -33,9 +33,9 @@ export default class FriendService {
   }
 
   // Remove a friend
-  public static async removeFriends(artistId: number): Promise<boolean> {
+  public static async removeFriends(artistId: number, artist2Id: number): Promise<boolean> {
     try {
-      const response = await fetch(`/friends/RemoveFriends?artistId=${artistId}`, {
+      const response = await fetch(`/friends/RemoveFriends?artistId=${artistId}, artistId2=${artist2Id}`, {
         method: "DELETE",
       });
 
