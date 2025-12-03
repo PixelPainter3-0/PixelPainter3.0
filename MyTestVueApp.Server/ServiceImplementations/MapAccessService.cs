@@ -259,6 +259,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         Art.pointId
                     FROM ART  
                     WHERE Art.pointId = @pointId 
+                    AND isPublic = 1
                     ";
                 using (var command = new SqlCommand(query1, connection))
                 {
