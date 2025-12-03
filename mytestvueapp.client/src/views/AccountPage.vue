@@ -37,6 +37,18 @@
               :severity="route.hash == '#liked_art' ? 'primary' : 'secondary'"
               @click="changeHash('#liked_art')"
             />
+            <Button
+              v-if="isFriend == '0' && curArtist.id !== curUser.id"
+              label="Add Friend"
+              :severity="'primary'"
+              @click="updateFriends(true)"
+            />
+            <Button
+              v-if="isFriend == '1' && curArtist.id !== curUser.id"
+              label="Remove Friend"
+              :severity="'primary'"
+              @click="updateFriends(false)"
+            />
           </div>
         </template>
       </Card>
@@ -257,6 +269,7 @@ const pageStatus = ref<string>("");
 
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
+const isFriend = ref<string>("0");
 
 
 
@@ -365,7 +378,8 @@ onMounted(async () => {
     }
   } catch {
     // ignore, treat as anonymous
-    }
+    isFriend.value = "2";
+  }
   await loadArtistData(String(route.params.artist ?? ""));
   updateNotifications();
 });
@@ -392,6 +406,16 @@ function changeHash(hash: string): void {
   window.location.hash = hash;
 }
 
+function updateFriends(addFriend: boolean): void {
+  if(addFriend){
+    console.log("Adding friend...");
+    isFriend.value = "1"
+  }else{
+    console.log("Removing friend...");
+    isFriend.value = "0"
+  }
+
+}
 
 function cancelEdit(): void {
   isEditing.value = false;
