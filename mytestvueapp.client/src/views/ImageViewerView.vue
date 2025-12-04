@@ -161,7 +161,21 @@
            />
          </div>
 
-        <!-- 7) Delete Art -->
+         <!-- 7) Remove Location -->
+         <div class="viewer-actions row end" 
+           v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
+           <!-- ensure point can icon -->
+           <Button
+             class="danger-action"
+             title="Remove"
+             label="Remove Location"
+             icon="pi pi-times"
+             @click="removeLocation()"
+             :isAdmin="isAdmin"
+           />
+         </div>
+
+        <!-- 8) Delete Art -->
         <div class="viewer-actions row end">
           <!-- ensure trash can icon -->
           <DeleteArtButton
@@ -254,6 +268,7 @@ import GIFCreationService from "@/services/GIFCreationService";
 import { useLayerStore } from "@/store/LayerStore";
 import { PixelGrid } from "@/entities/PixelGrid";
 import StartArtFromImage from "@/components/PainterUi/StartArtFromImage.vue";
+import MapAccessService from "@/services/MapAccessService";
 
 const layerStore = useLayerStore();
 
@@ -368,6 +383,11 @@ async function editArt(): Promise<void> {
     layerStore.pushGrid(art.value.pixelGrid);
   }
   router.push(`/paint/${id}`);
+}
+
+async function removeLocation(): Promise<void> {
+  await MapAccessService.updateArtLocation(id, 0);
+  await router.go(0);
 }
 
 async function updateComments(): Promise<void> {

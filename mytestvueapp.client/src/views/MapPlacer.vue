@@ -179,7 +179,7 @@
 
 <style scoped>
     #map {
-        height: calc(85vh - 60px); /* Adjust 60px based on your header height */
+        height: calc(95vh - 60px); /* Adjust 60px based on your header height */
         width: 100%;
     }
 
