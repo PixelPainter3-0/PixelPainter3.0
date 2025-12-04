@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import LoginService from "@/services/LoginService";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -79,6 +80,26 @@ const router = createRouter({
       name: "MapPlacer",
       component: () => import("../views/MapPlacer.vue")
     }
+    ,
+    {
+      path: "/admin",
+      name: "Admin",
+      component: () => import("../views/AdminView.vue"),
+      meta: { requiresAdmin: true }
+    }
   ]
 });
 export default router;
+
+// Simple admin guard: routes with meta.requiresAdmin require admin
+router.beforeEach(async (to, _from, next) => {
+  if (to.meta && (to.meta as any).requiresAdmin) {
+    try {
+      const isAdmin = await LoginService.getIsAdmin();
+      if (!isAdmin) return next({ path: "/" });
+    } catch {
+      return next({ path: "/" });
+    }
+  }
+  next();
+});
