@@ -316,5 +316,42 @@ namespace MyTestVueApp.Server.Controllers
                 return Problem(ex.Message);
             }
         }
+        /// <summary>
+        /// Sets admin privileges for a user (admin only).
+        /// </summary>
+        /// <param name="artistId">Target artist id.</param>
+        /// <param name="isAdmin">True to grant admin, false to revoke.</param>
+        [HttpPost]
+        [Route("SetAdmin")]
+        public async Task<IActionResult> SetAdmin([FromQuery] int artistId, [FromQuery] bool isAdmin)
+        {
+            try
+            {
+                // Authenticate current user via cookie
+                if (!Request.Cookies.TryGetValue("GoogleOAuth", out var subId))
+                    throw new AuthenticationException("User is not logged in!");
+
+                var currentUser = await LoginService.GetUserBySubId(subId);
+                if (currentUser == null)
+                    throw new AuthenticationException("User does not have an account.");
+
+                // Authorize admin
+                if (!currentUser.IsAdmin)
+                    throw new AuthenticationException("User does not have permission to set admin.");
+
+                var ok = await LoginService.UpdateIsAdmin(artistId, isAdmin);
+                if (!ok) return NotFound($"Artist with id {artistId} not found.");
+
+                return Ok();
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
     }
 }
