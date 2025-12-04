@@ -206,12 +206,12 @@ namespace MyTestVueApp.Server.ServiceImplementations
             {
                 await connection.OpenAsync();
                 var query1 =
-                    @"
+                    $@"
                     SELECT Artspace.ArtspaceId,
                       Artspace.Title,
                       Artspace.Shape.STAsText()
                     FROM Artspace
-                    WHERE Artspace.ArtspaceId = 1";
+                    WHERE Artspace.ArtspaceId = @artspaceId";
                 using (var command = new SqlCommand(query1, connection))
                 {
                     command.Parameters.AddWithValue("@artspaceId", id);

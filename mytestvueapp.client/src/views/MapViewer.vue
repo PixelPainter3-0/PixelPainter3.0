@@ -1,5 +1,4 @@
 <template>
-  <h1 class="flex align-items-center gap-3 ml-4">Map</h1>
   <div id="map" ref="mapContainer"></div>
 </template>
 
