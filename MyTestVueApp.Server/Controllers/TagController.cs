@@ -160,5 +160,44 @@ namespace MyTestVueApp.Server.Controllers
                 return Problem(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Delete a tag (admin only). Also removes any Art-Tag associations.
+        /// </summary>
+        [HttpDelete]
+        [Route("Delete")]
+        public async Task<IActionResult> DeleteTag([FromQuery] int tagId)
+        {
+            try
+            {
+
+                if (Request.Cookies.TryGetValue("GoogleOAuth", out var userId))
+                {
+                    var user = await LoginService.GetUserBySubId(userId);
+                    if (user == null)
+                        throw new AuthenticationException("User does not have an account.");
+                    if (!user.IsAdmin)
+                        throw new AuthenticationException("User does not have permission to delete tags.");
+
+                    var deleted = await TagService.DeleteTag(tagId);
+                    if (deleted)
+                        return Ok();
+                    else
+                        return NotFound($"Tag with id {tagId} was not found.");
+                }
+                else
+                {
+                    throw new AuthenticationException("User is not logged in!");
+                }
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
     }
 }
