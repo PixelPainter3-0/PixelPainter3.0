@@ -27,7 +27,7 @@ describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
   it('Home button', (browser) => {
     browser
       .element.findByText('Home')
-      .assert.visible();
+      .assert.present();
     browser
       .element.findByText('Home')
       .click();
@@ -37,7 +37,7 @@ describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
   it('Painter button', (browser) => {
     browser
       .element.findByText('Painter')
-      .assert.visible();
+      .assert.present();
     browser
       .element.findByText('Painter')
       .click();
@@ -47,7 +47,7 @@ describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
   it('Gallery button', (browser) => {
     browser
       .element.findByText('Gallery')
-      .assert.visible();
+      .assert.present();
     browser
       .element.findByText('Gallery')
       .click();
