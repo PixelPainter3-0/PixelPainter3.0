@@ -21,8 +21,8 @@
               @click="changeHash('#notification_settings')"
             />
             <Button
-              class="profile-nav-btn"
               label="Friends"
+                v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#friends' ? 'primary' : 'secondary'"
               @click="changeHash('#friends')"
             />
@@ -199,10 +199,32 @@
     </template>
   </Card>
 </div>
-<div v-if="route.hash == '#friends'" class="account-content">
-  <h2>Friends</h2>
+<Card class="mt-4">
+  <template #header>Friends</template>
 
-</div>
+  <template #content>
+    <div class="flex flex-column gap-2">
+      <div 
+        v-for="friend in friends" 
+        :key="friend.id"
+        class="flex justify-content-between align-items-center border-round p-2 border-1 surface-border"
+      >
+        <span class="text-lg">{{ friend.name }}</span>
+
+        <Button 
+          label="Remove" 
+          icon="pi pi-times" 
+          class="p-button-danger p-button-sm" 
+          @click="removeFriend(friend.id)"
+        />
+      </div>
+
+      <div v-if="friends.length === 0" class="text-secondary"> 
+        You have no friends yet.
+      </div>
+    </div>
+  </template>
+</Card>
 
       <!-- Creator's Art -->
       <div v-if="route.hash == '#created_art'">
@@ -272,7 +294,7 @@ const pageStatus = ref<string>("");
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
 const isFriend = ref<string>("0");
-
+const friends = ref<Friend[]>([]);
 
 
 
@@ -385,6 +407,7 @@ onMounted(async () => {
   }
   await loadArtistData(String(route.params.artist ?? ""));
   updateNotifications();
+  await loadFriends();
 });
 
 
@@ -393,6 +416,15 @@ watch(
   () => route.params.artist,
   async (newArtist) => {
     await loadArtistData(String(newArtist ?? ""));
+  }
+);
+
+watch(
+  () => route.hash,
+  async (hash) => {
+    if (hash === "#friends") {
+      await loadFriends();
+    }
   }
 );
 
@@ -419,6 +451,17 @@ function updateFriends(addFriend: boolean): void {
   }
 
 }
+
+const loadFriends = async () => {
+  friends.value = await FriendService.getArtistFriends();
+};
+
+const removeFriend = async (friendId: number) => {
+  const result = await FriendService.removeFriends(friendId);
+  if (result) {
+    friends.value = friends.value.filter(f => f.friend2Id !== friendId);
+  }
+};
 
 function cancelEdit(): void {
   isEditing.value = false;

@@ -124,6 +124,8 @@ BEGIN
     CREATE TABLE Friends (
         Friend1Id INT,
         Friend2Id INT,
+        Friend1Name VARCHAR(20),
+        Friend2Name VARCHAR(20),
         FriendsOnDate DATETIME DEFAULT GETDATE(),
         PRIMARY KEY (Friend1Id, Friend2Id),
     );

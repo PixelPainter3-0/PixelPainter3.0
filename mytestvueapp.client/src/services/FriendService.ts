@@ -3,7 +3,7 @@ import Friends from "../entities/Friends";
 export default class FriendService {
   
   // Get the logged-in user's friends
-  public static async getArtistFriends(artistId: number): Promise<Friends[]> {
+  public static async getArtistFriends(): Promise<Friends[]> {
     try {
       const response = await fetch(`/friends/GetArtistFriends`);
 
@@ -33,7 +33,7 @@ export default class FriendService {
   }
 
   // Remove a friend
-  public static async removeFriends(artistId: number, artist2Id: number): Promise<boolean> {
+  public static async removeFriends(artistId: number): Promise<boolean> {
     try {
       const response = await fetch(`/friends/RemoveFriends?artistId=${artistId}`, {
         method: "DELETE",

@@ -44,11 +44,13 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     }
                 }
 
-                var query = "INSERT INTO Friends (Friend1ID, Friend2ID, FriendsOnDate) VALUES (@Friend1Id, @Friend2Id, @Now)";
+                var query = "INSERT INTO Friends (Friend1ID, Friend2ID, Friend1Name, Friend2Name, FriendsOnDate) VALUES (@Friend1Id, @Friend2Id, @Friend1Name, @Friend2Name, @Now)";
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Friend1Id", artist1.Id);
                     command.Parameters.AddWithValue("@Friend2Id", artist2.Id);
+                    command.Parameters.AddWithValue("@Friend1Name", artist1.Name);
+                    command.Parameters.AddWithValue("@Friend2Name", artist2.Name);
                     command.Parameters.AddWithValue("@Now", DateTime.Now);
 
                     int rowsChanged = await command.ExecuteNonQueryAsync();
@@ -118,9 +120,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
                         SELECT 
                             Friends.Friend1Id,
                             Friends.Friend2Id,
-                            Friends.FriendsOnDate,
-                            Artist.Id, 
-                            Artist.[Name]
+                            Friends.Friend1Name,
+                            Friends.Friend2Name,
+                            Friends.FriendsOnDate   
                         FROM Friends 
                         JOIN Artist ON Artist.Id = Friends.Friend2Id
                         WHERE Friends.Friend1Id = @id
@@ -137,7 +139,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                 { 
                                     Friend1Id = reader.GetInt32(0),
                                     Friend2Id = reader.GetInt32(1),
-                                    FriendsOnDate = reader.GetDateTime(2),
+                                    Friend1Name = reader.GetString(2),
+                                    Friend2Name = reader.GetString(3),
+                                    FriendsOnDate = reader.GetDateTime(4),
                                 };
                                 friends.Add(friend);
                             }
