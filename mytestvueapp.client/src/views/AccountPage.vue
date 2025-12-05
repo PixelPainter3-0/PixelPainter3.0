@@ -244,9 +244,11 @@ import { useToast } from "primevue/usetoast";
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
 import NotificationService from "@/services/NotificationService";
+import FriendService from "@/services/FriendService";
 
 import type Art from "@/entities/Art";
 import Artist from "@/entities/Artist";
+import Friend from "@/entities/Friends";
 
 // PrimeVue components used in template
 //import router from "@/router";
@@ -270,6 +272,7 @@ const pageStatus = ref<string>("");
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
 const isFriend = ref<string>("0");
+
 
 
 
