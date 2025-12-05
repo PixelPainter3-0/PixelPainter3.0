@@ -1,5 +1,4 @@
 <template>
-  <h1 class="flex align-items-center gap-3 ml-4">Map</h1>
   <div id="map" ref="mapContainer"></div>
 </template>
 
@@ -178,7 +177,7 @@
 
 <style scoped>
 #map {
-    height: calc(85vh - 60px); /* Adjust 60px based on your header height */
+    height: calc(95vh - 60px); /* Adjust 60px based on your header height */
     width: 100%;
 }
 .lCard {

@@ -78,4 +78,13 @@ export default class TagService {
     const response = await fetch(`/tag/RemoveFromArt?artId=${artId}&tagId=${tagId}`, { method: "DELETE" });
     if (!response.ok) throw new Error("Failed to remove tag from art");
   }
+
+  public static async deleteTag(tagId: number): Promise<void> {
+    const response = await fetch(`/tag/Delete?tagId=${tagId}`, { method: "DELETE" });
+    if (!response.ok) {
+      let t = "";
+      try { t = await response.text(); } catch {}
+      throw new Error(`Failed to delete tag (${response.status}) ${t}`);
+    }
+  }
 }

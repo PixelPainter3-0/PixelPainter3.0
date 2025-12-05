@@ -47,3 +47,35 @@ jobs:
         name: published-app
         path: ./publish
 
+  nightwatch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup Node.js for npm install
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x' # Use the Node.js version compatible with your project
+
+    - name: Install npm dependencies
+      working-directory: ./mytestvueapp.client
+      run: npm install --legacy-peer-deps
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: npm-install
+      working-directory: ./mytestvueapp.client
+      run: npm ci --legacy-peer-deps
+    - run: sudo apt-get install xvfb
+
+    - name: npm run dev
+      working-directory: ./mytestvueapp.client
+      run: nohup npm run dev &
+
+    - name: Run Nightwatch tests
+      working-directory: ./mytestvueapp.client
+      run: xvfb-run --auto-servernum npm test

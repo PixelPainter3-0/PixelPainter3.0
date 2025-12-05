@@ -551,5 +551,28 @@ namespace MyTestVueApp.Server.ServiceImplementations
             }
             return null;
         }
+
+        public async Task<bool> UpdateIsAdmin(int artistId, bool isAdmin)
+        {
+            var connectionString = AppConfig.Value.ConnectionString;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                // Ensure artist exists
+                var existsCmd = new SqlCommand("SELECT COUNT(1) FROM Artist WHERE Id = @Id", connection);
+                existsCmd.Parameters.AddWithValue("@Id", artistId);
+                var exists = (int)await existsCmd.ExecuteScalarAsync() > 0;
+                if (!exists) return false;
+
+                var updateCmd = new SqlCommand(
+                    "UPDATE Artist SET IsAdmin = @IsAdmin WHERE Id = @Id", connection);
+                updateCmd.Parameters.AddWithValue("@IsAdmin", isAdmin);
+                updateCmd.Parameters.AddWithValue("@Id", artistId);
+
+                var rows = await updateCmd.ExecuteNonQueryAsync();
+                return rows > 0;
+            }
+        }
     }
 }

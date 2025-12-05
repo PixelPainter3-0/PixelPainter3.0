@@ -92,6 +92,24 @@ export default class LoginService {
     }
   }
 
+  public static async setAdmin(artistId: number, isAdmin: boolean): Promise<boolean> {
+    try {
+      const response = await fetch(`/login/SetAdmin?artistId=${artistId}&isAdmin=${isAdmin}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) {
+        let t = ""; try { t = await response.text(); } catch {}
+        throw new Error(`Error setting admin: ${response.status} ${t}`);
+      }
+      // server returns Ok(); assume true on 200
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
   public static async updateUsername(newUsername: any): Promise<boolean> {
     try {
       const response = await fetch(
