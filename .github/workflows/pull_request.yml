@@ -58,19 +58,18 @@ jobs:
       with:
         node-version: '18.x' # Use the Node.js version compatible with your project
 
-    - name: Install npm dependencies
-      working-directory: ./mytestvueapp.client
-      run: npm install --legacy-peer-deps
-
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    - name: npm-install
+    - name: Install npm dependencies
       working-directory: ./mytestvueapp.client
       run: npm ci --legacy-peer-deps
-    - run: sudo apt-get install xvfb
+
+    - name: Install xvfb
+      working-directory: ./mytestvueapp.client
+      run: sudo apt-get install xvfb
 
     - name: npm run dev
       working-directory: ./mytestvueapp.client
