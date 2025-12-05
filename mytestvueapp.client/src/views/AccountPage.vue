@@ -43,12 +43,6 @@
               :severity="'primary'"
               @click="updateFriends(true)"
             />
-            <Button
-              v-if="isFriend == '1' && curArtist.id !== curUser.id"
-              label="Remove Friend"
-              :severity="'primary'"
-              @click="updateFriends(false)"
-            />
           </div>
         </template>
       </Card>
@@ -202,6 +196,7 @@
 <div v-if="route.hash == '#friends'" class="account-content">
   <h2>Friends</h2>
 
+
 </div>
 
       <!-- Creator's Art -->
@@ -244,11 +239,9 @@ import { useToast } from "primevue/usetoast";
 import LoginService from "@/services/LoginService";
 import ArtAccessService from "@/services/ArtAccessService";
 import NotificationService from "@/services/NotificationService";
-import FriendService from "@/services/FriendService";
 
 import type Art from "@/entities/Art";
 import Artist from "@/entities/Artist";
-import Friend from "@/entities/Friends";
 
 // PrimeVue components used in template
 //import router from "@/router";
@@ -259,6 +252,8 @@ import Avatar from "primevue/avatar";
 import Message from "primevue/message";
 // Child component
 import ArtCard from "@/components/Gallery/ArtCard.vue";
+import FriendService from "@/services/FriendService";
+import friend from "@/entities/Friends";
 //import { createBuilderStatusReporter } from "typescript";
 
 const toast = useToast();
@@ -275,7 +270,6 @@ const isFriend = ref<string>("0");
 
 
 
-
 const notifLikes = ref<boolean>(true);
 const notifComments = ref<boolean>(true);
 const notifReplies = ref<boolean>(true);
@@ -285,6 +279,7 @@ const notifCommentDislikes = ref<boolean>(true);
 
 
 const myArt = ref<Art[]>([]);
+const myFriends = ref<friend[]>([]);
 const likedArt = ref<Art[]>([]);
 
 const canEdit = computed<boolean>(
@@ -366,6 +361,32 @@ async function loadArtistData(artistName: string): Promise<void> {
   }
 }
 
+async function loadArtistFriends(friendName: string): Promise<void> {
+  if (!friendName) return;
+  console.log("Loading Friend info!!!!!!");
+
+  myFriends.value = [];
+
+  try {
+    const artistFriends = await FriendService.getArtistFriends(curArtist.value.id);
+    console.log(artistFriends);
+  } catch (e) {
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Failed to load artist's friends",
+      life: 3000,
+    });
+  }
+  console.log("Checking for if the current artist is a friend");
+  for(let idx in myFriends.value){
+    if(curArtist.value.id == myFriends.value[idx].friend2Id){
+      isFriend.value = "1";
+    }
+  }
+
+}
+
 onMounted(async () => {
   // Default tab if none/invalid
   if (!["#settings", "notifications_settings", "#friends", "#created_art", "#liked_art"].includes(route.hash)) {
@@ -384,6 +405,7 @@ onMounted(async () => {
     isFriend.value = "2";
   }
   await loadArtistData(String(route.params.artist ?? ""));
+  await loadArtistFriends(String(route.params.artist ?? ""));
   updateNotifications();
 });
 
@@ -409,11 +431,18 @@ function changeHash(hash: string): void {
   window.location.hash = hash;
 }
 
-function updateFriends(addFriend: boolean): void {
+async function updateFriends(addFriend: boolean): Promise<void> {
   if(addFriend){
     console.log("Adding friend...");
-    isFriend.value = "1"
-  }else{
+    try {
+      console.log(curArtist.value.id);
+      const addedFriend = await FriendService.insertFriends(curArtist.value.id);
+      console.log("insertFriend result:", addedFriend);
+      isFriend.value = "1"
+    } catch (error){
+      console.error("Adding friend failed", error);
+    }
+  }else {
     console.log("Removing friend...");
     isFriend.value = "0"
   }

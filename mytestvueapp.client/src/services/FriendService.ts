@@ -5,6 +5,7 @@ export default class FriendService {
   // Get the logged-in user's friends
   public static async getArtistFriends(artistId: number): Promise<Friends[]> {
     try {
+      console.log("Getting friend list by artist id: " + artistId);
       const response = await fetch(`/friends/GetArtistFriends`);
 
       if (!response.ok) {
@@ -25,6 +26,7 @@ export default class FriendService {
         method: "POST",
       });
 
+      console.log("Response ok: " + response.ok);
       return response.ok;
     } catch (error) {
       console.error("Error inserting friends:", error);
