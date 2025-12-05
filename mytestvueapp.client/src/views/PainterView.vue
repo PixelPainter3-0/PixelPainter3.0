@@ -1316,8 +1316,9 @@ function flattenArt(): string[][] {
     }
   }
   return arr;
-}
+    }
 
+/*
 async function saveToFile(): Promise<void> {
   const grid: string[][] = flattenArt();
 
@@ -1365,6 +1366,7 @@ async function saveToFile(): Promise<void> {
   link.href = upsizedCanvas.toDataURL("image/png");
   link.click();
 }
+*/
 
 async function saveGIFFromPainter(): Promise<void> {
   let urls: string[] = [];
@@ -1427,8 +1429,7 @@ function handleKeyDown(event: KeyboardEvent) {
   if (keyBindActive.value) {
     if (event.key === "p") {
       event.preventDefault();
-      
-      .value.selectedTool.label = "Pan";
+      cursor.value.selectedTool.label = "Pan";
       canvas?.value.updateCursor();
     } else if (event.key === "b") {
       event.preventDefault();
@@ -1545,7 +1546,7 @@ function handleKeyDown(event: KeyboardEvent) {
       if (art.value.pixelGrid.isGif) {
         saveGIFFromPainter();
       } else {
-        saveToFile();
+        document.getElementById("downloadButton")?.click();
       }
     } else if ((event.ctrlKey || event.metaKey) && event.key === "s") {
       event.preventDefault();
