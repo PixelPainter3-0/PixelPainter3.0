@@ -5,7 +5,6 @@ export default class FriendService {
   // Get the logged-in user's friends
   public static async getArtistFriends(): Promise<Friends[]> {
     try {
-      console.log("Getting friend list by artist id: " + artistId);
       const response = await fetch(`/friends/GetArtistFriends`);
 
       if (!response.ok) {

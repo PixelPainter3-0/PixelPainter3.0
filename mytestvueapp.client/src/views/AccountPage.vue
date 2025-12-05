@@ -200,16 +200,16 @@
     <div class="flex flex-column gap-2">
       <div 
         v-for="friend in friends" 
-        :key="friend.id"
+        :key="friend.friend2Id"
         class="flex justify-content-between align-items-center border-round p-2 border-1 surface-border"
       >
-        <span class="text-lg">{{ friend.name }}</span>
+        <span class="text-lg">{{ friend.friend2Name }}</span>
 
         <Button 
           label="Remove" 
           icon="pi pi-times" 
           class="p-button-danger p-button-sm" 
-          @click="removeFriend(friend.id)"
+          @click="removeFriend(friend.friend2Id)"
         />
       </div>
 
@@ -288,7 +288,7 @@ const pageStatus = ref<string>("");
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
 const isFriend = ref<string>("0");
-const friends = ref<Friend[]>([]);
+const friends = ref<friend[]>([]);
 
 
 
