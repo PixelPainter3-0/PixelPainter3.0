@@ -65,6 +65,10 @@ jobs:
 
     - name: Install npm dependencies
       working-directory: ./mytestvueapp.client
+      run: npm install --legacy-peer-deps
+
+    - name: Install npm dependencies
+      working-directory: ./mytestvueapp.client
       run: npm ci --legacy-peer-deps
 
     - name: Install xvfb
