@@ -7,19 +7,19 @@
       {{ art.title }}
     </h2>
   </div>
-  <div class="justify-content-center flex w-full h-full align-items-center">
-    <div v-if="!art.isGif && art" class="border-2">
+  <div class="viewer-main justify-content-center flex w-full h-full align-items-center">
+    <div v-if="!art.isGif && art" class="media-wrap">
       <MyCanvas
         v-model="squareColor"
         v-if="!art.isGif && art"
         :key="art.id"
         :art="art"
-        :pixelSize="20"
+        :pixelSize="pixelSize"  
         :canvas-number="1"
       />
     </div>
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
-    <Card class="w-35rem ml-5">
+    <Card class="info-card w-35rem ml-5">
       <template #content>
         <!-- 1) Artist -->
         <div class="artist-block">
@@ -32,7 +32,7 @@
                 cursor: 'pointer'
               }"
               title="View artist profile"
-              @click="router.push(`/accountpage/${art.artistName[0]}`)"
+              @click="router.push(`/accountpage/${encodeURIComponent(art.artistName[0])}#created_art`)"
               @mouseover="hoverIndex = 'main'"
               @mouseleave="hoverIndex = null"
             >
@@ -49,7 +49,7 @@
               cursor: hoverIndex === index ? 'pointer' : 'default'
             }"
             title="View artist profile"
-            @click="router.push(`/accountpage/${artist}`)"
+            @click="router.push(`/accountpage/${encodeURIComponent(artist)}#created_art`);"
             @mouseover="hoverIndex = index"
             @mouseleave="hoverIndex = null"
           >
@@ -58,7 +58,9 @@
         </div>
 
         <!-- 2) Upload date -->
-        <div v-if="art.pointId" class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+        <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+
+         <!-- 3) Location name -->
         <div v-if="art.pointId" class="placed-at">Placed at {{pointTitle}} in {{artspaceTitle}}</div>
         
 
@@ -125,6 +127,7 @@
             class="download-only-icon"
             title="Download image"
             :art="art"
+            :grid="art.pixelGrid"
             :fps="art.gifFps"
             :gifFromViewer="urls"
             :filtered="filtered"
@@ -158,7 +161,21 @@
            />
          </div>
 
-        <!-- 7) Delete Art -->
+         <!-- 7) Remove Location -->
+         <div class="viewer-actions row end" 
+           v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
+           <!-- ensure point can icon -->
+           <Button
+             class="danger-action"
+             title="Remove"
+             label="Remove Location"
+             icon="pi pi-times"
+             @click="removeLocation()"
+             :isAdmin="isAdmin"
+           />
+         </div>
+
+        <!-- 8) Delete Art -->
         <div class="viewer-actions row end">
           <!-- ensure trash can icon -->
           <DeleteArtButton
@@ -233,7 +250,7 @@ import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
 import DeleteArtButton from "@/components/DeleteArtButton.vue";
 import Art from "@/entities/Art";
 import MyCanvas from "@/components/MyCanvas/MyCanvas.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import Comment from "@/entities/Comment";
 import CommentOnArt from "@/components/Comment/CommentOnArt.vue";
 import ArtAccessService from "../services/ArtAccessService";
@@ -251,6 +268,7 @@ import GIFCreationService from "@/services/GIFCreationService";
 import { useLayerStore } from "@/store/LayerStore";
 import { PixelGrid } from "@/entities/PixelGrid";
 import StartArtFromImage from "@/components/PainterUi/StartArtFromImage.vue";
+import MapAccessService from "@/services/MapAccessService";
 
 const layerStore = useLayerStore();
 
@@ -285,6 +303,7 @@ const urls = ref<string[]>([]);
 const copyArt = ref<string[]>([]);
 const isLiked = ref<boolean>(false);
 const isDisliked = ref<boolean>(false);
+const pixelSize = ref<number>(20);
 onMounted(async () => {
   ArtAccessService.getArtById(id)
     .then((promise: Art) => {
@@ -325,6 +344,24 @@ onMounted(async () => {
   getIsAdmin();
 });
 
+function updatePixelSize() {
+  const w = window.innerWidth;
+  pixelSize.value =
+    w >= 1200 ? 20 :
+    w >= 1000 ? 16 :
+    w >= 768  ? 12 :
+                 10; // floor size on small phones
+}
+
+onMounted(() => {
+  updatePixelSize();
+  window.addEventListener("resize", updatePixelSize, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updatePixelSize);
+});
+
 async function editArt(): Promise<void> {
   layerStore.empty();
   layerStore.clearStorage();
@@ -346,6 +383,11 @@ async function editArt(): Promise<void> {
     layerStore.pushGrid(art.value.pixelGrid);
   }
   router.push(`/paint/${id}`);
+}
+
+async function removeLocation(): Promise<void> {
+  await MapAccessService.updateArtLocation(id, 0);
+  await router.go(0);
 }
 
 async function updateComments(): Promise<void> {
@@ -1000,7 +1042,55 @@ async function gifDisplay(): Promise<void> {
 /* Filters block */
 .filters-panel { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #32363d; }
 
-@media (max-width: 768px) {
-  .viewer-actions.row.end { justify-content:flex-start; }
+/* Keep the two-panel layout side-by-side on desktop */
+.viewer-main {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Canvas container: allow shrinking */
+.media-wrap {
+  max-width: 100%;
+  width: min(720px, 100%);
+}
+
+/* Ensure the canvas itself fills the container */
+:deep(.media-wrap canvas) {
+  width: 100% !important;
+  height: auto !important;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Info card can have a tunable max width */
+.info-card {
+  /* COMMENT: Adjust info card max width here */
+  max-width: 420px; /* tweak as needed */
+}
+
+/* Mobile/tablet: stack and put the info card below the art */
+@media (max-width: 1000px) {
+  .viewer-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .media-wrap {
+    width: 100%;
+  }
+  .info-card {
+    order: 2;       /* ensure card is under the art */
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
 }
 </style>
+
+<!-- 1 -->
