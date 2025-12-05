@@ -89,15 +89,15 @@ function init(): void {
   dropShadowFilter.distance = 0;
 
   const dropShadow = new Sprite(Texture.WHITE);
-  dropShadow.width = props.grid.width * PIXEL_SIZE;
-  dropShadow.height = props.grid.width * PIXEL_SIZE;
+  dropShadow.width = layerStore.grids[0].width * PIXEL_SIZE;
+  dropShadow.height = layerStore.grids[0].height * PIXEL_SIZE;
   dropShadow.tint = 0x000000;
   dropShadow.filters = [dropShadowFilter];
 
   const background = new Sprite(Texture.WHITE);
-  background.width = props.grid.width * PIXEL_SIZE;
-  background.height = props.grid.width * PIXEL_SIZE;
-  background.tint = props.grid.backgroundColor;
+  background.width = layerStore.grids[0].width * PIXEL_SIZE;
+  background.height = layerStore.grids[0].height * PIXEL_SIZE;
+  background.tint = layerStore.grids[0].backgroundColor;
 
   viewport.addChild(dropShadow);
   viewport.addChild(background);
@@ -209,7 +209,7 @@ function updateCell(layer: number, x: number, y: number, color: string): void {
       }
 
       //no way around this, viewport stores sprites in a 1d array
-      idx += x * props.grid.width + y;
+      idx += x * props.grid.height + y;
       const cell = viewport.children[idx] as Sprite;
       if (color === "empty") {
         cell.alpha = 0;
@@ -225,17 +225,17 @@ function updateCell(layer: number, x: number, y: number, color: string): void {
   }else{
     let idx = 2;
     if (!props.grid.isGif) {
-      //square the width to get last index of grid before current,
+      //height times width to get last index of grid before current,
       //mult by layer to get selected layer,
       //add by 2 to account for dropshadow and background sprites in viewport
-      idx += props.grid.width ** 2 * layer;
+        idx += layerStore.grids[0].width * layerStore.grids[0].height * layer;
       if (!props.showLayers) {
         idx = 2;
-      }
+      } 
     }
 
     //no way around this, viewport stores sprites in a 1d array
-    idx += x * props.grid.width + y;
+    idx += x * layerStore.grids[0].height + y;
     const cell = viewport.children[idx] as Sprite;
     if (color === "empty") {
       cell.alpha = 0;
@@ -308,7 +308,7 @@ function updateCursor(): void {
   } else {
     cursor.value.position.x = Math.floor(pos.value.x / PIXEL_SIZE);
     cursor.value.position.y = Math.floor(pos.value.y / PIXEL_SIZE);
-  }
+    }
 
   // Remove the old cursor
   viewport.children.forEach((child) => {
@@ -349,7 +349,7 @@ function updateCursor(): void {
 //centers the canvas
 function recenter(): void {
   viewport.fit();
-  viewport.setZoom(40 / props.grid.width);
+  viewport.setZoom(Math.min((40 / layerStore.grids[0].width) , (40 / layerStore.grids[0].height)));
   viewport.moveCenter(
     (props.grid.width * PIXEL_SIZE) / 2,
     (props.grid.height * PIXEL_SIZE) / 2 +

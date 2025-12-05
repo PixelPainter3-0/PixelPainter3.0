@@ -13,9 +13,9 @@ namespace MyTestVueApp.Server.ServiceImplementations
         Dictionary<int, MembershipRecord> Records = new();
         GridGroup Grid;
 
-        public void AddGroup(string groupName, List<Artist> contributors, string[][][] canvas, int canvasSize, string backgroundColor)
+        public void AddGroup(string groupName, List<Artist> contributors, string[][][] canvas, int canvasWidth, int canvasHeight, string backgroundColor)
         {
-            Groups.Add(groupName, new Group(groupName, contributors, canvas, canvasSize, backgroundColor));
+            Groups.Add(groupName, new Group(groupName, contributors, canvas, canvasWidth, canvasHeight, backgroundColor));
         }
         public void AddUser(string connectionId, Artist artist, string groupName)
         {
