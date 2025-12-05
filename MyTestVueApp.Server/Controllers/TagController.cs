@@ -165,7 +165,7 @@ namespace MyTestVueApp.Server.Controllers
         /// Delete a tag (admin only). Also removes any Art-Tag associations.
         /// </summary>
         [HttpDelete]
-        [Route("Delete")]
+        [Route("DeleteTag")]
         public async Task<IActionResult> DeleteTag([FromQuery] int tagId)
         {
             try
