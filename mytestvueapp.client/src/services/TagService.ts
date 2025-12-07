@@ -80,7 +80,7 @@ export default class TagService {
   }
 
   public static async deleteTag(tagId: number): Promise<void> {
-    const response = await fetch(`/tag/Delete?tagId=${tagId}`, { method: "DELETE" });
+    const response = await fetch(`/tag/DeleteTag?tagId=${tagId}`, { method: "DELETE" });
     if (!response.ok) {
       let t = "";
       try { t = await response.text(); } catch {}
