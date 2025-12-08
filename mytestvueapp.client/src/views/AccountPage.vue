@@ -47,7 +47,7 @@
               v-if="curArtist.id !== curUser.id && isFriend == true"
               label="Remove Friend"
               :severity="'primary'"
-              @click="RemoveFriend(curArtist.id)"
+              @click="removeFriend(curArtist.id)"
             />
           </div>
         </template>
@@ -212,6 +212,8 @@
         class="flex justify-content-between align-items-center border-round p-2 border-1 surface-border"
       >
         <span class="text-lg">{{ friend.friend2Name }}</span>
+
+        <span class="text-lg">Friends On: {{ friend.friendsOnDate }}</span>
 
         <Button 
           label="Remove" 
