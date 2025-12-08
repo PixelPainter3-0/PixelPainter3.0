@@ -38,10 +38,16 @@
               @click="changeHash('#liked_art')"
             />
             <Button
-              v-if="isFriend == '0' && curArtist.id !== curUser.id"
+              v-if="curArtist.id !== curUser.id && isFriend == false"
               label="Add Friend"
               :severity="'primary'"
               @click="updateFriends(true)"
+            />
+            <Button
+              v-if="curArtist.id !== curUser.id && isFriend == true"
+              label="Remove Friend"
+              :severity="'primary'"
+              @click="RemoveFriend(curArtist.id)"
             />
           </div>
         </template>
@@ -193,8 +199,10 @@
     </template>
   </Card>
 </div>
-<Card class="mt-4">
-  <template #header>Friends</template>
+
+<div v-if="route.hash == '#friends'">
+  <h2>Friends</h2>
+  <Card>
 
   <template #content>
     <div class="flex flex-column gap-2">
@@ -206,7 +214,6 @@
         <span class="text-lg">{{ friend.friend2Name }}</span>
 
         <Button 
-          v-if="curArtist.id === curUser.id"
           label="Remove" 
           icon="pi pi-times" 
           class="p-button-danger p-button-sm" 
@@ -220,6 +227,7 @@
     </div>
   </template>
 </Card>
+</div>
 
       <!-- Creator's Art -->
       <div v-if="route.hash == '#created_art'">
@@ -288,8 +296,9 @@ const pageStatus = ref<string>("");
 
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
-const isFriend = ref<string>("0");
+const isFriend = ref<boolean>(false);
 const friends = ref<friend[]>([]);
+
 
 
 
@@ -384,54 +393,28 @@ async function loadArtistData(artistName: string): Promise<void> {
   }
 }
 
-async function loadArtistFriends(friendName: string): Promise<void> {
-  if (!friendName) return;
-  console.log("Loading Friend info!!!!!!");
 
-  myFriends.value = [];
-
-  try {
-    const artistFriends = await FriendService.getArtistFriends();
-    console.log(artistFriends);
-    myFriends.value = artistFriends;
-  } catch (e) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load artist's friends",
-      life: 3000,
-    });
-  }
-  console.log("Checking for if the current artist is a friend");
-  for(let idx in myFriends.value){
-    if(curArtist.value.id == myFriends.value[idx].friend2Id){
-      isFriend.value = "1";
-    }
-  }
-
-}
 
 onMounted(async () => {
   // Default tab if none/invalid
   if (!["#settings", "notifications_settings", "#friends", "#created_art", "#liked_art"].includes(route.hash)) {
     changeHash("#settings");
   }
-
-  // Try to get current user, but allow anonymous
-  try {
+    try{
     const user = await LoginService.getCurrentUser();
     if (user && user.id !== 0) {
       curUser.value = user;
       isAdmin.value = !!(user as any).isAdmin;
+        updateNotifications();
+        await loadFriends();
     }
-  } catch {
-    // ignore, treat as anonymous
-    isFriend.value = "2";
+  }
+  catch{
+    // user is anonymous
   }
   await loadArtistData(String(route.params.artist ?? ""));
-  await loadArtistFriends(String(route.params.artist ?? ""));
-  updateNotifications();
-  await loadFriends();
+  checkIfFriend();
+
 });
 
 
@@ -472,13 +455,13 @@ async function updateFriends(addFriend: boolean): Promise<void> {
       console.log(curArtist.value.id);
       const addedFriend = await FriendService.insertFriends(curArtist.value.id);
       console.log("insertFriend result:", addedFriend);
-      isFriend.value = "1"
+      isFriend.value = true;
     } catch (error){
       console.error("Adding friend failed", error);
     }
   }else {
     console.log("Removing friend...");
-    isFriend.value = "0"
+    isFriend.value = false;
   }
 
 }
@@ -492,6 +475,11 @@ const removeFriend = async (friendId: number) => {
   if (result) {
     friends.value = friends.value.filter(f => f.friend2Id !== friendId);
   }
+};
+
+const checkIfFriend = async () => {
+  const friends = await FriendService.getArtistFriends();
+  isFriend.value = friends.some(f => f.friend2Id === curArtist.value.id);
 };
 
 function cancelEdit(): void {
