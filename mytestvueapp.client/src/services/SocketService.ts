@@ -40,13 +40,6 @@ export default class SocketService {
         body: JSON.stringify(name),
         headers: { "Content-Type": "application/json" }
       });
-    // const response = await fetch("/socket/SaveGrid", { 
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json"
-    //   },
-    //   body: JSON.stringify({ name })
-    // });
     const json = await response.json();
     if (!json){
       throw new Error("Failed to save grid");
