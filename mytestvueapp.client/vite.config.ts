@@ -101,6 +101,10 @@ export default defineConfig({
       "^/mapaccess": {
         target,
         secure: false,
+      },
+      "^/friends": {
+        target: "http://localhost:5054", // your backend dev API
+        secure: false
       }
     },
     host: '0.0.0.0',

@@ -78,7 +78,7 @@ export const useSignalStore = defineStore('signal', {
             if (!this.connection) this.initConnection();
             if (this.connection!.state === SignalR.HubConnectionState.Connected) {                
               this.joinGrid(artist);
-              return;
+                return;
             }
             try {
                 console.log("Starting SignalR connection...");

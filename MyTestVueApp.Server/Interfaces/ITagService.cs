@@ -9,5 +9,7 @@ namespace MyTestVueApp.Server.Interfaces
         Task<bool> AssignTagsToArt(int artId, List<int> tagIds);
         Task<IEnumerable<Tag>> GetTagsForArt(int artId);
         Task<bool> RemoveTagFromArt(int artId, int tagId, Artist artist);
+        Task<bool> DeleteTag(int tagId);
+
     }
 }

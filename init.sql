@@ -119,6 +119,19 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Friends')
+BEGIN
+    CREATE TABLE Friends (
+        Friend1Id INT,
+        Friend2Id INT,
+        Friend1Name VARCHAR(20),
+        Friend2Name VARCHAR(20),
+        FriendsOnDate DATE DEFAULT GETDATE(),
+        PRIMARY KEY (Friend1Id, Friend2Id),
+    );
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'GIF')
 BEGIN
     CREATE TABLE GIF (
@@ -223,20 +236,20 @@ GO
     ---------------------------------------------------------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM Artist)
 BEGIN
-	insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38122958058531183631, 'Philis Morritt', 0, '3/9/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (44122975206584778099, 'Karlee Crosfield', 1, '9/20/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (88309234664584806658, 'Delly Ashborne', 1, '5/6/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (58741385422427034950, 'Ezechiel Lathy', 0, '4/16/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (92184896274216337553, 'Gail Megson', 0, '2/18/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (30595057885342481831, 'Karia Wagge', 0, '3/23/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (15816409770081296289, 'Marlon Livick', 1, '6/22/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (65258688469564849567, 'Ellerey Hackford', 0, '3/25/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38367604156163723632, 'Gerrie Wadham', 1, '6/22/2024');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (95379320039119637636, 'Joanne Goodbourn', 0, '12/30/2023');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38223858058531183631, '500Cigarettes', 0, '9/19/2025');
-    insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38223858058531183631, 'George Washington', 0, '10/13/2025');
+	insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (38122958058531183631, 'Philis Morritt', 'test@email.com', 0, '3/9/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (44122975206584778099, 'Karlee Crosfield', 'test@email.com', 1, '9/20/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (88309234664584806658, 'Delly Ashborne', 'test@email.com', 1, '5/6/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (58741385422427034950, 'Ezechiel Lathy', 'test@email.com', 0, '4/16/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (92184896274216337553, 'Gail Megson', 'test@email.com', 0, '2/18/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (30595057885342481831, 'Karia Wagge', 'test@email.com', 0, '3/23/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (15816409770081296289, 'Marlon Livick', 'test@email.com', 1, '6/22/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (65258688469564849567, 'Ellerey Hackford', 'test@email.com', 0, '3/25/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (38367604156163723632, 'Gerrie Wadham', 'test@email.com', 1, '6/22/2024');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (95379320039119637636, 'Joanne Goodbourn', 'test@email.com', 0, '12/30/2023');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (38223858058531183631, '500Cigarettes', 'test@email.com', 0, '9/19/2025');
+    insert into Artist (SubId, [Name], Email, IsAdmin, CreationDate) values (38223858058531183631, 'George Washington', 'test@email.com', 0, '10/13/2025');
     SET IDENTITY_INSERT Artist ON;
-    INSERT INTO Artist (Id, SubId, Name, Email, IsAdmin, CreationDate) VALUES (0, 30595057885342489459, 'Public Grid', '', 0, CURRENT_TIMESTAMP);
+    INSERT INTO Artist (Id, SubId, Name, Email, IsAdmin, CreationDate) VALUES (0, 30595057885342489459, 'Public Grid', 'test@email.com', 0, CURRENT_TIMESTAMP);
     SET IDENTITY_INSERT Artist OFF;
 END
 GO
