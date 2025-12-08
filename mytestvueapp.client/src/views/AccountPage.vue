@@ -209,7 +209,8 @@
       <div 
         v-for="friend in friends" 
         :key="friend.friend2Id"
-        class="flex artist-line justify-content-between align-items-center border-round p-2 border-1 surface-border"
+        class="grid artist-line align-items-center border-round p-2 border-1 surface-border"
+        style="grid-template-columns: 250px 1fr auto; column-gap: 1rem;"
       >
         <span class="text-md"
         :style="{
@@ -224,12 +225,13 @@
         {{ friend.friend2Name }}
         </span>
 
-        <span class="text-lg">Friends On: {{ friend.friendsOnDate }}</span>
+        <span class="text-md" style="margin-left: auto">Friends On: {{ friend.friendsOnDate }}</span>
 
         <Button 
           label="Remove" 
           icon="pi pi-times" 
-          class="block m-2 flex p-button-danger p-button-sm" 
+          class="p-button-danger p-button-sm"
+          style="align-self: center;"
           @click="removeFriend(friend.friend2Id)"
         />
       </div>
