@@ -6,6 +6,11 @@
         <div>Loading grid…</div>
       </div>
     </div>
+    <div v-else-if="disabled && !visible" class="loading-overlay">
+      <div class="loading-box">
+        <div>The Pixel Grid is currently disabled.</div>
+      </div>
+    </div>
     <DrawingCanvas
       ref="canvas"
       :style="{ cursor: cursor.selectedTool.cursor }"
@@ -18,15 +23,20 @@
       @contextmenu.prevent
     />
   </div>
-  <Toolbar class="fixed bottom-0 left-0 right-0 m-2">
+  <Toolbar :class="artist.isAdmin ? 'admin-toolbar fixed bottom-0 left-0 right-0 m-2' : 'fixed bottom-0 left-0 right-0 m-2'">
     <template #start>
-      <UploadButton
-        v-if="artist.isAdmin"
-        :art="art"
-        :fps="fps"
-        
-        @OpenModal="toggleKeybinds"
-      />
+      <div v-if="artist.isAdmin" class="mr-2">
+        <Button
+          title="Save Grid"
+          :label="isHover ? 'Upload': ''"
+          icon="pi pi-upload"
+          @click="toggleModal()"
+          @mouseover="isHover = true"
+          @mouseleave="isHover = false"
+          :disabled="loading"
+          :id="'uploadButton'"
+        ></Button>
+      </div>
       <SaveImageToFile
         :art="art"
         :fps="fps"
@@ -38,8 +48,8 @@
       >
       </SaveImageToFile>
       <div class="ml-2">
-        <div v-if="timeOuts.length < 5">
-          Pixels Allowed: {{  (5-timeOuts.length) }}
+        <div v-if="timeOuts.length < 64">
+          Pixels Allowed: {{  (64-timeOuts.length) }}
         </div>
         <div v-else>
           Time till next Pixel: {{ countdown }}
@@ -68,6 +78,14 @@
       <HelpPopUp :isGrid="true" />
     </template>
     <template #end>
+      <Button 
+        v-if="artist.isAdmin"
+        class="mr-2"
+        :label="disabled ? 'Enable' : 'Disable'"
+        icon="pi pi-power-off"
+        :severity="disabled? 'success' : 'danger'" 
+        @click="toggleGrid"
+        />
       <Button
         class="mr-2"
         :label="started ? 'Stop Music' : 'Start Music'"
@@ -81,6 +99,41 @@
       />
     </template>
   </Toolbar>
+  <Dialog
+    :visible="visible"
+    modal
+    :closable="true"
+    :style="{ width: '40rem', maxWidth: '95vw' }"
+    @hide="visible = false"
+    :onshow="toggleKeybinds(false)"
+    :onhide="toggleKeybinds(true)"
+    >
+    <template #header>
+      <h3>Upload Grid</h3>
+    </template>
+    <span>Title: </span>
+    <InputText
+      v-model="newName"
+      placeholder="Title"
+      class="w-full"
+    ></InputText>
+    <template #footer>
+      <Button
+        label="Cancel"
+        text
+        severity="secondary"
+        @click="visible = false"
+        autofocus
+      />
+      <Button
+        label="Upload"
+        severity="Primary"
+        :disabled="loading"
+        @click="upload"
+        autofocus
+      />
+    </template>
+  </Dialog>
 </template>
 <script setup lang="ts">
 //vue prime
@@ -91,9 +144,10 @@ import Button from "primevue/button";
 import DrawingCanvas from "@/components/PainterUi/DrawingCanvas.vue";
 import BrushSelection from "@/components/PainterUi/BrushSelection.vue";
 import ColorSelection from "@/components/PainterUi/ColorSelection.vue";
-import UploadButton from "@/components/PainterUi/UploadButton.vue";
 import SaveImageToFile from "@/components/PainterUi/SaveImageToFile.vue";
 import AudioSelect from "@/components/PainterUi/AudioSelect.vue";
+import InputText from "primevue/inputtext";
+import Dialog from "primevue/dialog";
 
 //entities
 import { PixelGrid } from "@/entities/PixelGrid";
@@ -105,6 +159,7 @@ import Artist from "@/entities/Artist";
 
 //services
 import LoginService from "@/services/LoginService";
+import SocketService from "@/services/SocketService";
 
 //vue
 import { ref, watch, computed, onMounted, onUnmounted, nextTick, onBeforeUnmount } from "vue";
@@ -122,14 +177,16 @@ import { useArtistStore } from "@/store/ArtistStore";
 import HelpPopUp from "@/components/PainterUi/HelpPopUp.vue";
 import { useSignalStore } from "@/store/GridConnectStore";
 import { bus } from '@/bus/GridBus';
+import { isGetAccessorDeclaration } from "typescript";
 
 //variables
 const route = useRoute();
 const canvas = ref<any>();
 const toast = useToast();
+const isHover = ref<boolean>(false);
 const keyBindActive = ref<boolean>(true);
 const artist = ref<Artist>(new Artist());
-const resolution = ref<number>(200);
+const resolution = ref<number>(128);
 const backgroundColor = ref<string>("ffffff");
 const isImage = ref<boolean>(true);
 const gridCanvas = ref(
@@ -156,6 +213,9 @@ const audioFiles = [
   "/src/music/OrchestralSuiteNo3.mp3"
 ];
 const audioRef = ref(new Audio());
+const visible = ref<boolean>(false);
+const newName = ref<string>("");
+const disabled = ref<boolean>(false);
 
 const started = ref(false);
 const volume = ref(50);
@@ -163,6 +223,13 @@ const audioIndex = ref(0);
 
 const audio = ref<HTMLAudioElement | null>(null);
 
+const toggleGrid = () => {
+  if (disabled.value) {
+    SocketService.EnableGrid();
+  } else {
+    SocketService.DisableGrid();
+  }
+};
 const toggleAudio = () => {
   if (!started.value) {
     // Start the audio
@@ -268,7 +335,7 @@ onMounted(async () => {
   });
 
   bus.on('gridConfig', async (data: unknown) => {
-    const payload = data as {canvasSize: number, backgroundColor: string, pixels: Pixel[][]};
+    const payload = data as {canvasSize: number, backgroundColor: string, pixels: Pixel[][], disabled: boolean};
     art.value.pixelGrid.width = payload.canvasSize;
     art.value.pixelGrid.height = payload.canvasSize;
     art.value.pixelGrid.backgroundColor = payload.backgroundColor;
@@ -276,10 +343,17 @@ onMounted(async () => {
       payload.canvasSize,
       payload.canvasSize
     );
+    disabled.value = payload.disabled;
     await replaceCanvas(payload.pixels);
     loading.value = false;
   });
   
+  bus.on('enableGrid', () => {
+    disabled.value = false;
+  });
+  bus.on('disableGrid', () => {
+    disabled.value = true;
+  });
 });
 
 onUnmounted(() => {
@@ -303,6 +377,25 @@ function toggleKeybinds(disable: boolean) {
   } else {
     document.addEventListener("keydown", handleKeyDown);
   }
+}
+async function toggleModal(): Promise<void> {
+  console.log("Open modal");
+  visible.value = true;
+  if (newName.value == "") {
+    newName.value = "Untitled";
+  }
+  document.querySelector('.p-dialog-mask')
+}
+async function upload(): Promise<void>{
+  loading.value = true;
+  SocketService.SaveGrid(newName.value).then((result) => {
+    loading.value = false;
+    visible.value = false;
+    toast.add({severity:'success', summary: 'Success', detail: 'Grid uploaded successfully!', life: 3000});
+  }).catch((error) => {
+    loading.value = false;
+    toast.add({severity:'error', summary: 'Error', detail: 'Failed to upload grid.', life: 3000});
+  });
 }
 
 //functions
@@ -337,8 +430,8 @@ function setTimeLeft(){
   timeOuts.value = (timeOuts.value || []).map(d => new Date(d));
   const firstTs = timeOuts.value[0].getTime();
   const elapsedSec = Math.floor((Date.now() - firstTs) / 1000);
-  const fiveMinutes = 5 * 60;
-  timeLeft.value = Math.max(0, fiveMinutes - elapsedSec);
+  const tenMinutes = 10 * 60;
+  timeLeft.value = Math.max(0, tenMinutes - elapsedSec);
   startCountdown();
 }
 
@@ -560,12 +653,15 @@ function handleKeyDown(event: KeyboardEvent) {
 .grid-view-root { position: relative; min-height: 200px; }
 .loading-overlay {
   position: fixed;
-  inset: 0;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display:flex;
   align-items:center;
   justify-content:center;
   background: rgba(0,0,0,0.45);
-  z-index: 9999;
+  z-index: 925;
 }
 .loading-box {
   display:flex;
@@ -584,6 +680,9 @@ function handleKeyDown(event: KeyboardEvent) {
   border:4px solid rgba(0,0,0,0.1);
   border-top-color: #333;
   animation: spin 0.9s linear infinite;
+}
+.admin-toolbar {
+  z-index: 1001;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>

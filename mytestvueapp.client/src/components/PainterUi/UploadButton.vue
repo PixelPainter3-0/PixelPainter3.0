@@ -238,6 +238,7 @@ async function createTag(): Promise<void> {
 const props = defineProps<{
   art: Art;
   fps: number;
+  isGrid?: boolean;
 }>();
 
 const isEditing = computed(() => {
@@ -249,15 +250,6 @@ const emit = defineEmits(["openModal", "disconnect"]);
 watch(visible, () => {
   emit("openModal", visible.value);
 });
-
-// function toggleModal(): void { //OLD toggleModal();
-//   visible.value = !visible.value;
-//   newName.value = props.art.title;
-//   if (newName.value == "") {
-//     newName.value = "Untitled";
-//   }
-//   newPrivacy.value = props.art.isPublic;
-// }
 
 const filterQuery = ref<string>("");
 
