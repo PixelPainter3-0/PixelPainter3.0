@@ -235,6 +235,9 @@ BEGIN
     insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (95379320039119637636, 'Joanne Goodbourn', 0, '12/30/2023');
     insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38223858058531183631, '500Cigarettes', 0, '9/19/2025');
     insert into Artist (SubId, [Name], IsAdmin, CreationDate) values (38223858058531183631, 'George Washington', 0, '10/13/2025');
+    SET IDENTITY_INSERT Artist ON;
+    INSERT INTO Artist (Id, SubId, Name, Email, IsAdmin, CreationDate) VALUES (0, 30595057885342489459, 'Public Grid', '', 0, CURRENT_TIMESTAMP);
+    SET IDENTITY_INSERT Artist OFF;
 END
 GO
 --Check if the Forecasts table is empty, else prefill with some data

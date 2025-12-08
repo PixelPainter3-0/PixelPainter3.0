@@ -89,5 +89,6 @@ onMounted(async () => {
 /* Prevents the UI from getting crushed. */
 .custom-background {
   background-color: transparent;
+  z-index: 1001;
 }
 </style>
