@@ -21,6 +21,13 @@
               @click="changeHash('#notification_settings')"
             />
             <Button
+              label="Friends"
+                v-if="curArtist.id === curUser.id"
+              :severity="route.hash == '#friends' ? 'primary' : 'secondary'"
+              @click="changeHash('#friends')"
+            />
+            <Button
+              class="profile-nav-btn"
               label="Creator's Art"
               :severity="route.hash == '#created_art' ? 'primary' : 'secondary'"
               @click="changeHash('#created_art')"
@@ -29,6 +36,18 @@
               label="Liked Art"
               :severity="route.hash == '#liked_art' ? 'primary' : 'secondary'"
               @click="changeHash('#liked_art')"
+            />
+            <Button
+              v-if="curArtist.id !== curUser.id && isFriend == false"
+              label="Add Friend"
+              :severity="'primary'"
+              @click="updateFriends(true)"
+            />
+            <Button
+              v-if="curArtist.id !== curUser.id && isFriend == true"
+              label="Remove Friend"
+              :severity="'primary'"
+              @click="removeFriend(curArtist.id)"
             />
           </div>
         </template>
@@ -169,7 +188,6 @@
         />
       </div>
 
-      <!--Save Button -->
       <div class="flex justify-content-center mt-3">
         <Button
           label="Save Notification Settings"
@@ -182,6 +200,49 @@
   </Card>
 </div>
 
+<div v-if="route.hash == '#friends'">
+  <h2>Friends</h2>
+  <Card>
+
+  <template #content>
+    <div class="flex flex-column gap-2">
+      <div 
+        v-for="friend in friends" 
+        :key="friend.friend2Id"
+        class="grid artist-line align-items-center border-round p-2 border-1 surface-border"
+        style="grid-template-columns: 250px 1fr auto; column-gap: 1rem;"
+      >
+        <span class="text-md"
+        :style="{
+                textDecoration: hoverIndex === friend.friend2Id ? 'underline' : 'none',
+                cursor: 'pointer'
+              }"
+              title="View artist profile"
+              @click="router.push(`/accountpage/${encodeURIComponent(friend.friend2Name)}#created_art`)"
+              @mouseover="hoverIndex = friend.friend2Id"
+              @mouseleave="hoverIndex = null"
+        >
+        {{ friend.friend2Name }}
+        </span>
+
+        <span class="text-md" style="margin-left: auto">Friends On: {{ friend.friendsOnDate }}</span>
+
+        <Button 
+          label="Remove" 
+          icon="pi pi-times" 
+          class="p-button-danger p-button-sm"
+          style="align-self: center;"
+          @click="removeFriend(friend.friend2Id)"
+        />
+      </div>
+
+      <div v-if="friends.length === 0" class="text-secondary"> 
+        You have no friends yet.
+      </div>
+    </div>
+  </template>
+</Card>
+</div>
 
       <!-- Creator's Art -->
       <div v-if="route.hash == '#created_art'">
@@ -236,6 +297,9 @@ import Avatar from "primevue/avatar";
 import Message from "primevue/message";
 // Child component
 import ArtCard from "@/components/Gallery/ArtCard.vue";
+import FriendService from "@/services/FriendService";
+import friend from "@/entities/Friends";
+import router from "@/router";
 //import { createBuilderStatusReporter } from "typescript";
 
 const toast = useToast();
@@ -248,7 +312,10 @@ const pageStatus = ref<string>("");
 
 const isEditing = ref<boolean>(false);
 const newUsername = ref<string>("");
+const isFriend = ref<boolean>(false);
+const friends = ref<friend[]>([]);
 
+const hoverIndex = ref<string | number | null>(null);
 
 
 const notifLikes = ref<boolean>(true);
@@ -260,6 +327,7 @@ const notifCommentDislikes = ref<boolean>(true);
 
 
 const myArt = ref<Art[]>([]);
+const myFriends = ref<friend[]>([]);
 const likedArt = ref<Art[]>([]);
 
 const canEdit = computed<boolean>(
@@ -341,24 +409,28 @@ async function loadArtistData(artistName: string): Promise<void> {
   }
 }
 
+
+
 onMounted(async () => {
   // Default tab if none/invalid
-  if (!["#settings", "notifications_settings", "#created_art", "#liked_art"].includes(route.hash)) {
+  if (!["#settings", "notifications_settings", "#friends", "#created_art", "#liked_art"].includes(route.hash)) {
     changeHash("#settings");
   }
-
-  // Try to get current user, but allow anonymous
-  try {
+    try{
     const user = await LoginService.getCurrentUser();
     if (user && user.id !== 0) {
       curUser.value = user;
       isAdmin.value = !!(user as any).isAdmin;
+        updateNotifications();
+        await loadFriends();
     }
-  } catch {
-    // ignore, treat as anonymous
-    }
+  }
+  catch{
+    // user is anonymous
+  }
   await loadArtistData(String(route.params.artist ?? ""));
-  updateNotifications();
+  checkIfFriend();
+
 });
 
 
@@ -367,6 +439,15 @@ watch(
   () => route.params.artist,
   async (newArtist) => {
     await loadArtistData(String(newArtist ?? ""));
+  }
+);
+
+watch(
+  () => route.hash,
+  async (hash) => {
+    if (hash === "#friends") {
+      await loadFriends();
+    }
   }
 );
 
@@ -383,6 +464,39 @@ function changeHash(hash: string): void {
   window.location.hash = hash;
 }
 
+async function updateFriends(addFriend: boolean): Promise<void> {
+  if(addFriend){
+    console.log("Adding friend...");
+    try {
+      console.log(curArtist.value.id);
+      const addedFriend = await FriendService.insertFriends(curArtist.value.id);
+      console.log("insertFriend result:", addedFriend);
+      isFriend.value = true;
+    } catch (error){
+      console.error("Adding friend failed", error);
+    }
+  }else {
+    console.log("Removing friend...");
+    isFriend.value = false;
+  }
+
+}
+
+const loadFriends = async () => {
+  friends.value = await FriendService.getArtistFriends();
+};
+
+const removeFriend = async (friendId: number) => {
+  const result = await FriendService.removeFriends(friendId);
+  if (result) {
+    friends.value = friends.value.filter(f => f.friend2Id !== friendId);
+  }
+};
+
+const checkIfFriend = async () => {
+  const friends = await FriendService.getArtistFriends();
+  isFriend.value = friends.some(f => f.friend2Id === curArtist.value.id);
+};
 
 function cancelEdit(): void {
   isEditing.value = false;
@@ -535,6 +649,7 @@ const createdArtHeading = computed(() =>
   display: none !important;
 }
 
+.artist-line { display: inline-flex; align-items: center; gap: .35rem; }
 
 /* Art grid: desktop rows/columns, mobile feed; matches Gallery behavior */
 /* COMMENT: adjust --art-card-min to widen/narrow desktop columns */
