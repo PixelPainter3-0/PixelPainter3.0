@@ -1,9 +1,16 @@
 <template>
   <div class="pagination" v-if="pages > 1">
     <!--Only have pagination if there are more than one page-->
-    <button v-if="pages != 2" :disabled="page === 1" @click="page = 1" aria-label="First page" title="First page">
-      &lt;&lt;
-    </button>
+    <Button
+      v-if="pages != 2"
+      text
+      :disabled="page === 1"
+      label=""
+      icon="pi pi-angle-double-left"
+      aria-label="First page"
+      title="First page"
+      @click="page = 1"
+    />
     <!-- Prev: PrimeVue style like AdminView -->
     <Button
       text
@@ -81,13 +88,18 @@
       title="Next page"
       @click="page = Math.min(pages, page + 1)"
     />
-    <button
+    <!-- Last: PrimeVue style to match rest of paginator -->
+    <Button
       v-if="pages != 2"
-      :disabled="page == pages"
+      text
+      :disabled="page === pages"
+      label=""
+      icon="pi pi-angle-double-right"
+      iconPos="right"
+      aria-label="Last page"
+      title="Last page"
       @click="page = props.pages"
-      aria-label="Last page" title="Last page">
-      &gt;&gt;
-    </button>
+    />
   </div>
 </template>
 

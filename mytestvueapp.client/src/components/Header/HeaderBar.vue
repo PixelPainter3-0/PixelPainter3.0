@@ -298,7 +298,7 @@ watch(
 }
 
 /* Mobile-specific rules */
-@media (max-width: 1080px) {
+@media (max-width: 1100px) {
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
