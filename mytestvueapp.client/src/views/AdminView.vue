@@ -143,14 +143,14 @@ import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import type Artist from '@/entities/Artist';
-import type Location from '@/entities/Location';
+import type Point from '@/entities/Point';
 
 type Tag = { id: number; name: string; creationDate?: string };
 
 const isAdmin = ref<boolean>(false);
 const ready = ref<boolean>(false);
 const tags = ref<Tag[]>([]);
-const locations = ref<Location[]>([]);
+    const locations = ref<Point[]>([]);
 const confirm = useConfirm();
 const artists = ref<Artist[]>([]);
 
@@ -271,7 +271,7 @@ function confirmDelete(tag: Tag) {
     });
     }
 
-function removeLocation(location: Location) {
+function removeLocation(location: Point) {
     confirm.require({
         message: `Delete location "${location.title}"?`,
         header: 'Confirm',
