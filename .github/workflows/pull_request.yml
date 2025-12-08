@@ -81,8 +81,4 @@ jobs:
 
     - name: Run Nightwatch tests
       working-directory: ./mytestvueapp.client
-      run: xvfb-run --auto-servernum npm test > test_output.txt
-
-    - name: Display test output
-      working-directory: ./mytestvueapp.client
-      run: cat test_output.txt
+      run: xvfb-run --auto-servernum npm test
