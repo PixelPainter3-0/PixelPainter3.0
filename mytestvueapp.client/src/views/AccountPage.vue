@@ -47,7 +47,7 @@
               v-if="curArtist.id !== curUser.id && isFriend == true"
               label="Remove Friend"
               :severity="'primary'"
-              @click="RemoveFriend(curArtist.id)"
+              @click="removeFriend(curArtist.id)"
             />
           </div>
         </template>
@@ -209,14 +209,25 @@
       <div 
         v-for="friend in friends" 
         :key="friend.friend2Id"
-        class="flex justify-content-between align-items-center border-round p-2 border-1 surface-border"
+        class="flex artist-line justify-content-between align-items-center border-round p-2 border-1 surface-border"
       >
-        <span class="text-lg">{{ friend.friend2Name }}</span>
+        <span class="text-md"
+        :style="{
+                textDecoration: hoverIndex === friend.friend2Id ? 'underline' : 'none',
+                cursor: 'pointer'
+              }"
+              title="View artist profile"
+              @click="router.push(`/accountpage/${encodeURIComponent(friend.friend2Name)}#created_art`)"
+              @mouseover="hoverIndex = friend.friend2Id"
+              @mouseleave="hoverIndex = null"
+        >
+        {{ friend.friend2Name }}
+        </span>
 
         <Button 
           label="Remove" 
           icon="pi pi-times" 
-          class="p-button-danger p-button-sm" 
+          class="block m-2 flex p-button-danger p-button-sm" 
           @click="removeFriend(friend.friend2Id)"
         />
       </div>
@@ -284,6 +295,7 @@ import Message from "primevue/message";
 import ArtCard from "@/components/Gallery/ArtCard.vue";
 import FriendService from "@/services/FriendService";
 import friend from "@/entities/Friends";
+import router from "@/router";
 //import { createBuilderStatusReporter } from "typescript";
 
 const toast = useToast();
@@ -299,7 +311,7 @@ const newUsername = ref<string>("");
 const isFriend = ref<boolean>(false);
 const friends = ref<friend[]>([]);
 
-
+const hoverIndex = ref<string | number | null>(null);
 
 
 const notifLikes = ref<boolean>(true);
@@ -633,6 +645,7 @@ const createdArtHeading = computed(() =>
   display: none !important;
 }
 
+.artist-line { display: inline-flex; align-items: center; gap: .35rem; }
 
 /* Art grid: desktop rows/columns, mobile feed; matches Gallery behavior */
 /* COMMENT: adjust --art-card-min to widen/narrow desktop columns */
