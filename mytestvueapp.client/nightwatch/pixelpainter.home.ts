@@ -45,9 +45,16 @@ describe('Pixel Painter Tests', function(this: ExtendDescribeThis<CustomThis>) {
     browser
       .element.findByText('Gallery')
       .assert.present();
+<<<<<<< HEAD
     // browser
     //   .element.findByText('Gallery')
     //   .click();
     // browser.assert.urlEquals(this.pixelpainterurl_base + "gallery");
+=======
+    browser
+      .element.findByText('Gallery')
+      .click();
+    browser.assert.urlEquals(this.pixelpainterurl_base + "gallery");
+>>>>>>> main
   });
 });
