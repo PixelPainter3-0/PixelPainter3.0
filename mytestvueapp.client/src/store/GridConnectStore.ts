@@ -59,17 +59,25 @@ export const useSignalStore = defineStore('signal', {
 
             this.connection.on(
               "GridConfig",
-              async (canvasSize: number, backgroundColor: string, pixels: Pixel[][]) => {
-                bus.emit('gridConfig', {canvasSize, backgroundColor, pixels});
+              async (canvasSize: number, backgroundColor: string, pixels: Pixel[][], disabled: boolean) => {
+                bus.emit('gridConfig', {canvasSize, backgroundColor, pixels, disabled});
               }
-            )
+            );
+
+            this.connection.on(
+              "EnableGrid", async() => bus.emit('enableGrid')
+            );
+            this.connection.on(
+              "DisableGrid", async() => bus.emit('disableGrid')
+            );
             console.log("SignalR connection initialized.");
             return this.connection;
         },
 
         async start(artist: Artist) {
             if (!this.connection) this.initConnection();
-            if (this.connection!.state === SignalR.HubConnectionState.Connected) {                this.joinGrid(artist);
+            if (this.connection!.state === SignalR.HubConnectionState.Connected) {                
+              this.joinGrid(artist);
                 return;
             }
             try {

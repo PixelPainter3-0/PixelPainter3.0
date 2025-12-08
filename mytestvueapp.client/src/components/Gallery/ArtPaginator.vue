@@ -15,72 +15,32 @@
     <Button
       text
       :disabled="page === 1"
+      class="pn-button prev"
       label="Prev"
       icon="pi pi-chevron-left"
       aria-label="Previous page"
       title="Previous page"
       @click="page = Math.max(1, page - 1)"
     />
-    <div v-if="pages < 16" class="buttonHolder">
-      <!--Lists off all the pages-->
-      <Button
-        v-for="index in pages"
-        :key="index"
-        text
-        :label="String(index)"
-        :aria-current="index == page ? 'page' : undefined"
-        :title="`Page ${index}`"
-        :class="index == page ? 'page-selected' : ''"
-        @click="page = index"
-      />
-    </div>
-    <div v-else-if="startIndex == 1" class="buttonHolder">
-      <!--Lists off all the pages-->
-      <Button
-        v-for="index in maxButtons + 1"
-        :key="index"
-        text
-        :label="String(index)"
-        :aria-current="index == page ? 'page' : undefined"
-        :title="`Page ${index}`"
-        :class="index == page ? 'page-selected' : ''"
-        @click="page = index"
-      />
-      <span class="ellipsis" aria-hidden="true">…</span>
-    </div>
-    <div v-else-if="startIndex >= pages - 13" class="buttonHolder">
-      <!--Lists off all the pages-->
-      <span class="ellipsis" aria-hidden="true">…</span>
-      <Button
-        v-for="index in maxButtons + 1"
-        :key="index"
-        text
-        :label="String(index + startIndex - 1)"
-        :aria-current="index + startIndex - 1 == page ? 'page' : undefined"
-        :title="`Page ${index + startIndex - 1}`"
-        :class="index + startIndex - 1 == page ? 'page-selected' : ''"
-        @click="page = index + startIndex - 1"
-      />
-    </div>
-    <div v-else class="buttonHolder">
-      <!--Lists off all the pages-->
-      <span class="ellipsis" aria-hidden="true">…</span>
-      <Button
-        v-for="index in maxButtons"
-        :key="index"
-        text
-        :label="String(index + startIndex - 1)"
-        :aria-current="index + startIndex - 1 == page ? 'page' : undefined"
-        :title="`Page ${index + startIndex - 1}`"
-        :class="index + startIndex - 1 == page ? 'page-selected' : ''"
-        @click="page = index + startIndex - 1"
-      />
-      <span class="ellipsis" aria-hidden="true">…</span>
+    <div class="buttonHolder">
+      <template v-for="(it, idx) in pageItems" :key="'pi-' + idx">
+        <Button
+          v-if="typeof it === 'number'"
+          text
+          :label="String(it)"
+          :aria-current="it == page ? 'page' : undefined"
+          :title="`Page ${it}`"
+          :class="it == page ? 'page-selected' : ''"
+          @click="page = it"
+        />
+        <span v-else class="ellipsis" aria-hidden="true">…</span>
+      </template>
     </div>
     <!-- Next: PrimeVue style like AdminView -->
     <Button
       text
       :disabled="page === pages"
+      class="pn-button next"
       label="Next"
       icon="pi pi-chevron-right"
       iconPos="right"
@@ -104,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, watch, defineEmits, computed } from "vue";
+import { ref, defineProps, watch, defineEmits, computed, onMounted, onBeforeUnmount } from "vue";
 import Button from 'primevue/button';
 const props = defineProps<{
   pages: number;
@@ -112,14 +72,51 @@ const props = defineProps<{
 const emit = defineEmits(["pageChange"]);
 const page = ref<number>(1);
 const maxButtons = ref<number>(13);
-const startIndex = computed(() => {
-  if (props.pages > 15 && page.value > 7) {
-    if (page.value + 7 >= props.pages) {
-      return props.pages - 13;
-    }
-    return page.value - 6;
+
+function calcMaxButtons() {
+  const w = window.innerWidth || 1920;
+  let m = 13;
+  if (w < 480) m = 2;
+  else if (w < 600) m = 2;
+  else if (w < 740) m = 4;
+  else if (w < 900) m = 6;
+  else if (w < 1120) m = 8;
+  else m = 13;
+  maxButtons.value = m;
+}
+
+const pageItems = computed<(number | 'ellipsis')[]>(() => {
+  const P = props.pages || 0;
+  const p = Math.min(Math.max(1, page.value), P);
+  const M = Math.max(3, maxButtons.value);
+
+  if (P <= M) return Array.from({ length: P }, (_, i) => i + 1);
+
+  const items: (number | 'ellipsis')[] = [];
+  items.push(1);
+  const innerCount = M - 2; // reserve first and last
+  let left = Math.max(2, p - Math.floor(innerCount / 2));
+  let right = Math.min(P - 1, left + innerCount - 1);
+
+  // adjust left if we are near the end
+  if (right - left + 1 < innerCount) {
+    left = Math.max(2, right - innerCount + 1);
   }
-  return 1;
+
+  if (left > 2) items.push('ellipsis');
+  for (let i = left; i <= right; i++) items.push(i);
+  if (right < P - 1) items.push('ellipsis');
+  items.push(P);
+  return items;
+});
+
+function onResize() { calcMaxButtons(); }
+onMounted(() => {
+  calcMaxButtons();
+  window.addEventListener('resize', onResize, { passive: true });
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResize);
 });
 watch(props, () => {
   page.value = 1;
@@ -180,6 +177,24 @@ watch(page, () => {
   .pagination { gap: .4rem; }
   .buttonHolder { gap: .4rem; }
   :deep(.p-button) { height: 2rem; }
+}
+
+/* Hide Prev/Next text and start shrinking at <= 510px */
+@media (max-width: 510px) {
+  .pagination { gap: .35rem; }
+  .buttonHolder { gap: .35rem; }
+
+  /* Hide labels for prev/next only, keep numbers visible */
+  :deep(.pn-button .p-button-label) { display: none !important; }
+
+  /* tighten general button sizing */
+  :deep(.p-button) {
+    height: 1.9rem;
+    min-width: 1.9rem;
+    padding: 0 .4rem;
+  }
+  /* slightly smaller chevron icons for prev/next */
+  :deep(.pn-button .pi) { font-size: 0.9rem; }
 }
 </style>
 
