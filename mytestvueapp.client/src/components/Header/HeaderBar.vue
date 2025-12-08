@@ -67,7 +67,7 @@
           <Notification />
         </RouterLink>
         <DarkModeSwitcher class="mr-2" />
-        <GoogleLogin />
+        <GoogleLogin class="google-login" />
       </template>
     </Toolbar>
   </header>
@@ -254,6 +254,32 @@ watch(
   flex-wrap: nowrap;
 }
 
+/* Shrink center nav buttons slightly before hamburger collapse */
+@media (max-width: 1320px) {
+  .nav-buttons .p-button {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.9rem;
+    height: 36px;
+  }
+  .nav-buttons .p-button .pi {
+    font-size: 0.95rem;
+  }
+  /* tighten RouterLink padding wrappers */
+  .nav-buttons .p-2 { padding: 0.25rem; }
+}
+
+@media (max-width: 1220px) {
+  .nav-buttons .p-button {
+    padding: 0.28rem 0.52rem;
+    font-size: 0.86rem;
+    height: 34px;
+  }
+  .nav-buttons .p-button .pi {
+    font-size: 0.9rem;
+  }
+  .nav-buttons .p-2 { padding: 0.2rem; }
+}
+
 /* Hamburger (hidden desktop) */
 .menu-toggle {
   display: none;
@@ -272,7 +298,7 @@ watch(
 }
 
 /* Mobile-specific rules */
-@media (max-width: 1170px) {
+@media (max-width: 1100px) {
   .menu-toggle { display: inline-flex; }
   .nav-buttons { display: none; }
 
@@ -348,6 +374,16 @@ watch(
       transform: scale(0.92);
     }
   }
+  /* Hide Google button label at <= 400px to save space */
+  @media (max-width: 400px) {
+    .google-login :deep(.p-button-label) {
+      display: none !important;
+    }
+    .google-login :deep(.p-button) {
+      padding: 0.22rem; /* tighter padding when label hidden */
+      min-width: 32px;
+    }
+  }
     /* hide the header toolbar notification button on small screens */
   .hide-on-mobile {
     display: none !important;
@@ -376,4 +412,4 @@ watch(
 }
 </style>
 
-<!-- 6 -->
+<!-- 3 -->
