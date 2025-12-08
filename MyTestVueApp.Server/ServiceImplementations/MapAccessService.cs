@@ -363,6 +363,46 @@ namespace MyTestVueApp.Server.ServiceImplementations
                 return false;
             }
         }
+
+        /// <summary>
+        /// Tag existing art with location
+        /// </summary>
+        /// <param name="pointId">pointId</param>
+        public async Task<bool> DeleteLocation(int pointId)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(AppConfig.Value.ConnectionString))
+                {
+                    connection.Open();
+
+                    var updateQuery = @"
+                    UPDATE Art SET pointId = 0 WHERE pointId = @PointId;
+                ";
+                    using (var command = new SqlCommand(updateQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@PointId", pointId);
+                        await command.ExecuteNonQueryAsync();
+                    }
+
+                    var removeQuery = @"
+                    DELETE FROM Points WHERE pointId = @PointId;
+                ";
+                    using (var command = new SqlCommand(removeQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@PointId", pointId);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error in Removing Location");
+                throw;
+                return false;
+            }
+        }
     }
 }
 
