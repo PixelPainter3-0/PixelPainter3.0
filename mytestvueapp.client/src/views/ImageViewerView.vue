@@ -60,6 +60,9 @@
         <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
          <!-- 3) Location name -->
+        <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+
+         <!-- 3) Location name -->
         <div v-if="art.pointId" class="placed-at">Placed at {{pointTitle}} in {{artspaceTitle}}</div>
         
 
@@ -158,7 +161,21 @@
            />
          </div>
 
-         <!-- 7) Remove Location -->
+          <!-- 7) Remove Location -->
+         <div class="viewer-actions row end" 
+           v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
+           <!-- ensure point can icon -->
+           <Button
+             class="danger-action"
+             title="Remove"
+             label="Remove Location"
+             icon="pi pi-times"
+             @click="removeLocation()"
+             :isAdmin="isAdmin"
+           />
+         </div>
+
+        <!-- 8) Remove Location -->
          <div class="viewer-actions row end" 
            v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
            <Button

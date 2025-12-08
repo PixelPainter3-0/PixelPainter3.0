@@ -191,4 +191,19 @@ export default class MapAccessService {
             return false;
         }
     }
+
+    public static async deleteLocation(pointId: number): Promise<boolean> {
+      try {
+        const response = await fetch(`/mapaccess/DeleteLocation?pointId=${pointId}`, {
+          method: "PUT"
+        });
+        if (!response.ok) {
+          throw new Error("Response was false.");
+        }
+        return true;
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+  }
 }

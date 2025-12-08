@@ -270,5 +270,60 @@ namespace MyTestVueApp.Server.Controllers
                 return Problem(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Delete location
+        /// </summary>
+        /// <param name="pointId">pointId</param>
+        [HttpPut]
+        [Route("DeleteLocation")]
+        public async Task<IActionResult> DeleteLocation([FromQuery] int pointId)
+        {
+            try
+            {
+                // If the user is logged in
+                if (Request.Cookies.TryGetValue("GoogleOAuth", out var userId))
+                {
+                    var artist = await LoginService.GetUserBySubId(userId);
+                    if (!artist.IsAdmin)
+                    {
+                        throw new AuthenticationException("User does not have permission to delete tags.");
+                    }
+                    else if (artist != null)
+                    {
+                        // You can add additional checks here if needed
+                        var deleted = await MapAccessService.DeleteLocation(pointId);
+                        if (deleted) // If the like has sucessfully been inserted
+                        {
+                            return Ok();
+                        }
+                        else
+                        {
+                            throw new ArgumentException("Failed to delete location.");
+                        }
+                    }
+                    else
+                    {
+                        throw new AuthenticationException("User does not have an account.");
+                    }
+                }
+                else
+                {
+                    throw new AuthenticationException("User is not logged in!");
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
     }
 }
