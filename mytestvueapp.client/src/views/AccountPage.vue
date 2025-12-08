@@ -224,6 +224,8 @@
         {{ friend.friend2Name }}
         </span>
 
+        <span class="text-lg">Friends On: {{ friend.friendsOnDate }}</span>
+
         <Button 
           label="Remove" 
           icon="pi pi-times" 

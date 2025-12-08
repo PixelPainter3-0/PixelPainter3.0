@@ -51,7 +51,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                     command.Parameters.AddWithValue("@Friend2Id", artist2.Id);
                     command.Parameters.AddWithValue("@Friend1Name", artist1.Name);
                     command.Parameters.AddWithValue("@Friend2Name", artist2.Name);
-                    command.Parameters.AddWithValue("@Now", DateTime.Now);
+                    command.Parameters.AddWithValue("@Now", DateOnly.FromDateTime(DateTime.Now));
 
                     int rowsChanged = await command.ExecuteNonQueryAsync();
                     if (rowsChanged > 0)
@@ -141,7 +141,7 @@ namespace MyTestVueApp.Server.ServiceImplementations
                                     Friend2Id = reader.GetInt32(1),
                                     Friend1Name = reader.GetString(2),
                                     Friend2Name = reader.GetString(3),
-                                    FriendsOnDate = reader.GetDateTime(4),
+                                    FriendsOnDate = DateOnly.FromDateTime(reader.GetDateTime(4)),
                                 };
                                 friends.Add(friend);
                             }

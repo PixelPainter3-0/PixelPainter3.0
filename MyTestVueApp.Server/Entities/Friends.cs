@@ -9,7 +9,7 @@
 
         public string Friend2Name { get; set; }
 
-        public DateTime FriendsOnDate { get; set; }
+        public DateOnly FriendsOnDate { get; set; }
 
     }
 }
