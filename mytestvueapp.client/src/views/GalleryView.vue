@@ -52,7 +52,7 @@
       <div class="row row-filters">
         <!-- Tags group -->
         <div class="filter-group filter-tags">
-          <label class="group-label" for="tagsSelect">Tags</label>
+          <label class="group-label" for="tagsInput" id="tagsLabel">Tags</label>
           <MultiSelect
             id="tagsSelect"
             class="tag-multiselect filter-select"
@@ -64,6 +64,8 @@
             filter
             placeholder="Filter by tag(s)"
             :maxSelectedLabels="4"
+            inputId="tagsInput"
+            aria-labelledby="tagsLabel"
             @filter="onTagFilter"
           />
         </div>
@@ -94,7 +96,7 @@
         </div>
         <!-- Locations group -->
         <div class="filter-group filter-locations">
-          <label class="group-label" for="locationsSelect">Locations</label>
+          <label class="group-label" for="locationsInput" id="locationsLabel">Locations</label>
           <MultiSelect
             id="locationsSelect"
             class="location-multiselect filter-select"
@@ -106,17 +108,21 @@
             filter
             placeholder="Filter by location(s)"
             :maxSelectedLabels="4"
+            inputId="locationsInput"
+            aria-labelledby="locationsLabel"
             @filter="onTagFilter"
           />
         </div>
         <!-- Per-page group -->
         <div class="filter-group filter-perpage">
-          <label class="group-label" for="perPageSelect">Art per page</label>
+          <span class="group-label" id="perPageLabel">Art per page</span>
           <Dropdown
             id="perPageSelect"
             class="per-page-select"
             v-model="perPage"
             :options="paginationOptions"
+            inputId="perPageInput"
+            aria-labelledby="perPageLabel"
           />
         </div>
       </div>
@@ -726,20 +732,32 @@ function sortGallery(): void {
 }
 .feed-item { min-width: 0; }
 
-@media (min-width: 1001px) {
+/* Desktop: fixed 4 columns for wide screens */
+@media (min-width: 1100px) {
   .gallery-feed {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 1000px) {
+/* Tablet/Mid: 3 columns between mobile and desktop */
+@media (min-width: 826px) and (max-width: 1099px) {
   .gallery-feed {
-    display: flex !important;
-    flex-direction: column;
-    gap: .75rem;
-    max-width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .feed-item { width: 100%; }
+}
+
+/* Small tablets/large phones: 2 columns */
+@media (min-width: 600px) and (max-width: 825px) {
+  .gallery-feed {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile: single column for very small screens */
+@media (max-width: 599px) {
+  .gallery-feed {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
 }
 
 .gallery-feed :deep(img),
@@ -945,4 +963,4 @@ function sortGallery(): void {
 }
 </style>
 
-<!-- 23 -->
+<!-- 1 -->

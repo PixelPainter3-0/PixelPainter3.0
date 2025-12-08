@@ -44,7 +44,7 @@
           </div>
         </div>
       </div>
-      <div>
+      <div class="comment-actions">
         <!-- Reply to comments -->
         <Button
           @click="showReply = true"
@@ -249,3 +249,21 @@ function getRelativeTime(minutes: number): string {
   return `${years} year${years > 1 ? "s" : ""} ago`;
 }
 </script>
+<style scoped>
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem; /* space between action buttons */
+  margin-top: .5rem;
+}
+
+/* Ensure reply/new-comment spacing looks good when NewComment is shown inline */
+.comment-actions :global(.ml-4) {
+  margin-left: 1rem !important;
+}
+
+/* Slightly reduce spacing for very small screens */
+@media (max-width: 420px) {
+  .comment-actions { gap: .35rem; }
+}
+</style>
