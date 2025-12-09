@@ -116,6 +116,7 @@
             @click="editArt()"
           />
           <StartArtFromImage
+            class="start-from-btn"
             icon="pi pi-copy"
             title="Start a new painting from this"
             :art="art"
@@ -1144,6 +1145,11 @@ async function gifDisplay(): Promise<void> {
 
 .viewer-header {
   padding: 1rem; 
+}
+
+/* Hide the Start From button on screens smaller than 1000px */
+@media (max-width: 1000px) {
+  .start-from-btn { display: none; }
 }
 </style>
 
