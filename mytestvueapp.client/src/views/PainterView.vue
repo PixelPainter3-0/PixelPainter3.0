@@ -848,37 +848,89 @@ function drawAtCoords(coords: Vector2[]) {
   }
 }
 
+/*
 function pasteSelection(){
     if (copiedSelection != null){
         //console.log(copiedSelection.value.length);
         //console.log(copiedSelection.value[0].length);
-
+        
         let w = copiedSelection.value.length;
         let h = copiedSelection.value[0].length;
 
-        let startW = Math.max(0, endPix.value.x);
-        let startH = Math.max(0, endPix.value.y);
-        let endW = Math.min(layerStore.grids[layerStore.layer].width, endPix.value.x + copiedSelection.value.length);
-        let endH = Math.min(layerStore.grids[layerStore.layer].height, endPix.value.y + copiedSelection.value[0].length);
+        let startW = endPix.value.x - Math.floor(w / 2);
+        let startH = endPix.value.y - Math.floor(h / 2);
+        let endW = Math.min(layerStore.grids[layerStore.layer].width,
+            startW + copiedSelection.value.length);
+        let endH = Math.min(layerStore.grids[layerStore.layer].height,
+            startH + copiedSelection.value[0].length);
 
-        /*let offsetW = Math.max(0, w - (endPix.value.x + copiedSelection.value.length));
-        let offsetH = Math.max(0, h - (endPix.value.y + copiedSelection.value[0].length));
+        //let offsetW = Math.max(0, w - (endPix.value.x + copiedSelection.value.length - Math.floor(w / 2)));
+        //let offsetH = Math.max(0, h - (endPix.value.y + copiedSelection.value[0].length - Math.floor(h / 2)));
 
-        console.log(w + " - " + endPix.value.x + copiedSelection.value.length)
-        console.log(offsetW);*/
+        //console.log(w + " - " + endPix.value.x + copiedSelection.value.length)
+        //console.log(offsetW);
 
         for (let i = startW; i < endW; i++) {
             for (let j = startH; j < endH; j++) {
                 //console.log("Now attempting to place " + copiedSelection.value[i - startW][j - startH] + " at x:" + i + " y:" + j);
-
-                layerStore.grids[layerStore.layer].grid[i][j]
-                    = copiedSelection.value[i - startW][j - startH];
+                if (i - startW >= 0 && j - startH >= 0) {
+                    layerStore.grids[layerStore.layer].grid[i][j]
+                        = copiedSelection.value[i - startW][j - startH];
 //If desired, we can make this check if it's an empty pixel and only paste it if it isn't empty. But I think it's more useful to artists if we don't
-                canvas.value?.updateCell(layerStore.layer, i, j,
-                    copiedSelection.value[i - startW][j - startH]);
+                    canvas.value?.updateCell(layerStore.layer, i, j,
+                        layerStore.grids[layerStore.layer].grid[i][j]);
+                }
             }
         }
     }
+}*/
+
+
+function pasteSelection() { //the above, rewritten by AI for style and to fix a bug. HOWEVER: still broken if you click too far to the left
+    if (!copiedSelection) return;
+
+    console.log(endPix.value.x);
+    console.log(endPix.value.y);
+
+  const gridLayer = layerStore.grids[layerStore.layer];
+  const canvasW = gridLayer.width;
+  const canvasH = gridLayer.height;
+
+  // Source (selection) dimensions
+  const selW = copiedSelection.value.length;            // width in cells
+  const selH = copiedSelection.value[0].length;         // height in cells
+
+  // Destination start (centered on endPix)
+  const startX = endPix.value.x - Math.floor(selW / 2);
+  const startY = endPix.value.y - Math.floor(selH / 2);
+
+  // Clip destination range to canvas bounds
+  const destStartX = Math.max(0, startX);
+  const destStartY = Math.max(0, startY);
+  const destEndX   = Math.min(canvasW, startX + selW);
+  const destEndY   = Math.min(canvasH, startY + selH);
+
+  // If there is no intersection, do nothing
+  if (destStartX >= destEndX || destStartY >= destEndY) return;
+
+  for (let x = destStartX; x < destEndX; x++) {
+    for (let y = destStartY; y < destEndY; y++) {
+      // Map destination back to source (selection)
+      const srcX = x - startX; // guaranteed in [0, selW)
+      const srcY = y - startY; // guaranteed in [0, selH)
+
+      // Safety check (defensive): ensure indices in-bounds for source
+      if (srcX >= 0 && srcX < selW && srcY >= 0 && srcY < selH) {
+        const value = copiedSelection.value[srcX][srcY];
+
+        // Optional: skip "empty" pixels if you define them (e.g., null or a specific code)
+        // if (value == null) continue;
+
+        gridLayer.grid[x][y] = value;
+        canvas.value?.updateCell(layerStore.layer, x, y, value);
+      }
+    }
+  }
 }
 
 function fill(
