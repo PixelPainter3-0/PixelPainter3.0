@@ -1,9 +1,9 @@
 <template>
   <div
     style="text-align: center"
-    class="justify-content-center flex w-full h-full align-items-center"
+    class="viewer-header justify-content-center flex w-full h-full align-items-center"
   >
-    <h2 class="flex">
+    <h2 class="flex art-title" title="Art title">
       {{ art.title }}
     </h2>
   </div>
@@ -21,8 +21,7 @@
     <div><img v-if="GifURL" :src="GifURL" alt="" /></div>
     <Card class="info-card w-35rem ml-5">
       <template #content>
-        <!-- 1) Artist -->
-        <div class="artist-block">
+       <div class="artist-block">
           <div class="py-1 artist-line">
             <span class="by-label">By:</span>
             <span
@@ -58,6 +57,9 @@
         </div>
 
         <!-- 2) Upload date -->
+        <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
+
+         <!-- 3) Location name -->
         <div class="uploaded-on">Uploaded on {{ uploadDate.toLocaleDateString() }}</div>
 
          <!-- 3) Location name -->
@@ -122,7 +124,6 @@
             :filtered="filtered"
             :filteredArt="squareColor"
           />
-          <!-- icon-only download; label hidden via CSS -->
           <SaveImageToFile
             class="download-only-icon"
             title="Download image"
@@ -149,7 +150,6 @@
 
            <!-- 6) Tag Location -->
          <div class="viewer-actions row end">
-           <!-- ensure point can icon -->
            <Button
              v-if="art.currentUserIsOwner || isAdmin"
              class="danger-action"
@@ -161,7 +161,7 @@
            />
          </div>
 
-         <!-- 7) Remove Location -->
+          <!-- 7) Remove Location -->
          <div class="viewer-actions row end" 
            v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
            <!-- ensure point can icon -->
@@ -175,9 +175,21 @@
            />
          </div>
 
+        <!-- 8) Remove Location -->
+         <div class="viewer-actions row end" 
+           v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
+           <Button
+             class="danger-action"
+             title="Remove"
+             label="Remove Location"
+             icon="pi pi-times"
+             @click="removeLocation()"
+             :isAdmin="isAdmin"
+           />
+         </div>
+
         <!-- 8) Delete Art -->
         <div class="viewer-actions row end">
-          <!-- ensure trash can icon -->
           <DeleteArtButton
             v-if="art.currentUserIsOwner || isAdmin"
             class="danger-action"
@@ -226,10 +238,9 @@
     </Card>
   </div>
 
-  <h2 class="px-4">{{ totalNumComments }} Comments</h2>
+  <h2 class="comments-title px-4">{{ totalNumComments }} Comments</h2>
 
-  <div class="px-6">
-    <!-- Initial comment. Reply to image -->
+  <div class="comments-container px-6">
     <NewComment
       @newComment="updateComments"
       class="mb-4"
@@ -1045,12 +1056,12 @@ async function gifDisplay(): Promise<void> {
 /* Keep the two-panel layout side-by-side on desktop */
 .viewer-main {
   display: flex;
-  gap: 1rem;
   align-items: flex-start;
   justify-content: center;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 1rem;             /* consistent side spacing */
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -1069,9 +1080,17 @@ async function gifDisplay(): Promise<void> {
   image-rendering: crisp-edges;
 }
 
+/* Ensure all media in viewer respects container width */
+.viewer-main :deep(img),
+.viewer-main :deep(video) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* Info card can have a tunable max width */
 .info-card {
-  /* COMMENT: Adjust info card max width here */
+  margin: 2rem;
   max-width: 420px; /* tweak as needed */
 }
 
@@ -1091,6 +1110,41 @@ async function gifDisplay(): Promise<void> {
     margin-left: 0;
   }
 }
+
+/* Shared container spacing for header and comments blocks */
+.viewer-header,
+.comments-container,
+.comments-title {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1rem 0rem 1rem;  /* consistent side spacing */
+  box-sizing: border-box;
+}
 </style>
 
-<!-- 1 -->
+<style scoped>
+/* Ensure long art titles wrap and gracefully truncate */
+.art-title {
+  max-width: min(100%, 65ch);
+  margin: 0 auto;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden; 
+}
+
+@media (max-width: 768px) {
+  .art-title {
+    max-width: 90vw;
+  }
+}
+
+.viewer-header {
+  padding: 1rem; 
+}
+</style>
+
+<!-- 2 -->

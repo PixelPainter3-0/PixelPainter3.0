@@ -121,14 +121,14 @@ namespace MyTestVueApp.Server.Hubs
         {
             if (!Manager.GridExists())
             {
-                Manager.AddGrid(200);
+                Manager.AddGrid(128);
             }
             Manager.AddGridMember(Context.ConnectionId, artist);
             await Groups.AddToGroupAsync(Context.ConnectionId, GridName);
 
             var Grid = Manager.GetGrid();
             var TimeOuts = Manager.TimeOuts(artist.Id);
-            await Clients.Client(Context.ConnectionId).SendAsync("GridConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList());
+            await Clients.Client(Context.ConnectionId).SendAsync("GridConfig", Grid.CanvasSize, Grid.BackgroundColor, Grid.GetPixelsAsList(), Grid.isDisabled);
             await Clients.Client(Context.ConnectionId).SendAsync("TimeOuts", TimeOuts);
 
             await Clients.Group(GridName).SendAsync("NewMember", artist);

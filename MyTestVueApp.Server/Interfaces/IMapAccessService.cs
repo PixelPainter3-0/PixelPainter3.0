@@ -20,5 +20,6 @@ namespace MyTestVueApp.Server.Interfaces
         public Task<IEnumerable<Art>> GetArtByPoint(int id);
         public Task<int> CreatePoint(float latitude, float longitude, string title, int artspace);
         public Task<Boolean> UpdateArtLocation(int artId, int pointId);
+        public Task<Boolean> DeleteLocation(int pointId);
     }
 }

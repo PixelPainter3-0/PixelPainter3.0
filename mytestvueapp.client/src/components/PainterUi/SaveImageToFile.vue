@@ -22,7 +22,7 @@ const isHovered = ref<Boolean>(false);
 const props = defineProps<{
   art: Art;
   grid: PixelGrid;
-  isGrid?: boolean
+  isGrid?: boolean;
   fps: number;
   gifFromViewer?: string[];
   filtered?: boolean;
