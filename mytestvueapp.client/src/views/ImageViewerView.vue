@@ -173,19 +173,6 @@
            />
          </div>
 
-        <!-- 8) Remove Location -->
-         <div class="viewer-actions row end" 
-           v-if="(art.currentUserIsOwner || isAdmin)  && (art.pointId != 0)">
-           <Button
-             class="danger-action"
-             title="Remove"
-             label="Remove Location"
-             icon="pi pi-times"
-             @click="removeLocation()"
-             :isAdmin="isAdmin"
-           />
-         </div>
-
         <!-- 8) Delete Art -->
         <div class="viewer-actions row end">
           <DeleteArtButton
