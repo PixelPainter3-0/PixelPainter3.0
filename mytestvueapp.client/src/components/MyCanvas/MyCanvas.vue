@@ -57,8 +57,25 @@ function updateCanvas(): void {
     if (contextInit) {
       ctx.value = contextInit;
       ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
-      canvas.value.width = 32 * props.pixelSize;
-      canvas.value.height = 32 * props.pixelSize;
+
+      //NOT SURE WHAT I SHOULD BE DOING HERE: rectangular canvases do not display properly.
+        //There is almost certainly also an error when it's iterating through it in one of the render functions or elsewherethat
+      //both causes a display error for horizontal canvases and a machine error for vertical canvases
+
+
+      //What is even the point of this step? What is it doing? can it be skipped? is the number 32 even relevant? Surely width and height should not be the same for a rectangle though
+      //canvas.value.width = props.art.pixelGrid.width * props.pixelSize;
+      //canvas.value.height = props.art.pixelGrid.height * props.pixelSize;
+
+      if (canvas.value.width >= canvas.value.height) { 
+         canvas.value.width = 32 * props.pixelSize;
+         canvas.value.height = 32 * props.pixelSize * canvas.value.height / canvas.value.width;
+      }
+      else {
+         canvas.value.height = 32 * props.pixelSize;
+         canvas.value.width = 32 * props.pixelSize * canvas.value.width / canvas.value.height;
+      }
+
       ctx.value.scale(
         32 / props.art.pixelGrid.width,
         32 / props.art.pixelGrid.height
