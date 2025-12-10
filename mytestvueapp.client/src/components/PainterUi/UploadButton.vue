@@ -177,6 +177,12 @@ watch(newTagName, (val) => {
 });
 
 async function createTag(): Promise<void> {
+  // Require login before allowing new tag creation
+  const loggedIn = await LoginService.isLoggedIn();
+  if (!loggedIn) {
+    handleNotLoggedIn("You must be logged in to create tags");
+    return;
+  }
   tagCreationError.value = "";
   const tokens = extractTokens(newTagName.value || "");
   newTagName.value = "";
@@ -368,11 +374,11 @@ function FlattenFrameEncode(index: number): string {
   }
   return arr.flat().join("");
 }
-function handleNotLoggedIn(): void {
+function handleNotLoggedIn(message?: string): void {
   toast.add({
     severity: "error",
     summary: "Error",
-    detail: "You must be logged in to upload art",
+    detail: message || "You must be logged in to upload art",
     life: 3000
   });
   loading.value = false;

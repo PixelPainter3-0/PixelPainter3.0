@@ -578,13 +578,11 @@ function sortGallery(): void {
 
 .date-dropdown {
   min-width: 130px;
-  max-width: 180px;
   justify-self: start;
 }
 
 .newest-toggle {
   min-width: 150px;
-  max-width: 180px;
   justify-self: start;
 }
 

@@ -10,18 +10,21 @@
             <Button
               :disabled="!canEdit"
               label="Account Settings"
+              icon="pi pi-cog"
               v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#settings' ? 'primary' : 'secondary'"
               @click="changeHash('#settings')"
             />
             <Button
               label="Notification Settings"
+              icon="pi pi-cog"
                v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#notification_settings' ? 'primary' : 'secondary'"
               @click="changeHash('#notification_settings')"
             />
             <Button
               label="Friends"
+              icon="pi pi-users"
                 v-if="curArtist.id === curUser.id"
               :severity="route.hash == '#friends' ? 'primary' : 'secondary'"
               @click="changeHash('#friends')"
@@ -29,24 +32,28 @@
             <Button
               class="profile-nav-btn"
               label="Creator's Art"
+              icon="pi pi-palette"
               :severity="route.hash == '#created_art' ? 'primary' : 'secondary'"
               @click="changeHash('#created_art')"
             />
             <Button
               label="Liked Art"
+              icon="pi pi-heart"
               :severity="route.hash == '#liked_art' ? 'primary' : 'secondary'"
               @click="changeHash('#liked_art')"
             />
             <Button
               v-if="curArtist.id !== curUser.id && isFriend == false"
               label="Add Friend"
-              :severity="'primary'"
+              severity="secondary"
+              icon="pi pi-user-plus"
               @click="updateFriends(true)"
             />
             <Button
               v-if="curArtist.id !== curUser.id && isFriend == true"
               label="Remove Friend"
-              :severity="'primary'"
+              severity="secondary"
+              icon="pi pi-user-minus"
               @click="removeFriend(curArtist.id)"
             />
           </div>

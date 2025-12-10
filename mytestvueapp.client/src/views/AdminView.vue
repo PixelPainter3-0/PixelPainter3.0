@@ -9,75 +9,6 @@
             </div>
             <div v-else>
 
-                <div class="flex align-items-center justify-content-between mb-2">
-                    <h3 class="m-0">Tags</h3>
-                    <span class="text-sm">Showing {{ tagStart + 1 }}–{{ tagEnd }} of {{ filteredTags.length }}</span>
-                </div>
-                <div class="flex align-items-center justify-content-between gap-2 mb-3">
-                    <InputText v-model="tagSearch" placeholder="Search tags…" class="w-full mr-2" />
-                    <Dropdown v-model="tagPageSize" :options="pageSizeOptions" optionLabel="label" optionValue="value"
-                              class="w-10rem" />
-                </div>
-                <div v-if="tags.length === 0" class="p-2">No tags found.</div>
-                <div v-else class="grid">
-                    <div v-for="t in pagedTags" :key="t.id" class="col-6 md:col-4 lg:col-3 xl:col-3">
-                        <Card class="h-full">
-                            <template #title>
-                                <span class="name">{{ t.name }}</span>
-                            </template>
-                            <template #content>
-                                <small v-if="t.creationDate" class="text-color-secondary">
-                                    Created: {{ new Date(t.creationDate as any).toLocaleDateString() }}
-                                </small>
-                            </template>
-                            <template #footer>
-                                <Button size="small" severity="danger" icon="pi pi-trash" label="Delete"
-                                        @click="confirmDelete(t)" />
-                            </template>
-                        </Card>
-                    </div>
-                </div>
-                <div class="flex gap-2 mt-2">
-                    <Button text :disabled="tagPage === 0" label="Prev" icon="pi pi-chevron-left"
-                            @click="tagPage = Math.max(0, tagPage - 1)" />
-                    <Button text :disabled="tagEnd >= filteredTags.length" label="Next" icon="pi pi-chevron-right"
-                            iconPos="right" @click="tagPage = tagPage + 1" />
-                </div>
-
-                <div class="flex align-items-center justify-content-between mb-2">
-                    <h3 class="m-0">Locations</h3>
-                    <span class="text-sm">Showing {{ locationStart + 1 }}–{{ locationEnd }} of {{ filteredLocations.length }}</span>
-                </div>
-                <div class="flex align-items-center justify-content-between gap-2 mb-3">
-                    <InputText v-model="locationSearch" placeholder="Search locations…" class="w-full mr-2" />
-                    <Dropdown v-model="locationPageSize" :options="pageSizeOptions" optionLabel="label" optionValue="value"
-                              class="w-10rem" />
-                </div>
-                <div v-if="locations.length === 0" class="p-2">No locations found.</div>
-                <div v-else class="grid">
-                    <div v-for="t in pagedLocations" :key="t.id" class="col-6 md:col-4 lg:col-3 xl:col-3">
-                        <Card class="h-full">
-                            <template #title>
-                                <span class="name">{{ t.title }}</span>
-                            </template>
-                            <template #content>
-                            </template>
-                            <template #footer>
-                                <Button size="small" severity="danger" icon="pi pi-trash" label="Delete"
-                                        @click="removeLocation(t)" />
-                            </template>
-                        </Card>
-                    </div>
-                </div>
-                <div class="flex gap-2 mt-2">
-                    <Button text :disabled="locationPage === 0" label="Prev" icon="pi pi-chevron-left"
-                            @click="tagPage = Math.max(0, tagPage - 1)" />
-                    <Button text :disabled="locationEnd >= filteredLocations.length" label="Next" icon="pi pi-chevron-right"
-                            iconPos="right" @click="locationPage = locationPage + 1" />
-                </div>
-
-
-
                 <div class="flex align-items-center justify-content-between mt-4 mb-2">
                     <h3 class="m-0">User Administration</h3>
                     <span class="text-sm">Showing {{ userStart + 1 }}–{{ userEnd }} of {{ filteredArtists.length }}</span>
@@ -92,7 +23,10 @@
                     <div v-for="a in pagedArtists" :key="a.id" class="col-6 md:col-4 lg:col-3 xl:col-3">
                         <Card class="h-full">
                             <template #title>
-                                {{ a.name || a.name || ('User #' + a.id) }}
+                                <span class="clickable breakable" title="View user profile"
+                                      @click="goToUser(a.name || ('User #' + a.id))">
+                                    {{ truncateText(a.name || ('User #' + a.id)) }}
+                                </span>
                             </template>
                             <template #content>
                                 <div class="flex align-items-center gap-2">
@@ -123,6 +57,78 @@
                     <Button text :disabled="userEnd >= filteredArtists.length" label="Next" icon="pi pi-chevron-right"
                             iconPos="right" @click="userPage = userPage + 1" />
                 </div>
+
+                <div class="flex align-items-center justify-content-between mt-4 mb-2">
+                    <h3 class="m-0">Tags</h3>
+                    <span class="text-sm">Showing {{ tagStart + 1 }}–{{ tagEnd }} of {{ filteredTags.length }}</span>
+                </div>
+                <div class="flex align-items-center justify-content-between gap-2 mb-3">
+                    <InputText v-model="tagSearch" placeholder="Search tags…" class="w-full mr-2" />
+                    <Dropdown v-model="tagPageSize" :options="pageSizeOptions" optionLabel="label" optionValue="value"
+                              class="w-10rem" />
+                </div>
+                <div v-if="tags.length === 0" class="p-2">No tags found.</div>
+                <div v-else class="grid">
+                    <div v-for="t in pagedTags" :key="t.id" class="col-6 md:col-4 lg:col-3 xl:col-3">
+                        <Card class="h-full">
+                            <template #title>
+                                <span class="name clickable breakable" title="View tag gallery"
+                                      @click="goToTag(t.name)"
+                                      role="button">{{ truncateText(t.name) }}</span>
+                            </template>
+                            <template #content>
+                                <small v-if="t.creationDate" class="text-color-secondary">
+                                    Created: {{ new Date(t.creationDate as any).toLocaleDateString() }}
+                                </small>
+                            </template>
+                            <template #footer>
+                                <Button size="small" severity="danger" icon="pi pi-trash" label="Delete"
+                                        @click="confirmDelete(t)" />
+                            </template>
+                        </Card>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <Button text :disabled="tagPage === 0" label="Prev" icon="pi pi-chevron-left"
+                            @click="tagPage = Math.max(0, tagPage - 1)" />
+                    <Button text :disabled="tagEnd >= filteredTags.length" label="Next" icon="pi pi-chevron-right"
+                            iconPos="right" @click="tagPage = tagPage + 1" />
+                </div>
+
+               <div class="flex align-items-center justify-content-between mt-4 mb-2">
+                    <h3 class="m-0">Locations</h3>
+                    <span class="text-sm">Showing {{ locationStart + 1 }}–{{ locationEnd }} of {{ filteredLocations.length }}</span>
+                </div>
+                <div class="flex align-items-center justify-content-between gap-2 mb-3">
+                    <InputText v-model="locationSearch" placeholder="Search locations…" class="w-full mr-2" />
+                    <Dropdown v-model="locationPageSize" :options="pageSizeOptions" optionLabel="label" optionValue="value"
+                              class="w-10rem" />
+                </div>
+                <div v-if="locations.length === 0" class="p-2">No locations found.</div>
+                <div v-else class="grid">
+                    <div v-for="t in pagedLocations" :key="t.id" class="col-6 md:col-4 lg:col-3 xl:col-3">
+                        <Card class="h-full">
+                            <template #title>
+                                <span class="name clickable breakable" title="View on map"
+                                      @click="goToLocation(t)"
+                                      role="button">{{ truncateText(t.title) }}</span>
+                            </template>
+                            <template #content>
+                            </template>
+                            <template #footer>
+                                <Button size="small" severity="danger" icon="pi pi-trash" label="Delete"
+                                        @click="removeLocation(t)" />
+                            </template>
+                        </Card>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <Button text :disabled="locationPage === 0" label="Prev" icon="pi pi-chevron-left"
+                            @click="tagPage = Math.max(0, tagPage - 1)" />
+                    <Button text :disabled="locationEnd >= filteredLocations.length" label="Next" icon="pi pi-chevron-right"
+                            iconPos="right" @click="locationPage = locationPage + 1" />
+                </div>
+                
             </div>
         </div>
         <div class="admin-bottom-spacer" aria-hidden="true"></div>
@@ -145,6 +151,13 @@ import Dropdown from 'primevue/dropdown';
 import type Artist from '@/entities/Artist';
 import type Point from '@/entities/Point';
 
+// Helper to truncate long text with an ellipsis
+function truncateText(text?: string, maxChars: number = 19): string {
+    const s = (text || '').trim();
+    if (s.length === 0) return '';
+    return s.length > maxChars ? s.slice(0, maxChars) + '…' : s;
+}
+
 type Tag = { id: number; name: string; creationDate?: string };
 
 const isAdmin = ref<boolean>(false);
@@ -153,6 +166,23 @@ const tags = ref<Tag[]>([]);
     const locations = ref<Point[]>([]);
 const confirm = useConfirm();
 const artists = ref<Artist[]>([]);
+function goToTag(name?: string) {
+    const tag = (name || '').trim();
+    if (!tag) return;
+    router.push({ name: 'TagGallery', params: { tag } });
+}
+
+function goToUser(name?: string) {
+    const n = (name || '').trim();
+    if (!n) return;
+    router.push(`/accountpage/${encodeURIComponent(n)}#created_art`);
+}
+
+function goToLocation(p?: Point) {
+    if (!p || !p.id) return;
+    // Navigate to gallery location detail
+    router.push(`/gallery/location/${encodeURIComponent(String(p.id))}`);
+}
 
 // Search + paging state
 const pageSizeOptions = [
@@ -343,5 +373,20 @@ async function setUserAdmin(a: Artist, makeAdmin: boolean) {
 
 .name {
     font-weight: 500;
+}
+
+/* Uniform section spacing */
+.admin-page h3 { margin-top: 1.25rem; }
+.admin-page .grid { margin-top: .5rem; }
+.admin-page .flex.gap-2.mt-2 { margin-top: .75rem; }
+
+/* Clickable text */
+.clickable { cursor: pointer; }
+.clickable:hover { text-decoration: underline; }
+
+/* Allow breaking long, space-less names safely */
+.breakable {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 </style>
