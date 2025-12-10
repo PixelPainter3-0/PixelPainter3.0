@@ -38,7 +38,7 @@
             />
             <Button
               label="Liked Art"
-              icon="pi pi-heart"
+              icon="pi pi-thumbs-up"
               :severity="route.hash == '#liked_art' ? 'primary' : 'secondary'"
               @click="changeHash('#liked_art')"
             />
