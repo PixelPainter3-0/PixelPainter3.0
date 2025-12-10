@@ -48,9 +48,9 @@ export class PixelGrid {
     height: number,
   ): string[][] {
     const grid: string[][] = [];
-    for (let i = 0; i < height; i++) {
+    for (let i = 0; i < width; i++) {
       const row: string[] = [];
-      for (let j = 0; j < width; j++) {
+      for (let j = 0; j < height; j++) {
         row.push("empty");
       }
       grid.push(row);

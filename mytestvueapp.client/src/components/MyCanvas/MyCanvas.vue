@@ -57,11 +57,25 @@ function updateCanvas(): void {
     if (contextInit) {
       ctx.value = contextInit;
       ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
-      canvas.value.width = 32 * props.pixelSize;
-      canvas.value.height = 32 * props.pixelSize;
+
+      //There is almost certainly also an error when it's iterating through it in one of the render functions or elsewhere that
+      //both causes a display error for horizontal canvases and a machine error for vertical canvases
+
+      canvas.value.width = props.art.pixelGrid.width * props.pixelSize;
+      canvas.value.height = props.art.pixelGrid.height * props.pixelSize;
+
+        let wScale = 32;
+        let hScale = 32;
+        if (canvas.value.width >= canvas.value.height) {
+            hScale = 32 * canvas.value.height / canvas.value.width;
+        }
+        else {
+            wScale = 32 * canvas.value.width / canvas.value.height;
+        }
+
       ctx.value.scale(
-        32 / props.art.pixelGrid.width,
-        32 / props.art.pixelGrid.width
+        wScale / props.art.pixelGrid.width,
+        hScale / props.art.pixelGrid.height
       );
     }
   }

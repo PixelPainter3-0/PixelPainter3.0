@@ -108,7 +108,7 @@ function pushLayer(): void {
     layers.value.push(layers.value.length);
     layerStore.pushGrid(
       new PixelGrid(
-        layerStore.grids[0].height,
+        layerStore.grids[0].width,
         layerStore.grids[0].height,
         layerStore.grids[0].backgroundColor,
         layerStore.grids[0].isGif
